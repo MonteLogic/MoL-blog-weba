@@ -1,0 +1,3 @@
+[submodule "mol-training-blog"]
+	path = mol-training-blog
+	url = https://github.com/MonteLogic/mol-training-blog.git
