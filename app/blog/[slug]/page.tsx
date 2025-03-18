@@ -1,27 +1,29 @@
-// app/blog/[slug]/page.tsx
 import React from 'react';
-import ReactMarkdown from 'react-markdown';
+import fs from 'fs';
+import path from 'path';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import ReactMarkdown from 'react-markdown';
 
-interface GitHubFile {
-  name: string;
-  path: string;
-  sha: string;
-  download_url: string;
-  content?: string;
-  encoding?: string;
+// Define types
+interface BlogPostParams {
+  slug: string;
 }
 
-interface PostMetadata {
-  title: string;
-  description: string;
-  date: string;
-  author: string;
-  categories: string[];
-  tags: string[];
+// Generate static params for all blog posts
+export async function generateStaticParams(): Promise<BlogPostParams[]> {
+  const postsDirectory = path.join(process.cwd(), 'MoL-blog-content/posts');
+  
+  // Get all directories in the posts folder
+  const postFolders = fs.readdirSync(postsDirectory, { withFileTypes: true })
+    .filter(dirent => dirent.isDirectory())
+    .map(dirent => dirent.name);
+  
+  return postFolders.map(folder => ({
+    slug: folder,
+  }));
 }
 
+// Custom link component for ReactMarkdown
 const CustomLink = (props: any) => {
   const href = props.href;
   const isInternalLink = href && (href.startsWith('/') || href.startsWith('#'));
@@ -33,134 +35,67 @@ const CustomLink = (props: any) => {
       </Link>
     );
   }
+
   return <a target="_blank" rel="noopener noreferrer" {...props} />;
 };
 
-function extractFrontmatter(content: string): { metadata: PostMetadata | null; content: string } {
-  const frontmatterRegex = /^---\n([\s\S]*?)\n---/;
-  const match = content.match(frontmatterRegex);
-
-  if (!match) {
-    return { metadata: null, content };
-  }
-
-  const frontmatter = match[1];
-  const remainingContent = content.replace(match[0], '').trim();
-
-  // Parse YAML-like frontmatter
-  const metadata: any = {};
-  frontmatter.split('\n').forEach(line => {
-    const [key, ...valueParts] = line.split(':');
-    if (key && valueParts.length) {
-      let value = valueParts.join(':').trim();
-      
-      // Handle arrays (categories and tags)
-      if (value.startsWith('-')) {
-        metadata[key.trim()] = frontmatter
-          .split(key + ':')[1]
-          .split('\n')
-          .filter(item => item.trim().startsWith('-'))
-          .map(item => item.replace('-', '').trim());
-      } else {
-        // Handle regular values
-        metadata[key.trim()] = value;
-      }
-    }
-  });
-
-  return {
-    metadata: metadata as PostMetadata,
-    content: remainingContent
-  };
-}
-
-async function getPost(slug: string): Promise<{ metadata: PostMetadata | null; content: string }> {
-  const url = `https://api.github.com/repos/MonteLogic/cbud-articles/contents/blog/${slug}.md`;
+// Blog post page component
+export default async function BlogPost({ params }: { params: BlogPostParams }) {
+  const { slug } = params;
   
   try {
-    const response = await fetch(url, {
-      headers: {
-        Accept: 'application/vnd.github.v3+json',
-      },
-      next: { revalidate: 3600 },
-    });
-
-    if (!response.ok) {
-      if (response.status === 404) {
-        notFound();
-      }
-      throw new Error(`Failed to fetch blog post: ${response.statusText}`);
-    }
-
-    const data: GitHubFile = await response.json();
-    const contentResponse = await fetch(data.download_url);
-    if (!contentResponse.ok) {
-      throw new Error('Failed to fetch post content');
+    // Get the markdown content for this blog post
+    const postsDirectory = path.join(process.cwd(), 'MoL-blog-content/posts');
+    const postDirectory = path.join(postsDirectory, slug);
+    const contentPath = path.join(postDirectory, 'index.md');
+    
+    // Check if index.md exists
+    if (!fs.existsSync(contentPath)) {
+      throw new Error(`Blog post not found: ${slug}`);
     }
     
-    const rawContent = await contentResponse.text();
-    return extractFrontmatter(rawContent);
+    // Read markdown content
+    const content = fs.readFileSync(contentPath, 'utf8');
+    
+    // Extract the first heading as title
+    const titleMatch = content.match(/^#\s+(.+)$/m);
+    const title = titleMatch ? titleMatch[1] : slug;
+    
+    return (
+      <div className="max-w-4xl mx-auto p-6">
+        <div className="mb-6">
+          <Link href="/blog" className="text-blue-400 hover:text-blue-300">
+            ← Back to all posts
+          </Link>
+        </div>
+        
+        <article className="prose prose-invert prose-lg max-w-none">
+          <ReactMarkdown
+            components={{
+              a: CustomLink,
+              // You can customize other components as needed
+            }}
+          >
+            {content}
+          </ReactMarkdown>
+        </article>
+      </div>
+    );
   } catch (error) {
-    console.error('Error fetching post:', error);
-    throw error;
+    // Handle errors (file not found, etc.)
+    return (
+      <div className="max-w-4xl mx-auto p-6">
+        <div className="mb-6">
+          <Link href="/blog" className="text-blue-400 hover:text-blue-300">
+            ← Back to all posts
+          </Link>
+        </div>
+        
+        <div className="bg-red-900/20 border border-red-500 rounded-lg p-6">
+          <h1 className="text-3xl font-bold text-red-500 mb-4">Post Not Found</h1>
+          <p className="text-white">Could not find the requested blog post: {slug}</p>
+        </div>
+      </div>
+    );
   }
-}
-
-export default async function BlogPost({ params }: { params: { slug: string } }) {
-  const { metadata, content } = await getPost(params.slug);
-
-  return (
-    <div className="max-w-4xl mx-auto p-6">
-      <Link 
-        href="/blog"
-        className="text-blue-400 hover:text-blue-300 mb-8 inline-flex items-center gap-2"
-      >
-        ← Back to blog
-      </Link>
-      
-      {metadata && (
-        <header className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">{metadata.title}</h1>
-          <p className="text-gray-400 mb-4">{metadata.description}</p>
-          <div className="flex items-center gap-4 text-sm text-gray-500">
-            <span>{metadata.author}</span>
-            <span>•</span>
-            <time>{metadata.date}</time>
-          </div>
-        </header>
-      )}
-      
-      <article className="mt-8 prose prose-invert prose-lg max-w-none">
-        <ReactMarkdown
-          components={{
-            a: CustomLink,
-          }}
-        >
-          {content}
-        </ReactMarkdown>
-      </article>
-    </div>
-  );
-}
-
-export async function generateStaticParams() {
-  const response = await fetch(
-    'https://api.github.com/repos/MonteLogic/cbud-articles/contents/blog',
-    {
-      headers: {
-        Accept: 'application/vnd.github.v3+json',
-      },
-    }
-  );
-
-  if (!response.ok) {
-    return [];
-  }
-
-  const files: GitHubFile[] = await response.json();
-  return files
-    .filter(file => file.name.endsWith('.md'))
-    .map(file => ({
-      slug: file.name.replace('.md', ''),
-    }));
 }
