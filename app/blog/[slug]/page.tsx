@@ -9,19 +9,8 @@ interface BlogPostParams {
   slug: string;
 }
 
-// Generate static params for all blog posts
-export async function generateStaticParams(): Promise<BlogPostParams[]> {
-  const postsDirectory = path.join(process.cwd(), 'MoL-blog-content/posts');
-  
-  // Get all directories in the posts folder
-  const postFolders = fs.readdirSync(postsDirectory, { withFileTypes: true })
-    .filter(dirent => dirent.isDirectory())
-    .map(dirent => dirent.name);
-  
-  return postFolders.map(folder => ({
-    slug: folder,
-  }));
-}
+// Remove generateStaticParams to avoid build-time errors with submodules
+// The pages will be generated dynamically at request time instead
 
 // Custom link component for ReactMarkdown
 const CustomLink = (props: any) => {
@@ -57,10 +46,6 @@ export default async function BlogPost({ params }: { params: BlogPostParams }) {
     // Read markdown content
     const content = fs.readFileSync(contentPath, 'utf8');
     
-    // Extract the first heading as title
-    const titleMatch = content.match(/^#\s+(.+)$/m);
-    const title = titleMatch ? titleMatch[1] : slug;
-    
     return (
       <div className="max-w-4xl mx-auto p-6">
         <div className="mb-6">
@@ -82,6 +67,8 @@ export default async function BlogPost({ params }: { params: BlogPostParams }) {
       </div>
     );
   } catch (error) {
+    console.error('Error rendering blog post:', error);
+    
     // Handle errors (file not found, etc.)
     return (
       <div className="max-w-4xl mx-auto p-6">
@@ -93,7 +80,9 @@ export default async function BlogPost({ params }: { params: BlogPostParams }) {
         
         <div className="bg-red-900/20 border border-red-500 rounded-lg p-6">
           <h1 className="text-3xl font-bold text-red-500 mb-4">Post Not Found</h1>
-          <p className="text-white">Could not find the requested blog post: {slug}</p>
+          <p className="text-white">
+            This blog post could not be found. It may not be available in the current environment.
+          </p>
         </div>
       </div>
     );
