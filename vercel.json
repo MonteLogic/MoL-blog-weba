@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "buildCommand": "pnpm run build",
+  "installCommand": "pnpm run setup",
+  "git": {
+    "deploymentEnabled": {
+      "main": true
+    },
+    "submodules": true
+  }
+}
