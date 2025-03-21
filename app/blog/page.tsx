@@ -12,6 +12,7 @@ interface BlogPost {
     description?: string;
     tags?: string[];
     author?: string;
+    componentSets?: string[];
     [key: string]: any; // For additional frontmatter fields
   };
 }
@@ -28,7 +29,7 @@ async function getBlogPosts(): Promise<BlogPost[]> {
       .map(dirent => dirent.name);
     
     // Process each post folder
-    const posts = postFolders.map(folderName => {
+    const posts: BlogPost[] = postFolders.map(folderName => {
       // Look for index.mdx first, then fall back to index.md
       const mdxPath = path.join(postsDirectory, folderName, 'index.mdx');
       const mdPath = path.join(postsDirectory, folderName, 'index.md');
@@ -51,12 +52,14 @@ async function getBlogPosts(): Promise<BlogPost[]> {
       const fileContent = fs.readFileSync(filePath, 'utf8');
       
       // Parse frontmatter using gray-matter
-      const { data: frontmatter, content } = matter(fileContent);
+      const { data } = matter(fileContent);
       
-      // Ensure title exists in frontmatter
-      if (!frontmatter.title) {
-        frontmatter.title = formatTitle(folderName);
-      }
+      // Create a properly typed frontmatter object with required title
+      const frontmatter: BlogPost['frontmatter'] = { 
+        ...data,
+        // Ensure title exists in frontmatter
+        title: data.title || formatTitle(folderName)
+      };
       
       return {
         slug: folderName,
