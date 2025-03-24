@@ -49,7 +49,7 @@ export function AddressBar({ subscriptionData }: { subscriptionData?: any }) {
         <div>
           <ClerkLoading>Loading ...</ClerkLoading>
           <div className="bg-white">
-            <PaymentStatusSwitcher
+            {/* <PaymentStatusSwitcher
               paymentInfo={{
                 status: {
                   isActive: subscriptionData.status.isActive,
@@ -59,7 +59,7 @@ export function AddressBar({ subscriptionData }: { subscriptionData?: any }) {
                   recentTransactions: [],
                 },
               }}
-            />
+            /> */}
           </div>
         </div>
       </div>
