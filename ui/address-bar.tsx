@@ -3,7 +3,7 @@
 import { ClerkLoading, useSession } from '@clerk/nextjs';
 import { UserButton } from '@clerk/nextjs';
 import { checkUserRole } from '#/utils/UserUtils';
-import PaymentStatusSwitcher from './summary-page-bar';
+import TaskBar from './task-bar';
 import Link from 'next/link';
 
 export function AddressBar({ subscriptionData }: { subscriptionData?: any }) {
@@ -49,7 +49,7 @@ export function AddressBar({ subscriptionData }: { subscriptionData?: any }) {
         <div>
           <ClerkLoading>Loading ...</ClerkLoading>
           <div className="bg-white">
-            {/* <PaymentStatusSwitcher
+            <TaskBar
               paymentInfo={{
                 status: {
                   isActive: subscriptionData.status.isActive,
@@ -59,7 +59,7 @@ export function AddressBar({ subscriptionData }: { subscriptionData?: any }) {
                   recentTransactions: [],
                 },
               }}
-            /> */}
+            />
           </div>
         </div>
       </div>

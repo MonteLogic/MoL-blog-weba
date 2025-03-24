@@ -78,7 +78,7 @@ const getStatusIcon = (
  * Similar to Clerk's OrgSwitcher but focused on payment status
  */
 
-const PaymentStatusSwitcher: React.FC<PaymentStatusSwitcherProps> = ({
+const TaskBar: React.FC<PaymentStatusSwitcherProps> = ({
   paymentInfo,
   onManageSubscription,
   className = '',
@@ -247,4 +247,4 @@ const PaymentStatusSwitcher: React.FC<PaymentStatusSwitcherProps> = ({
   );
 };
 
-export default PaymentStatusSwitcher;
+export default TaskBar;
