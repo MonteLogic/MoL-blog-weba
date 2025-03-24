@@ -14,7 +14,7 @@ export const getSecondMenu = (
     items: [
       {
         name: 'Home',
-        slug: 'home',
+        slug: '/',
         description: 'Home page showing a summary view.',
       },
       {
