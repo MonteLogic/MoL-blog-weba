@@ -1,15 +1,15 @@
-'use client';
 
+'use client';
 import { ClerkLoading, useSession } from '@clerk/nextjs';
 import { UserButton } from '@clerk/nextjs';
 import { checkUserRole } from '#/utils/UserUtils';
-import PaymentStatusSwitcher from './summary-page-bar';
+import TaskBar from './task-bar';
 import Link from 'next/link';
 
 export function AddressBar({ subscriptionData }: { subscriptionData?: any }) {
   const { session, isLoaded } = useSession();
   const userRole = session ? checkUserRole(session) : null;
-
+  
   // Show loading state that maintains layout
   if (!isLoaded) {
     return (
@@ -24,7 +24,7 @@ export function AddressBar({ subscriptionData }: { subscriptionData?: any }) {
       </div>
     );
   }
-
+  
   // Only show sign-in button when we're sure user is not logged in
   if (!session) {
     return (
@@ -38,7 +38,7 @@ export function AddressBar({ subscriptionData }: { subscriptionData?: any }) {
       </div>
     );
   }
-
+  
   // Render full component for logged-in users
   return (
     <div className="flex items-center gap-x-2 p-3.5 lg:px-5 lg:py-3">
@@ -49,8 +49,8 @@ export function AddressBar({ subscriptionData }: { subscriptionData?: any }) {
         <div>
           <ClerkLoading>Loading ...</ClerkLoading>
           <div className="bg-white">
-            <PaymentStatusSwitcher
-              paymentInfo={{
+            <TaskBar
+              paymentInfo={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY && subscriptionData ? {
                 status: {
                   isActive: subscriptionData.status.isActive,
                   planId: subscriptionData.status.planId,
@@ -58,7 +58,7 @@ export function AddressBar({ subscriptionData }: { subscriptionData?: any }) {
                   planName: subscriptionData.status.planName,
                   recentTransactions: [],
                 },
-              }}
+              } : undefined}
             />
           </div>
         </div>

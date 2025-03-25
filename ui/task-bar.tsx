@@ -35,7 +35,15 @@ interface PaymentInfo {
 /** Props interface for the PaymentStatusSwitcher component */
 interface PaymentStatusSwitcherProps {
   /** Payment and subscription information */
-  paymentInfo: StripeSubscriptionStatus;
+  paymentInfo?: {
+    status: {
+      isActive: boolean;
+      planId: string;
+      expiresAt: string;
+      planName: string;
+      recentTransactions: Transaction[];
+    };
+  };
   /** Optional callback for when the manage subscription button is clicked */
   onManageSubscription?: () => void;
   /** Optional class name for additional styling */
@@ -47,27 +55,24 @@ interface PaymentStatusSwitcherProps {
  * @param status - The current payment status
  * @returns Tailwind color class string
  */
-const getStatusColor = (status: StripeSubscriptionStatus['status']): string => {
-  if (status.isActive) {
+const getStatusColor = (status: any): string => {
+  if (status?.isActive) {
     return 'text-green-600';
   }
   return 'text-gray-600';
 };
 
-const getStatusDisplay = (
-  status: StripeSubscriptionStatus['status'],
-): string => {
-  return status.isActive ? 'Active' : 'Inactive';
+const getStatusDisplay = (status: any): string => {
+  return status?.isActive ? 'Active' : 'Inactive';
 };
+
 /**
  * Determines icon component to display based on subscription status
  * @param status - Current subscription status object from Stripe
  * @returns React component for status icon
  */
-const getStatusIcon = (
-  status: StripeSubscriptionStatus['status'],
-): React.ReactNode => {
-  if (status.isActive) {
+const getStatusIcon = (status: any): React.ReactNode => {
+  if (status?.isActive) {
     return <CheckCircle className="h-5 w-5 text-green-600" />;
   }
   return <CreditCard className="h-5 w-5 text-gray-600" />;
@@ -78,7 +83,7 @@ const getStatusIcon = (
  * Similar to Clerk's OrgSwitcher but focused on payment status
  */
 
-const PaymentStatusSwitcher: React.FC<PaymentStatusSwitcherProps> = ({
+const TaskBar: React.FC<PaymentStatusSwitcherProps> = ({
   paymentInfo,
   onManageSubscription,
   className = '',
@@ -113,8 +118,7 @@ const PaymentStatusSwitcher: React.FC<PaymentStatusSwitcherProps> = ({
       }
     }
   };
-    const { count } = useTimecardsMetadata();
-
+  const { count } = useTimecardsMetadata();
 
   return (
     <div className={`relative ${className}`}>
@@ -125,7 +129,7 @@ const PaymentStatusSwitcher: React.FC<PaymentStatusSwitcherProps> = ({
         aria-haspopup="dialog"
       >
         <div className="flex items-center space-x-3">
-          {getStatusIcon(paymentInfo.status)}
+          {paymentInfo ? getStatusIcon(paymentInfo.status) : <CreditCard className="h-5 w-5 text-gray-600" />}
           <span>User Details</span>
         </div>
         <ChevronDown
@@ -152,33 +156,27 @@ const PaymentStatusSwitcher: React.FC<PaymentStatusSwitcherProps> = ({
         <div className="p-4" onClick={(e) => e.stopPropagation()}>
           <div className="mb-4 flex items-center justify-between">
             <h3 className="text-lg font-medium text-gray-600">Plan Details</h3>
-            {/* <span
-              className={`rounded-full px-2 py-1 text-sm ${getStatusColor(
-                paymentInfo.status,
-              )} bg-opacity-10`}
-            >
-         Something:       {getStatusDisplay(paymentInfo.status)}
-            </span> */}
           </div>
 
           <div className="space-y-4">
             <div>
               <p className="text-sm font-medium text-gray-500">Current Plan:</p>
               <p className="mt-1 text-sm text-gray-500">
-                <Link className='text-blue-600 hover:text-blue-800' href="/docs/plans" >{paymentInfo.status.planName}
+                <Link className='text-blue-600 hover:text-blue-800' href="/docs/plans" >
+                  {paymentInfo?.status.planName || 'No Plan'}
                 </Link>
               </p>
             </div>
             <div>
               <p className="mt-1 text-sm text-gray-500">
-                Subscription Active: {paymentInfo.status ? 'Yes' : 'No'}
+                Subscription Active: {paymentInfo?.status?.isActive ? 'Yes' : 'No'}
               </p>
             </div>
 
             <div>
               <p className="mt-1 text-sm text-gray-500">
                 Expires:{' '}
-                {paymentInfo.status.expiresAt
+                {paymentInfo?.status.expiresAt
                   ? new Date(paymentInfo.status.expiresAt)
                       .toISOString()
                       .split('T')[0]
@@ -215,7 +213,7 @@ const PaymentStatusSwitcher: React.FC<PaymentStatusSwitcherProps> = ({
                 </div>
               </Link>
               <div className="space-y-2">
-                {paymentInfo.status.recentTransactions.map((transaction) => (
+                {paymentInfo?.status.recentTransactions.map((transaction) => (
                   <div
                     key={transaction.id}
                     className="flex justify-between text-sm"
@@ -247,4 +245,4 @@ const PaymentStatusSwitcher: React.FC<PaymentStatusSwitcherProps> = ({
   );
 };
 
-export default PaymentStatusSwitcher;
+export default TaskBar;
