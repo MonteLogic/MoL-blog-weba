@@ -1,3 +1,4 @@
+
 import React from 'react';
 import fs from 'fs';
 import path from 'path';
@@ -11,17 +12,17 @@ import { redirect } from 'next/navigation';
 
 // Define types
 interface BlogPostParams {
-  slug: string;
+  readonly slug: string;
 }
 
 interface Frontmatter {
-  title: string;
-  date?: string;
-  description?: string;
-  tags?: string[];
-  author?: string;
-  status?: string;
-  [key: string]: any; // For additional frontmatter fields
+  readonly title: string;
+  readonly date?: string;
+  readonly description?: string;
+  readonly tags?: string[];
+  readonly author?: string;
+  readonly status?: string;
+  readonly [key: string]: any; // For additional frontmatter fields
 }
 
 // Custom components for MDX
@@ -42,12 +43,10 @@ function formatTitle(folderName: string): string {
     .join(' ');
 }
 
-// Options for MDX processing
-const options = {
-  mdxOptions: {
-    remarkPlugins: [remarkGfm],
-    rehypePlugins: [[rehypePrettyCode, { theme: 'github-dark' }]],
-  },
+// Options for MDX processing - restructured to match required types
+const mdxOptions = {
+  remarkPlugins: [remarkGfm],
+  rehypePlugins: [rehypePrettyCode],
 };
 
 // Helper function to check if user can view a post based on role and post status
@@ -65,7 +64,7 @@ function canViewPost(
 }
 
 // Blog post page component
-export default async function BlogPost({ params }: { params: BlogPostParams }) {
+export default async function BlogPost({ params }: Readonly<{ params: BlogPostParams }>) {
   const { slug } = params;
   const { userId } = auth();
   let userRole: string | undefined;
@@ -185,11 +184,13 @@ export default async function BlogPost({ params }: { params: BlogPostParams }) {
           </header>
 
           <div className="mdx-content">
-            {/* @ts-ignore - MDXRemote types in RSC mode */}
+            {/* @ts-ignore */}
             <MDXRemote
               source={content}
               components={components}
-              options={options}
+              options={{
+                mdxOptions
+              }}
             />
           </div>
         </article>
