@@ -1,4 +1,3 @@
-
 import React from 'react';
 import fs from 'fs';
 import path from 'path';
@@ -9,6 +8,7 @@ import rehypePrettyCode from 'rehype-pretty-code';
 import remarkGfm from 'remark-gfm';
 import { auth, currentUser } from '@clerk/nextjs';
 import { redirect } from 'next/navigation';
+import ReactMarkdown from 'react-markdown';
 
 // Define types
 interface BlogPostParams {
@@ -90,10 +90,14 @@ export default async function BlogPost({ params }: Readonly<{ params: BlogPostPa
     const mdPath = path.join(postDirectory, 'index.md');
 
     let filePath = '';
+    let isMdx = false;
+    
     if (fs.existsSync(mdxPath)) {
       filePath = mdxPath;
+      isMdx = true;
     } else if (fs.existsSync(mdPath)) {
       filePath = mdPath;
+      isMdx = false;
     } else {
       throw new Error(`Blog post not found: ${slug}`);
     }
@@ -184,14 +188,25 @@ export default async function BlogPost({ params }: Readonly<{ params: BlogPostPa
           </header>
 
           <div className="mdx-content">
-            {/* @ts-ignore */}
-            <MDXRemote
-              source={content}
-              components={components}
-              options={{
-                mdxOptions
-              }}
-            />
+            {isMdx ? (
+              // Use MDXRemote for .mdx files (server component)
+              // @ts-ignore
+              <MDXRemote
+                source={content}
+                components={components}
+                options={{
+                  mdxOptions
+                }}
+              />
+            ) : (
+              // Use ReactMarkdown for .md files (client component)
+              <ReactMarkdown 
+                remarkPlugins={[remarkGfm]}
+                className="markdown-content"
+              >
+                {content}
+              </ReactMarkdown>
+            )}
           </div>
         </article>
       </div>
