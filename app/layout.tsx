@@ -20,7 +20,7 @@ import titles from '#/titles.json';
 export const metadata: Metadata = {
   title: {
     default: titles.title,
-    template: '%s | Contractor Bud',
+    template: '%s | MonteLogic',
   },
   description:
    titles.title + ' is an online system for managing contractors concerns. These concerns include scheduling, timecards, route management and time management. This easy to use app will make truck drivers and route managers working lives much easier.',

@@ -1,7 +1,7 @@
 import { TabGroupBlog } from '#/ui/tab-group-blog';
 import React from 'react';
 
-const title = 'CBud Blog Page';
+const title = 'MonteLogic Blog';
 
 export const metadata = {
   title,
