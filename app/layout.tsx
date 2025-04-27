@@ -14,16 +14,14 @@ import { Analytics } from '@vercel/analytics/next';
 import UpgradePrompt from '#/ui/upgrade-prompt';
 import titles from '#/titles.json';
 
-
-
-
 export const metadata: Metadata = {
   title: {
     default: titles.title,
     template: '%s | MonteLogic',
   },
   description:
-   titles.title + ' is an online system for managing contractors concerns. These concerns include scheduling, timecards, route management and time management. This easy to use app will make truck drivers and route managers working lives much easier.',
+    titles.title +
+    ' is an online system for managing contractors concerns. These concerns include scheduling, timecards, route management and time management. This easy to use app will make truck drivers and route managers working lives much easier.',
   openGraph: {
     title: titles.title,
     description:
@@ -46,8 +44,6 @@ const getUserData = cache(async () => {
       dbUserId: null,
     };
   }
-
-
 });
 
 export default async function RootLayout({

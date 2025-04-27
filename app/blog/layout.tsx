@@ -21,8 +21,14 @@ export default function Layout({ children }: Readonly<{ children: React.ReactNod
         items={[
           {
             text: 'Home',
+          },
+          {
+            text: 'Work Notes 1',
+            slug:'work-notes'
           }
-        ]}
+        ]
+      
+      }
       />
 
       <div>{children}</div>

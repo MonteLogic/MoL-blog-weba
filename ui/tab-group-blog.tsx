@@ -17,17 +17,20 @@ interface TabGroupBlogProps {
 export const TabGroupBlog: React.FC<TabGroupBlogProps> = ({ path, items }) => {
   const pathname = usePathname(); // Get the pathname
 
-  return (
+    return (
     <div className="border-b border-gray-200">
       <nav className="-mb-px flex space-x-8" aria-label="Tabs">
         {items.map((item, index) => {
-          const href = item.slug ? `${path}/${item.slug}` : path;
+          // Generate the href based on the item's text if slug is not provided
+          const slug = item.slug || (item.text === 'Home' ? '' : item.text.toLowerCase().replace(/\s+/g, '-'));
+          const href = slug ? `${path}/${slug}` : path;
+          
           const isActive =
             pathname === href ||
             (pathname?.startsWith(path + '/') &&
-              item.slug &&
-              pathname?.split('/')[2] === item.slug); // Optional chaining
-
+              slug &&
+              pathname?.split('/')[2] === slug);
+              
           return (
             <Link
               key={index}
@@ -45,4 +48,5 @@ export const TabGroupBlog: React.FC<TabGroupBlogProps> = ({ path, items }) => {
       </nav>
     </div>
   );
+
 };
