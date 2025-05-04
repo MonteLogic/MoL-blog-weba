@@ -81,9 +81,10 @@ export default async function BlogPost({ params }: Readonly<{ params: BlogPostPa
   }
 
   try {
-    // Get the markdown content for this blog post
+    // Construct the full path to the blog post
     const postsDirectory = path.join(process.cwd(), 'MoL-blog-content/posts');
-    const postDirectory = path.join(postsDirectory, slug);
+    // Directly construct the path to the nested post using the known structure
+    const postDirectory = path.join(postsDirectory, 'categorized', 'work-project-notes', 'work-notes', slug);
 
     // Look for MDX file first, then fall back to MD
     const mdxPath = path.join(postDirectory, 'index.mdx');
@@ -91,7 +92,7 @@ export default async function BlogPost({ params }: Readonly<{ params: BlogPostPa
 
     let filePath = '';
     let isMdx = false;
-    
+
     if (fs.existsSync(mdxPath)) {
       filePath = mdxPath;
       isMdx = true;
@@ -200,7 +201,7 @@ export default async function BlogPost({ params }: Readonly<{ params: BlogPostPa
               />
             ) : (
               // Use ReactMarkdown for .md files (client component)
-              <ReactMarkdown 
+              <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 className="markdown-content"
               >
