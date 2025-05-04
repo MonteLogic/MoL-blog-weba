@@ -15,6 +15,7 @@ export const metadata = {
 
 export default async function Layout({ children }: Readonly<{ children: React.ReactNode }>) {
   const categoryTabs = await getBlogCategoryTabs();
+  console.log('categoryTabs in layout:', categoryTabs); // Add this line
 
   return (
     <div className="space-y-9">

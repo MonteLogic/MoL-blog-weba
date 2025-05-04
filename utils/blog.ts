@@ -20,7 +20,7 @@ function formatTitle(folderName: string): string {
 }
 
 export async function getBlogCategoryTabs(): Promise<
-  { text: string; slug?: string; href?: string }[]
+  { text: string; href?: string }[]
 > {
   try {
     const schemaPath = path.join(
@@ -34,7 +34,7 @@ export async function getBlogCategoryTabs(): Promise<
     const schemaFile = fs.readFileSync(schemaPath, 'utf8');
     const schema: CategorySchema = JSON.parse(schemaFile);
 
-    const tabs: { text: string; slug?: string; href?: string }[] = [
+    const tabs: { text: string; href?: string }[] = [
       { text: 'Home', href: '/blog' },
     ];
 
@@ -43,8 +43,7 @@ export async function getBlogCategoryTabs(): Promise<
         const categoryDetails = schema.categories[categorySlug][0];
         tabs.push({
           text: formatTitle(categorySlug),
-          slug: categorySlug,
-          href: categoryDetails.url,
+          href: categoryDetails.url, // This will now be used directly
         });
       }
     }
