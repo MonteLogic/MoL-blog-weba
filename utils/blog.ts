@@ -40,10 +40,9 @@ export async function getBlogCategoryTabs(): Promise<
 
     for (const categorySlug in schema.categories) {
       if (schema.categories.hasOwnProperty(categorySlug)) {
-        const categoryDetails = schema.categories[categorySlug][0];
         tabs.push({
           text: formatTitle(categorySlug),
-          href: categoryDetails.url, // This will now be used directly
+          href: `/blog/categories/${categorySlug}`, // Construct the correct category URL
         });
       }
     }

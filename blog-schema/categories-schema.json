@@ -4,13 +4,13 @@
     "work-notes": [
       {
         "description": "Work Notes of various projects",
-        "url": "/categories/work-notes"
+        "url": "blog/categories/work-notes"
       }
     ],
     "project-notes": [
       {
         "description": "A larger scope view of the Project and the direction as well as where the Project has been.",
-        "url": "/categories/project-notes"
+        "url": "blog/categories/project-notes"
       }
     ]
   }
