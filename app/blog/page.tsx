@@ -164,7 +164,7 @@ import React from 'react';
              <div className="flex justify-between items-start">
                <h2 className="text-xl font-semibold mb-3">
                  <Link
-                   href={`/blog/${post.slug}`}
+                   href={`/blog/posts/${post.slug}`}
                    className="text-blue-400 hover:text-blue-300 no-underline"
                  >
                    {post.frontmatter.title}
@@ -209,7 +209,7 @@ import React from 'react';
 
              <div>
                <Link
-                 href={`/blog/${post.slug}`}
+                 href={`/blog/posts/${post.slug}`}
                  className="text-blue-400 hover:text-blue-300 inline-flex items-center gap-1 no-underline"
                >
                  Read more

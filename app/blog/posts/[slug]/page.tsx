@@ -81,10 +81,10 @@ export default async function BlogPost({ params }: Readonly<{ params: BlogPostPa
   }
 
   try {
-    // Construct the full path to the blog post
+    // Get the markdown content for this blog post
     const postsDirectory = path.join(process.cwd(), 'MoL-blog-content/posts');
-    // Directly construct the path to the nested post using the known structure
-    const postDirectory = path.join(postsDirectory, 'categorized', 'work-project-notes', 'work-notes', slug);
+    // Construct the path to look within the 'uncategorized' folder
+    const postDirectory = path.join(postsDirectory, 'uncategorized', slug);
 
     // Look for MDX file first, then fall back to MD
     const mdxPath = path.join(postDirectory, 'index.mdx');
@@ -100,7 +100,7 @@ export default async function BlogPost({ params }: Readonly<{ params: BlogPostPa
       filePath = mdPath;
       isMdx = false;
     } else {
-      throw new Error(`Blog post not found: ${slug}`);
+      throw new Error(`Blog post not found in uncategorized: ${slug}`);
     }
 
     // Read file content
@@ -229,8 +229,8 @@ export default async function BlogPost({ params }: Readonly<{ params: BlogPostPa
             Post Not Found
           </h1>
           <p className="text-white">
-            This blog post could not be found or you do not have permission to
-            view it.
+            This blog post could not be found in the uncategorized section or you
+            do not have permission to view it.
           </p>
         </div>
       </div>
