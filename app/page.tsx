@@ -20,6 +20,15 @@ interface BlogPost {
   };
 }
 
+interface CategorySchema {
+  categories: {
+    [key: string]: {
+      description: string;
+      url: string;
+    }[];
+  };
+}
+
 // Function to safely get blog posts, with fallback for production environments
 async function getBlogPosts(): Promise<BlogPost[]> {
   try {
@@ -122,6 +131,40 @@ function canViewPost(
   return userRole === 'Admin' || userRole === 'Contributor';
 }
 
+// Function to read and process the categories schema
+async function getCategoryTabs(): Promise<
+  { text: string; slug?: string; href?: string }[]
+> {
+  try {
+    const schemaPath = path.join(
+      process.cwd(),
+      'blog-schema/categories-schema.json',
+    );
+    const schemaFile = fs.readFileSync(schemaPath, 'utf8');
+    const schema: CategorySchema = JSON.parse(schemaFile);
+
+    const tabs: { text: string; slug?: string; href?: string }[] = [
+      { text: 'Home', href: '/blog' },
+    ];
+
+    for (const categorySlug in schema.categories) {
+      if (schema.categories.hasOwnProperty(categorySlug)) {
+        const categoryDetails = schema.categories[categorySlug][0]; // Assuming each category has one main definition
+        tabs.push({
+          text: formatTitle(categorySlug),
+          slug: categorySlug,
+          href: categoryDetails.url,
+        });
+      }
+    }
+
+    return tabs;
+  } catch (error) {
+    console.error('Error reading categories schema:', error);
+    return [{ text: 'Home', href: '/blog' }]; // Fallback to Home tab
+  }
+}
+
 export default async function BlogPage() {
   const { userId } = auth();
   let userRole: string | undefined;
@@ -144,6 +187,8 @@ export default async function BlogPage() {
     canViewPost(userRole, post.frontmatter.status || 'private'),
   );
 
+  const categoryTabs = await getCategoryTabs();
+
   if (visiblePosts.length === 0) {
     return (
       <div className="mx-auto max-w-4xl p-6">
@@ -161,18 +206,7 @@ export default async function BlogPage() {
 
   return (
     <div className="space-y-9">
-      <TabGroupBlog
-        path="/blog"
-        items={[
-          {
-            text: 'Home',
-          },
-          {
-            text: 'Work Notes 1',
-            slug: 'work-notes',
-          },
-        ]}
-      />
+      <TabGroupBlog path="/blog" items={categoryTabs} />
 
       <div className="mx-auto max-w-4xl p-6">
         <h1 className="mb-8 text-3xl font-bold text-white">CBud Blog</h1>
@@ -215,11 +249,14 @@ export default async function BlogPage() {
 
               {post.frontmatter.date && (
                 <div className="mb-3 text-sm text-gray-400">
-                  {new Date(post.frontmatter.date).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  })}
+                  {new Date(post.frontmatter.date).toLocaleDateString(
+                    'en-US',
+                    {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    },
+                  )}
                 </div>
               )}
 
