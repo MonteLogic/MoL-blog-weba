@@ -209,7 +209,7 @@ import React from 'react';
 
              <div>
                <Link
-                 href={`/blog/posts/${post.slug}`}
+                 href={`/blog/${post.slug}`}
                  className="text-blue-400 hover:text-blue-300 inline-flex items-center gap-1 no-underline"
                >
                  Read more
