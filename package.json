@@ -4,7 +4,7 @@
   "scripts": {
     "setup": "git submodule update --init --recursive && cd MoL-blog-content && pnpm i",
     "postinstall": "cd MoL-blog-content && pnpm install",
-    "build": "next build",
+    "build": "pnpm run generate-markdown-paths && next build",
     "dev": "next dev",
     "lint": "next lint",
     "stripe:listen": "stripe listen --forward-to localhost:3000/api/webhooks/stripe",
@@ -15,7 +15,8 @@
     "vitest": "vitest",
     "test:db": "tsx tests/sqlite-test/setup-test-db.ts",
     "test:playwright": " exec playwright test",
-    "local-db-create": "node tests/db-create/index.ts"
+    "local-db-create": "node tests/db-create/index.ts",
+      "generate-markdown-paths": "ts-node -O '{\"module\": \"CommonJS\"}' scripts/generate.ts"
   },
   "git": {
     "pre-commit": "lint-staged"
@@ -131,6 +132,7 @@
     "prettier": "2.8.1",
     "prettier-plugin-tailwindcss": "0.2.1",
     "ts-node": "10.9.2",
+    "tsconfig-paths": "4.2.0",
     "tsx": "4.19.2",
     "typescript": "4.9.4",
     "vitest": "2.1.4"
