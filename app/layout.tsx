@@ -6,12 +6,7 @@ import { Metadata } from 'next';
 import { ClerkProvider } from '@clerk/nextjs';
 import { auth } from '@clerk/nextjs/server';
 import { cache } from 'react';
-import { createClient } from '@libsql/client/web';
-import { drizzle } from 'drizzle-orm/libsql';
-import { eq } from 'drizzle-orm';
-import { users } from '#/db/schema';
 import { Analytics } from '@vercel/analytics/next';
-import UpgradePrompt from '#/ui/upgrade-prompt';
 import titles from '#/titles.json';
 
 export const metadata: Metadata = {
