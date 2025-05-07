@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import fs from 'fs';
-import path from 'path';
+import path from 'path'; // Ensure path is imported
 import matter from 'gray-matter';
 import { MDXRemote } from 'next-mdx-remote/rsc'; // For Server Components
 import rehypePrettyCode from 'rehype-pretty-code';
@@ -9,6 +9,7 @@ import remarkGfm from 'remark-gfm';
 import { auth, currentUser } from '@clerk/nextjs';
 import { redirect } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
+// import { notFound } from 'next/navigation'; // Optional: for a custom 404 trigger
 
 // --- Type Definitions ---
 interface BlogPostParams {
@@ -16,12 +17,12 @@ interface BlogPostParams {
 }
 
 interface Frontmatter {
-  title: string; // Made mutable for defaulting
+  title: string;
   date?: string;
   description?: string;
   tags?: string[];
   author?: string;
-  status?: string; // 'public' or 'private'
+  status?: string;
   componentSets?: string[];
   [key: string]: any;
 }
@@ -29,11 +30,12 @@ interface Frontmatter {
 // --- Helper Functions (Ideally, move to a shared 'utils/blog.ts' file) ---
 
 /**
- * Generates a URL-friendly slug from a given file path.
- * It aims to create shorter, more desirable slugs by ignoring common
- * organizational directories like "uncategorized", "categorized", "articles".
+ * Generates a "base" URL-friendly slug from a given file path.
+ * For index.md files, uses the immediate parent directory name.
+ * For other .md files, uses the filename without extension.
+ * Collision handling (e.g., appending -1, -2) is done by the calling functions.
  */
-function generateSlugForFilePath(filePathFromJson: string): string {
+function generateBaseSlug(filePathFromJson: string): string {
     const postsBaseDirString = 'MoL-blog-content/posts/';
     let normalizedFilePath = filePathFromJson.replace(/\\/g, '/').trim();
 
@@ -45,40 +47,29 @@ function generateSlugForFilePath(filePathFromJson: string): string {
         relativePathToPostsDir = normalizedFilePath;
     }
 
-    const ignoredSegments: string[] = ['uncategorized', 'categorized', 'articles'];
+    const fileExtension = path.posix.extname(relativePathToPostsDir);
+    const baseFilename = path.posix.basename(relativePathToPostsDir, fileExtension);
 
-    const pathParts = relativePathToPostsDir.split('/');
-    const significantPathParts = pathParts.filter((part, index) => {
-        const lowerPart = part.toLowerCase();
-        if (index < pathParts.length - 1) { 
-            return !ignoredSegments.includes(lowerPart);
-        }
-        return true; 
-    });
-
-    let effectiveRelativePath = significantPathParts.join('/');
-    
-    let dirNameForSlug = path.posix.dirname(effectiveRelativePath);
-    const fileExtension = path.posix.extname(effectiveRelativePath);
-    const baseFilename = path.posix.basename(effectiveRelativePath, fileExtension);
-
-    if (dirNameForSlug === '.') {
-        dirNameForSlug = ''; 
-    }
-
-    let slug: string;
+    let slugCandidate: string;
     if (baseFilename.toLowerCase() === 'index') {
-      slug = (dirNameForSlug === '' ? baseFilename : dirNameForSlug).replace(/\//g, '-');
+        const parentDirName = path.posix.basename(path.posix.dirname(relativePathToPostsDir));
+        slugCandidate = (parentDirName === '.' || parentDirName === '') ? 'home' : parentDirName;
     } else {
-      const slugPathPart = (dirNameForSlug === '' ? '' : dirNameForSlug.replace(/\//g, '-') + '-');
-      slug = slugPathPart + baseFilename;
+        slugCandidate = baseFilename;
     }
     
-    return slug
-      .replace(/-+/g, '-') 
-      .replace(/^-+|-+$/g, '') 
+    const slug = slugCandidate
+      .replace(/-+/g, '-')
+      .replace(/^-+|-+$/g, '')
       .toLowerCase()
-      .replace(/[^a-z0-9-]/g, ''); 
+      .replace(/[^a-z0-9-]/g, '');
+    
+    if (!slug) {
+        const pathHash = Buffer.from(filePathFromJson).toString('hex').substring(0, 8);
+        console.warn(`Generated empty base slug for path: ${filePathFromJson}. Using fallback: post-${pathHash}`);
+        return `post-${pathHash}`;
+    }
+    return slug;
 }
 
 /**
@@ -93,110 +84,128 @@ function formatTitle(namePart: string): string {
 }
 
 /**
- * Checks if the current user can view a post based on their role and the post's status.
+ * Checks if the current user can view a post.
  */
 function canViewPost(
   userRole: string | undefined,
-  postStatus: string | undefined, // Can be undefined if not set in frontmatter
+  postStatus: string | undefined,
 ): boolean {
-  const effectiveStatus = postStatus === 'public' ? 'public' : 'private'; // Default to private
-  if (effectiveStatus === 'public') {
-    return true;
-  }
-  // For private posts, only Admin or Contributor can view
+  const effectiveStatus = postStatus === 'public' ? 'public' : 'private';
+  if (effectiveStatus === 'public') return true;
   return userRole === 'Admin' || userRole === 'Contributor';
 }
 
 // --- MDX Configuration ---
-const mdxComponents = {
-  // Add any custom components you want to use in your MDX files here
-  // Example:
-  // h1: (props) => <h1 className="text-4xl font-bold my-4" {...props} />,
-  // CustomImage: (props) => <img className="rounded-lg shadow-md" {...props} />,
-};
-
+const mdxComponents = { /* Your custom MDX components */ };
 const mdxProcessingOptions = {
   remarkPlugins: [remarkGfm],
-  rehypePlugins: [
-    [rehypePrettyCode, { theme: 'github-dark' }], // Example theme
-  ],
+  rehypePlugins: [[rehypePrettyCode, { theme: 'github-dark' }]], // Or your preferred theme
 };
 
-// --- Data Fetching for Individual Post ---
-async function getPostDataBySlug(urlSlug: string): Promise<{ filePath: string; isMdx: boolean; frontmatter: Frontmatter; content: string } | null> {
+// --- Data Fetching Logic ---
+
+/**
+ * Processes a list of file paths to generate final unique slugs and associated data.
+ * This function is a precursor to getPostDataBySlug and generateStaticParams.
+ */
+function getAllPostsWithUniqueSlugs(): Array<{ filePath: string; uniqueSlug: string; baseSlug: string }> {
     const jsonFilePath = path.join(process.cwd(), 'blog-schema/file-paths/markdown-paths.json');
     if (!fs.existsSync(jsonFilePath)) {
-        console.error('CRITICAL: markdown-paths.json not found at:', jsonFilePath);
-        return null;
+        console.error('CRITICAL: markdown-paths.json not found for generating post list:', jsonFilePath);
+        return [];
     }
 
     try {
         const jsonFileContent = fs.readFileSync(jsonFilePath, 'utf8');
         const markdownFilePaths: string[] = JSON.parse(jsonFileContent);
+        
+        const postsData: Array<{ filePath: string; uniqueSlug: string; baseSlug: string }> = [];
+        const slugOccurrences: { [key: string]: number } = {};
 
-        for (const filePathFromJson of markdownFilePaths) {
-            const generatedSlug = generateSlugForFilePath(filePathFromJson.trim());
-            if (generatedSlug === urlSlug) {
-                const fullPath = path.join(process.cwd(), filePathFromJson.trim());
-                if (!fs.existsSync(fullPath)) {
-                    console.error(`File path from JSON exists, but file not found at: ${fullPath}`);
-                    continue; // Skip to next path if file is missing
-                }
-                const source = fs.readFileSync(fullPath, 'utf8');
-                const { data, content } = matter(source);
-                const frontmatter = data as Frontmatter;
+        for (const filePath of markdownFilePaths) {
+            const trimmedPath = filePath.trim();
+            const baseSlug = generateBaseSlug(trimmedPath);
+            let uniqueSlug: string;
 
-                // Default title if not present in frontmatter
-                if (!frontmatter.title) {
-                    const originalFileNameWithoutExt = path.posix.basename(fullPath, path.posix.extname(fullPath));
-                    const originalDirName = path.posix.basename(path.posix.dirname(fullPath));
-                    let titleSourceName: string;
-                    if (originalFileNameWithoutExt.toLowerCase() === 'index') {
-                        titleSourceName = (originalDirName && originalDirName !== '.') ? originalDirName : originalFileNameWithoutExt;
-                    } else {
-                        titleSourceName = originalFileNameWithoutExt;
-                    }
-                    frontmatter.title = formatTitle(titleSourceName);
-                }
-                
-                const fileExtension = path.extname(fullPath).toLowerCase();
-                return {
-                    filePath: fullPath,
-                    isMdx: fileExtension === '.mdx',
-                    frontmatter,
-                    content,
-                };
+            if (slugOccurrences[baseSlug] === undefined) {
+                slugOccurrences[baseSlug] = 0;
+                uniqueSlug = baseSlug;
+            } else {
+                slugOccurrences[baseSlug]++;
+                uniqueSlug = `${baseSlug}-${slugOccurrences[baseSlug]}`;
             }
+            postsData.push({ filePath: trimmedPath, uniqueSlug, baseSlug });
         }
+        return postsData;
     } catch (error) {
-        console.error(`Error reading or processing markdown paths JSON for slug ${urlSlug}:`, error);
-        return null;
+        console.error("Error processing markdown paths for unique slugs:", error);
+        return [];
     }
-    
-    console.warn(`No matching file found for slug: ${urlSlug}`);
-    return null;
 }
 
-// --- Generate Static Paths (for SSG) ---
-export async function generateStaticParams(): Promise<BlogPostParams[]> {
-    const jsonFilePath = path.join(process.cwd(), 'blog-schema/file-paths/markdown-paths.json');
-    if (!fs.existsSync(jsonFilePath)) {
-        console.warn('markdown-paths.json not found for generateStaticParams. No static paths will be generated.');
-        return [];
-    }
-    try {
-        const jsonFileContent = fs.readFileSync(jsonFilePath, 'utf8');
-        const markdownFilePaths: string[] = JSON.parse(jsonFileContent);
 
-        const params = markdownFilePaths.map(filePath => ({
-            slug: generateSlugForFilePath(filePath.trim()),
-        }));
-        console.log(`Generated ${params.length} static params for blog posts.`);
-        return params;
-    } catch (error) {
-        console.error("Error generating static params for blog posts:", error);
-        return [];
+async function getPostDataBySlug(urlSlug: string): Promise<{ filePath: string; isMdx: boolean; frontmatter: Frontmatter; content: string } | null> {
+    const allPostsMeta = getAllPostsWithUniqueSlugs();
+    const foundPostMeta = allPostsMeta.find(p => p.uniqueSlug === urlSlug);
+
+    if (!foundPostMeta) {
+        console.warn(`No matching file found for unique slug: "${urlSlug}"`);
+        return null;
     }
+
+    const { filePath } = foundPostMeta;
+    const fullPath = path.join(process.cwd(), filePath);
+
+    if (!fs.existsSync(fullPath)) {
+        console.error(`File path from JSON ("${filePath}") exists, but actual file not found at: "${fullPath}"`);
+        return null;
+    }
+
+    try {
+        const source = fs.readFileSync(fullPath, 'utf8');
+        const { data, content } = matter(source);
+        const frontmatter = data as Frontmatter;
+
+        // Default title if not present, using original filename/dirname
+        if (!frontmatter.title) {
+            const postsBaseDirString = 'MoL-blog-content/posts/';
+            let originalNormalizedPath = filePath.replace(/\\/g, '/');
+            let originalRelativePath = originalNormalizedPath.startsWith(postsBaseDirString)
+                ? originalNormalizedPath.substring(postsBaseDirString.length)
+                : originalNormalizedPath;
+
+            const fileExt = path.posix.extname(originalRelativePath);
+            const baseFName = path.posix.basename(originalRelativePath, fileExt);
+            let titleSourceName: string;
+            if (baseFName.toLowerCase() === 'index') {
+                const pDirName = path.posix.basename(path.posix.dirname(originalRelativePath));
+                titleSourceName = (pDirName === '.' || pDirName === '') ? 'Home' : pDirName;
+            } else {
+                titleSourceName = baseFName;
+            }
+            frontmatter.title = formatTitle(titleSourceName);
+        }
+        
+        const fileExtension = path.extname(fullPath).toLowerCase();
+        return {
+            filePath: fullPath,
+            isMdx: fileExtension === '.mdx',
+            frontmatter,
+            content,
+        };
+    } catch (error) {
+        console.error(`Error reading or processing file "${filePath}" for slug "${urlSlug}":`, error);
+        return null;
+    }
+}
+
+// --- Generate Static Paths ---
+export async function generateStaticParams(): Promise<BlogPostParams[]> {
+    const allPostsMeta = getAllPostsWithUniqueSlugs();
+    const params = allPostsMeta.map(p => ({ slug: p.uniqueSlug }));
+    
+    console.log(`Generated ${params.length} static params for blog posts using unique slugs.`);
+    return params;
 }
 
 // --- Blog Post Page Component ---
@@ -218,18 +227,16 @@ export default async function BlogPostPage({ params }: { params: BlogPostParams 
     const postData = await getPostDataBySlug(urlSlug);
 
     if (!postData) {
-      console.error(`Post data not found for slug: ${urlSlug}.`);
-      // This will be caught by the catch block below if not found
-      // For a more specific "Not Found" page, you can use Next.js's notFound() function here.
-      // import { notFound } from 'next/navigation';
-      // notFound();
-      throw new Error(`Blog post with slug "${urlSlug}" not found or could not be processed.`);
+      console.error(`Post data not found for slug: "${urlSlug}".`);
+      // For a standard 404, you might import and call notFound() from 'next/navigation';
+      // notFound(); 
+      throw new Error(`Blog post "${urlSlug}" not found or could not be processed.`);
     }
 
     const { isMdx, frontmatter, content } = postData;
 
     if (!canViewPost(userRole, frontmatter.status)) {
-      console.log(`User (Role: ${userRole || 'Guest'}) denied access to post "${urlSlug}" with status "${frontmatter.status}". Redirecting.`);
+      console.log(`User (Role: ${userRole || 'Guest'}) denied access to post "${urlSlug}" (Status: ${frontmatter.status}). Redirecting.`);
       redirect('/blog');
     }
 
@@ -242,6 +249,7 @@ export default async function BlogPostPage({ params }: { params: BlogPostParams 
         </div>
 
         <article className="prose prose-quoteless prose-neutral dark:prose-invert prose-lg max-w-none">
+          {/* ... (article header and content rendering, same as your last provided version) ... */}
           <header className="mb-10 border-b border-gray-700 pb-8">
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
               <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-white leading-tight">
@@ -297,16 +305,10 @@ export default async function BlogPostPage({ params }: { params: BlogPostParams 
               <MDXRemote
                 source={content}
                 components={mdxComponents}
-                options={{
-                  mdxOptions: mdxProcessingOptions,
-                }}
+                options={{ mdxOptions: mdxProcessingOptions }}
               />
             ) : (
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                // className="prose prose-quoteless prose-neutral dark:prose-invert" // Apply prose styles directly if needed
-                // Or ensure your global styles + Tailwind Typography handles .markdown-content
-              >
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
                 {content}
               </ReactMarkdown>
             )}
@@ -316,10 +318,6 @@ export default async function BlogPostPage({ params }: { params: BlogPostParams 
     );
   } catch (error: any) {
     console.error(`Error rendering blog post for slug "${urlSlug}":`, error.message);
-    // You could use Next.js notFound() here for a proper 404 page if error indicates "not found"
-    // import { notFound } from 'next/navigation';
-    // if (error.message.includes("not found")) notFound();
-
     return (
       <div className="mx-auto max-w-4xl p-6 text-center">
         <div className="mb-6">
@@ -328,14 +326,12 @@ export default async function BlogPostPage({ params }: { params: BlogPostParams 
           </Link>
         </div>
         <div className="rounded-lg border border-red-700 bg-red-900/30 p-8">
-          <h1 className="mb-4 text-2xl font-bold text-red-400">
-            Post Error
-          </h1>
+          <h1 className="mb-4 text-2xl font-bold text-red-400">Post Error</h1>
           <p className="text-gray-300">
-            The post you were looking for ({urlSlug}) could not be loaded. It might not exist or an error occurred.
+            The post you were looking for ({urlSlug}) could not be loaded.
           </p>
           {process.env.NODE_ENV === 'development' && (
-            <p className="mt-4 text-xs text-gray-500">Error: {error.message}</p>
+            <p className="mt-4 text-xs text-gray-500">Details: {error.message}</p>
           )}
         </div>
       </div>
