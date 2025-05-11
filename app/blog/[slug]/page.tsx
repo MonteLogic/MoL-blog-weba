@@ -302,9 +302,11 @@ export default async function BlogPostPage({ params }: { params: BlogPostParams 
 
           <div className="mdx-content">
             {isMdx ? (
+              // @ts-ignore
               <MDXRemote
                 source={content}
                 components={mdxComponents}
+              // @ts-ignore
                 options={{ mdxOptions: mdxProcessingOptions }}
               />
             ) : (
