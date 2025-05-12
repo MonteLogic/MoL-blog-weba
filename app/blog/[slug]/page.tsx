@@ -36,40 +36,54 @@ interface Frontmatter {
  * Collision handling (e.g., appending -1, -2) is done by the calling functions.
  */
 function generateBaseSlug(filePathFromJson: string): string {
-    const postsBaseDirString = 'MoL-blog-content/posts/';
-    let normalizedFilePath = filePathFromJson.replace(/\\/g, '/').trim();
+  const postsBaseDirString = 'MoL-blog-content/posts/';
+  let normalizedFilePath = filePathFromJson.replace(/\\/g, '/').trim();
 
-    let relativePathToPostsDir: string;
-    if (normalizedFilePath.startsWith(postsBaseDirString)) {
-        relativePathToPostsDir = normalizedFilePath.substring(postsBaseDirString.length);
-    } else {
-        console.warn(`Path "${normalizedFilePath}" (from JSON: "${filePathFromJson}") does not start with "${postsBaseDirString}". Slug generation might be affected.`);
-        relativePathToPostsDir = normalizedFilePath;
-    }
+  let relativePathToPostsDir: string;
+  if (normalizedFilePath.startsWith(postsBaseDirString)) {
+    relativePathToPostsDir = normalizedFilePath.substring(
+      postsBaseDirString.length,
+    );
+  } else {
+    console.warn(
+      `Path "${normalizedFilePath}" (from JSON: "${filePathFromJson}") does not start with "${postsBaseDirString}". Slug generation might be affected.`,
+    );
+    relativePathToPostsDir = normalizedFilePath;
+  }
 
-    const fileExtension = path.posix.extname(relativePathToPostsDir);
-    const baseFilename = path.posix.basename(relativePathToPostsDir, fileExtension);
+  const fileExtension = path.posix.extname(relativePathToPostsDir);
+  const baseFilename = path.posix.basename(
+    relativePathToPostsDir,
+    fileExtension,
+  );
 
-    let slugCandidate: string;
-    if (baseFilename.toLowerCase() === 'index') {
-        const parentDirName = path.posix.basename(path.posix.dirname(relativePathToPostsDir));
-        slugCandidate = (parentDirName === '.' || parentDirName === '') ? 'home' : parentDirName;
-    } else {
-        slugCandidate = baseFilename;
-    }
-    
-    const slug = slugCandidate
-      .replace(/-+/g, '-')
-      .replace(/^-+|-+$/g, '')
-      .toLowerCase()
-      .replace(/[^a-z0-9-]/g, '');
-    
-    if (!slug) {
-        const pathHash = Buffer.from(filePathFromJson).toString('hex').substring(0, 8);
-        console.warn(`Generated empty base slug for path: ${filePathFromJson}. Using fallback: post-${pathHash}`);
-        return `post-${pathHash}`;
-    }
-    return slug;
+  let slugCandidate: string;
+  if (baseFilename.toLowerCase() === 'index') {
+    const parentDirName = path.posix.basename(
+      path.posix.dirname(relativePathToPostsDir),
+    );
+    slugCandidate =
+      parentDirName === '.' || parentDirName === '' ? 'home' : parentDirName;
+  } else {
+    slugCandidate = baseFilename;
+  }
+
+  const slug = slugCandidate
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, '');
+
+  if (!slug) {
+    const pathHash = Buffer.from(filePathFromJson)
+      .toString('hex')
+      .substring(0, 8);
+    console.warn(
+      `Generated empty base slug for path: ${filePathFromJson}. Using fallback: post-${pathHash}`,
+    );
+    return `post-${pathHash}`;
+  }
+  return slug;
 }
 
 /**
@@ -96,7 +110,9 @@ function canViewPost(
 }
 
 // --- MDX Configuration ---
-const mdxComponents = { /* Your custom MDX components */ };
+const mdxComponents = {
+  /* Your custom MDX components */
+};
 const mdxProcessingOptions = {
   remarkPlugins: [remarkGfm],
   rehypePlugins: [[rehypePrettyCode, { theme: 'github-dark' }]], // Or your preferred theme
@@ -108,108 +124,142 @@ const mdxProcessingOptions = {
  * Processes a list of file paths to generate final unique slugs and associated data.
  * This function is a precursor to getPostDataBySlug and generateStaticParams.
  */
-function getAllPostsWithUniqueSlugs(): Array<{ filePath: string; uniqueSlug: string; baseSlug: string }> {
-    const jsonFilePath = path.join(process.cwd(), 'blog-schema/file-paths/markdown-paths.json');
-    if (!fs.existsSync(jsonFilePath)) {
-        console.error('CRITICAL: markdown-paths.json not found for generating post list:', jsonFilePath);
-        return [];
+function getAllPostsWithUniqueSlugs(): Array<{
+  filePath: string;
+  uniqueSlug: string;
+  baseSlug: string;
+}> {
+  const jsonFilePath = path.join(
+    process.cwd(),
+    'blog-schema/file-paths/markdown-paths.json',
+  );
+  if (!fs.existsSync(jsonFilePath)) {
+    console.error(
+      'CRITICAL: markdown-paths.json not found for generating post list:',
+      jsonFilePath,
+    );
+    return [];
+  }
+
+  try {
+    const jsonFileContent = fs.readFileSync(jsonFilePath, 'utf8');
+    const markdownFilePaths: string[] = JSON.parse(jsonFileContent);
+
+    const postsData: Array<{
+      filePath: string;
+      uniqueSlug: string;
+      baseSlug: string;
+    }> = [];
+    const slugOccurrences: { [key: string]: number } = {};
+
+    for (const filePath of markdownFilePaths) {
+      const trimmedPath = filePath.trim();
+      const baseSlug = generateBaseSlug(trimmedPath);
+      let uniqueSlug: string;
+
+      if (slugOccurrences[baseSlug] === undefined) {
+        slugOccurrences[baseSlug] = 0;
+        uniqueSlug = baseSlug;
+      } else {
+        slugOccurrences[baseSlug]++;
+        uniqueSlug = `${baseSlug}-${slugOccurrences[baseSlug]}`;
+      }
+      postsData.push({ filePath: trimmedPath, uniqueSlug, baseSlug });
     }
-
-    try {
-        const jsonFileContent = fs.readFileSync(jsonFilePath, 'utf8');
-        const markdownFilePaths: string[] = JSON.parse(jsonFileContent);
-        
-        const postsData: Array<{ filePath: string; uniqueSlug: string; baseSlug: string }> = [];
-        const slugOccurrences: { [key: string]: number } = {};
-
-        for (const filePath of markdownFilePaths) {
-            const trimmedPath = filePath.trim();
-            const baseSlug = generateBaseSlug(trimmedPath);
-            let uniqueSlug: string;
-
-            if (slugOccurrences[baseSlug] === undefined) {
-                slugOccurrences[baseSlug] = 0;
-                uniqueSlug = baseSlug;
-            } else {
-                slugOccurrences[baseSlug]++;
-                uniqueSlug = `${baseSlug}-${slugOccurrences[baseSlug]}`;
-            }
-            postsData.push({ filePath: trimmedPath, uniqueSlug, baseSlug });
-        }
-        return postsData;
-    } catch (error) {
-        console.error("Error processing markdown paths for unique slugs:", error);
-        return [];
-    }
+    return postsData;
+  } catch (error) {
+    console.error('Error processing markdown paths for unique slugs:', error);
+    return [];
+  }
 }
 
+async function getPostDataBySlug(urlSlug: string): Promise<{
+  filePath: string;
+  isMdx: boolean;
+  frontmatter: Frontmatter;
+  content: string;
+} | null> {
+  const allPostsMeta = getAllPostsWithUniqueSlugs();
+  const foundPostMeta = allPostsMeta.find((p) => p.uniqueSlug === urlSlug);
 
-async function getPostDataBySlug(urlSlug: string): Promise<{ filePath: string; isMdx: boolean; frontmatter: Frontmatter; content: string } | null> {
-    const allPostsMeta = getAllPostsWithUniqueSlugs();
-    const foundPostMeta = allPostsMeta.find(p => p.uniqueSlug === urlSlug);
+  if (!foundPostMeta) {
+    console.warn(`No matching file found for unique slug: "${urlSlug}"`);
+    return null;
+  }
 
-    if (!foundPostMeta) {
-        console.warn(`No matching file found for unique slug: "${urlSlug}"`);
-        return null;
+  const { filePath } = foundPostMeta;
+  const fullPath = path.join(process.cwd(), filePath);
+
+  if (!fs.existsSync(fullPath)) {
+    console.error(
+      `File path from JSON ("${filePath}") exists, but actual file not found at: "${fullPath}"`,
+    );
+    return null;
+  }
+
+  try {
+    const source = fs.readFileSync(fullPath, 'utf8');
+    const { data, content } = matter(source);
+    const frontmatter = data as Frontmatter;
+
+    // Default title if not present, using original filename/dirname
+    if (!frontmatter.title) {
+      const postsBaseDirString = 'MoL-blog-content/posts/';
+      let originalNormalizedPath = filePath.replace(/\\/g, '/');
+      let originalRelativePath = originalNormalizedPath.startsWith(
+        postsBaseDirString,
+      )
+        ? originalNormalizedPath.substring(postsBaseDirString.length)
+        : originalNormalizedPath;
+
+      const fileExt = path.posix.extname(originalRelativePath);
+      const baseFName = path.posix.basename(originalRelativePath, fileExt);
+      let titleSourceName: string;
+      if (baseFName.toLowerCase() === 'index') {
+        const pDirName = path.posix.basename(
+          path.posix.dirname(originalRelativePath),
+        );
+        titleSourceName =
+          pDirName === '.' || pDirName === '' ? 'Home' : pDirName;
+      } else {
+        titleSourceName = baseFName;
+      }
+      frontmatter.title = formatTitle(titleSourceName);
     }
 
-    const { filePath } = foundPostMeta;
-    const fullPath = path.join(process.cwd(), filePath);
-
-    if (!fs.existsSync(fullPath)) {
-        console.error(`File path from JSON ("${filePath}") exists, but actual file not found at: "${fullPath}"`);
-        return null;
-    }
-
-    try {
-        const source = fs.readFileSync(fullPath, 'utf8');
-        const { data, content } = matter(source);
-        const frontmatter = data as Frontmatter;
-
-        // Default title if not present, using original filename/dirname
-        if (!frontmatter.title) {
-            const postsBaseDirString = 'MoL-blog-content/posts/';
-            let originalNormalizedPath = filePath.replace(/\\/g, '/');
-            let originalRelativePath = originalNormalizedPath.startsWith(postsBaseDirString)
-                ? originalNormalizedPath.substring(postsBaseDirString.length)
-                : originalNormalizedPath;
-
-            const fileExt = path.posix.extname(originalRelativePath);
-            const baseFName = path.posix.basename(originalRelativePath, fileExt);
-            let titleSourceName: string;
-            if (baseFName.toLowerCase() === 'index') {
-                const pDirName = path.posix.basename(path.posix.dirname(originalRelativePath));
-                titleSourceName = (pDirName === '.' || pDirName === '') ? 'Home' : pDirName;
-            } else {
-                titleSourceName = baseFName;
-            }
-            frontmatter.title = formatTitle(titleSourceName);
-        }
-        
-        const fileExtension = path.extname(fullPath).toLowerCase();
-        return {
-            filePath: fullPath,
-            isMdx: fileExtension === '.mdx',
-            frontmatter,
-            content,
-        };
-    } catch (error) {
-        console.error(`Error reading or processing file "${filePath}" for slug "${urlSlug}":`, error);
-        return null;
-    }
+    const fileExtension = path.extname(fullPath).toLowerCase();
+    return {
+      filePath: fullPath,
+      isMdx: fileExtension === '.mdx',
+      frontmatter,
+      content,
+    };
+  } catch (error) {
+    console.error(
+      `Error reading or processing file "${filePath}" for slug "${urlSlug}":`,
+      error,
+    );
+    return null;
+  }
 }
 
 // --- Generate Static Paths ---
 export async function generateStaticParams(): Promise<BlogPostParams[]> {
-    const allPostsMeta = getAllPostsWithUniqueSlugs();
-    const params = allPostsMeta.map(p => ({ slug: p.uniqueSlug }));
-    
-    console.log(`Generated ${params.length} static params for blog posts using unique slugs.`);
-    return params;
+  const allPostsMeta = getAllPostsWithUniqueSlugs();
+  const params = allPostsMeta.map((p) => ({ slug: p.uniqueSlug }));
+
+  console.log(
+    `Generated ${params.length} static params for blog posts using unique slugs.`,
+  );
+  return params;
 }
 
 // --- Blog Post Page Component ---
-export default async function BlogPostPage({ params }: { params: BlogPostParams }) {
+export default async function BlogPostPage({
+  params,
+}: {
+  params: BlogPostParams;
+}) {
   const { slug: urlSlug } = params;
   const { userId } = auth();
   let userRole: string | undefined;
@@ -229,43 +279,57 @@ export default async function BlogPostPage({ params }: { params: BlogPostParams 
     if (!postData) {
       console.error(`Post data not found for slug: "${urlSlug}".`);
       // For a standard 404, you might import and call notFound() from 'next/navigation';
-      // notFound(); 
-      throw new Error(`Blog post "${urlSlug}" not found or could not be processed.`);
+      // notFound();
+      throw new Error(
+        `Blog post "${urlSlug}" not found or could not be processed.`,
+      );
     }
 
     const { isMdx, frontmatter, content } = postData;
 
     if (!canViewPost(userRole, frontmatter.status)) {
-      console.log(`User (Role: ${userRole || 'Guest'}) denied access to post "${urlSlug}" (Status: ${frontmatter.status}). Redirecting.`);
+      console.log(
+        `User (Role: ${
+          userRole || 'Guest'
+        }) denied access to post "${urlSlug}" (Status: ${
+          frontmatter.status
+        }). Redirecting.`,
+      );
       redirect('/blog');
     }
 
     return (
       <div className="mx-auto max-w-4xl p-6">
         <div className="mb-8">
-          <Link href="/blog" className="text-blue-400 hover:text-blue-300 transition-colors">
+          <Link
+            href="/blog"
+            className="text-blue-400 transition-colors hover:text-blue-300"
+          >
             ← Back to all posts
           </Link>
         </div>
 
-        <article className="prose prose-quoteless prose-neutral dark:prose-invert prose-lg max-w-none">
-          {/* ... (article header and content rendering, same as your last provided version) ... */}
+        <article className="prose prose-slate dark:prose-invert max-w-none">
+          {' '}
+          {/* Apply prose classes here */}
           <header className="mb-10 border-b border-gray-700 pb-8">
-            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-              <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-white leading-tight">
+            {/* ... (article header and content rendering, same as your last provided version) ... */}
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <h1 className="text-3xl font-extrabold leading-tight tracking-tight text-white md:text-4xl">
                 {frontmatter.title}
               </h1>
-              {(userRole === 'Admin' || userRole === 'Contributor') && frontmatter.status && (
-                <span
-                  className={`mt-1 sm:mt-0 whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium self-start ${
-                    frontmatter.status === 'public'
-                      ? 'border border-green-700 bg-green-900/50 text-green-300'
-                      : 'border border-yellow-700 bg-yellow-900/50 text-yellow-300'
-                  }`}
-                >
-                  {frontmatter.status}
-                </span>
-              )}
+              {(userRole === 'Admin' || userRole === 'Contributor') &&
+                frontmatter.status && (
+                  <span
+                    className={`mt-1 self-start whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium sm:mt-0 ${
+                      frontmatter.status === 'public'
+                        ? 'border border-green-700 bg-green-900/50 text-green-300'
+                        : 'border border-yellow-700 bg-yellow-900/50 text-yellow-300'
+                    }`}
+                  >
+                    {frontmatter.status}
+                  </span>
+                )}
             </div>
             {frontmatter.description && (
               <p className="mt-4 text-xl text-gray-400">
@@ -282,9 +346,7 @@ export default async function BlogPostPage({ params }: { params: BlogPostParams 
                   })}
                 </span>
               )}
-              {frontmatter.author && (
-                <span>By {frontmatter.author}</span>
-              )}
+              {frontmatter.author && <span>By {frontmatter.author}</span>}
             </div>
             {frontmatter.tags && frontmatter.tags.length > 0 && (
               <div className="mt-6 flex flex-wrap gap-2">
@@ -299,14 +361,13 @@ export default async function BlogPostPage({ params }: { params: BlogPostParams 
               </div>
             )}
           </header>
-
           <div className="mdx-content">
             {isMdx ? (
               // @ts-ignore
               <MDXRemote
                 source={content}
                 components={mdxComponents}
-              // @ts-ignore
+                // @ts-ignore
                 options={{ mdxOptions: mdxProcessingOptions }}
               />
             ) : (
@@ -319,7 +380,10 @@ export default async function BlogPostPage({ params }: { params: BlogPostParams 
       </div>
     );
   } catch (error: any) {
-    console.error(`Error rendering blog post for slug "${urlSlug}":`, error.message);
+    console.error(
+      `Error rendering blog post for slug "${urlSlug}":`,
+      error.message,
+    );
     return (
       <div className="mx-auto max-w-4xl p-6 text-center">
         <div className="mb-6">
@@ -333,7 +397,9 @@ export default async function BlogPostPage({ params }: { params: BlogPostParams 
             The post you were looking for ({urlSlug}) could not be loaded.
           </p>
           {process.env.NODE_ENV === 'development' && (
-            <p className="mt-4 text-xs text-gray-500">Details: {error.message}</p>
+            <p className="mt-4 text-xs text-gray-500">
+              Details: {error.message}
+            </p>
           )}
         </div>
       </div>

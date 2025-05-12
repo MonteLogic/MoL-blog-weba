@@ -50,7 +50,7 @@ export default async function RootLayout({
 
   return (
     <ClerkProvider>
-      <html lang="en" className="[color-scheme:dark]">
+      <html lang="en" className="[color-scheme:dark] dark">
         <body className="bg-gray-1100 overflow-y-scroll bg-[url('/grid.svg')] pb-36">
           <GlobalNav userData={userData} />
           <div className="lg:pl-72">
