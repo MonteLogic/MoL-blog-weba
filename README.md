@@ -22,4 +22,10 @@ node-version: 20.0.x
 git submodule init
 git submodule update
 
+## Get the submodule correct paths:
+Pnpm run generate-markdown-paths
+
 ```
+
+
+
