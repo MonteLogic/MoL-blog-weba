@@ -158,10 +158,19 @@ async function getBlogPosts(): Promise<BlogPost[]> {
         
         const { data: parsedFrontmatter } = matter(fileContentRead);
         
+        // Normalize categories logic (Same as in categories page - duplication acknowledged)
+        let rawCategories: string[] = [];
+        if (parsedFrontmatter.categories && Array.isArray(parsedFrontmatter.categories)) {
+            rawCategories = parsedFrontmatter.categories;
+        } else if (parsedFrontmatter.category && typeof parsedFrontmatter.category === 'string') {
+            rawCategories = [parsedFrontmatter.category];
+        }
+
         const frontmatter: BlogPost['frontmatter'] = {
           ...(parsedFrontmatter as object),
           title: parsedFrontmatter.title ?? formatTitle(titleSourceName),
           status: parsedFrontmatter.status === 'public' ? 'public' : 'private',
+          categories: rawCategories,
         };
         
         posts.push({
@@ -304,6 +313,29 @@ export default async function BlogPage({
                       day: 'numeric',
                     })}
                   </div>
+                )}
+                {/* Categories on Card */}
+                {post.frontmatter.categories && post.frontmatter.categories.length > 0 && (
+                     <div className="mb-3 flex flex-wrap gap-2">
+                        {post.frontmatter.categories.map((cat: string, idx: number) => {
+                             const catSlug = cat
+                                .toString()
+                                .toLowerCase()
+                                .trim()
+                                .replace(/\s+/g, '-')
+                                .replace(/[^\w\-]+/g, '')
+                                .replace(/\-\-+/g, '-');
+                            return (
+                                 <Link 
+                                    key={idx}
+                                    href={`/blog/categories/${catSlug}`}
+                                    className="text-xs font-medium text-blue-400 hover:text-blue-300 mr-2"
+                                 >
+                                    #{cat}
+                                 </Link>
+                            );
+                        })}
+                     </div>
                 )}
                 {post.frontmatter.tags && post.frontmatter.tags.length > 0 && (
                   <div className="mb-3 flex flex-wrap gap-2">

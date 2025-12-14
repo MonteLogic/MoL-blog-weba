@@ -362,6 +362,32 @@ export default async function BlogPostPage({
                 </span>
               )}
               {frontmatter.author && <span>By {frontmatter.author}</span>}
+              {/* Display Categories */}
+              {(frontmatter.categories || frontmatter.category) && (
+                 <div className="flex items-center gap-2">
+                    <span>in</span>
+                    {(Array.isArray(frontmatter.categories) ? frontmatter.categories : [frontmatter.category]).map((cat: string, idx: number) => {
+                        // Simple slugify for link
+                         const catSlug = cat
+                            .toString()
+                            .toLowerCase()
+                            .trim()
+                            .replace(/\s+/g, '-')
+                            .replace(/[^\w\-]+/g, '')
+                            .replace(/\-\-+/g, '-');
+                        
+                        return (
+                            <Link 
+                                key={idx} 
+                                href={`/blog/categories/${catSlug}`}
+                                className="text-blue-400 hover:text-blue-300 hover:underline"
+                            >
+                                {cat}
+                            </Link>
+                        );
+                    })}
+                 </div>
+              )}
             </div>
             {frontmatter.tags && frontmatter.tags.length > 0 && (
               <div className="mt-6 flex flex-wrap gap-2">

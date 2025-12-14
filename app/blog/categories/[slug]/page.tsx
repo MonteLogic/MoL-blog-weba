@@ -80,11 +80,34 @@ async function getBlogPosts(): Promise<BlogPost[]> {
         const fileContent = fs.readFileSync(filePath, 'utf8');
         const { data } = matter(fileContent);
 
+        // Normalize categories: handle 'category' (string) and 'categories' (array)
+        let rawCategories: string[] = [];
+        if (data.categories && Array.isArray(data.categories)) {
+            rawCategories = data.categories;
+        } else if (data.category && typeof data.category === 'string') {
+            rawCategories = [data.category];
+        }
+
+        // Slugify helper: straightforward kebab-case
+        const slugify = (text: string) => text
+            .toString()
+            .toLowerCase()
+            .trim()
+            .replace(/\s+/g, '-')     // Replace spaces with -
+            .replace(/[^\w\-]+/g, '') // Remove all non-word chars
+            .replace(/\-\-+/g, '-');  // Replace multiple - with single -
+
+        const categories = rawCategories;
+        // Store normalized slugs for filtering
+        const categorySlugs = rawCategories.map(cat => slugify(cat));
+
+
         const frontmatter: BlogPost['frontmatter'] = {
           ...data,
           title: data.title || formatTitle(folderName),
           status: data.status === 'public' ? 'public' : 'private',
-          categories: (data.categories as string[]) || [], // Ensure categories exist
+          categories: categories, 
+          categorySlugs: categorySlugs, // Add this to frontmatter for easier filtering
         };
 
         return {
@@ -110,17 +133,22 @@ async function getBlogPosts(): Promise<BlogPost[]> {
 }
 
 // Helper function to format folder name into a title
-function formatTitle(folderName: string): string {
-  const titleWithoutDate = folderName.replace(/^\d{2}-\d{2}-\d{4}-/, '');
-  return titleWithoutDate
+function formatTitle(slug: string): string {
+  return slug
     .split('-')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
 }
 
-// Helper function to check if user can view a post
+// Helper function to check if user can view a post based on role and post status
 function canViewPost(userRole: string | undefined, postStatus: string): boolean {
-  return postStatus === 'public' || userRole === 'Admin' || userRole === 'Contributor';
+  // If the post is public, everyone can view it
+  if (postStatus === 'public') {
+    return true;
+  }
+  
+  // If the post is private, only Admin and Contributor can view it
+  return userRole === 'Admin' || userRole === 'Contributor';
 }
 
 interface Props {
@@ -148,14 +176,19 @@ export default async function CategoryPage({ params: { slug }, searchParams }: P
   const categoryDetails = await getCategoryDetails(slug);
 
   if (!categoryDetails) {
-    notFound(); // This will render your Next.js 404 page
+    notFound(); 
   }
 
   const allPosts = await getBlogPosts();
-  const categoryPosts = allPosts.filter(post =>
-    post.frontmatter.categories?.includes(slug) &&
-    canViewPost(userRole, post.frontmatter.status || 'private')
-  );
+  const categoryPosts = allPosts.filter(post => {
+    // Check if the current page slug matches any of the post's normalized category slugs
+    // OR if it matches the raw category name (legacy support)
+    const hasCategory = post.frontmatter.categorySlugs?.includes(slug) || 
+                        post.frontmatter.categories?.includes(categoryDetails.name) || // Try matching name
+                        post.frontmatter.categories?.includes(slug); // Try matching raw slug (legacy)
+    
+    return hasCategory && canViewPost(userRole, post.frontmatter.status || 'private');
+  });
 
   // Pagination Logic
   const page = typeof searchParams.page === 'string' ? parseInt(searchParams.page, 10) : 1;
