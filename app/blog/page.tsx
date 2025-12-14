@@ -234,7 +234,7 @@ function canViewPost(
   }
   return (
     postStatus !== 'public' &&
-    (userRole === 'Admin' || userRole === 'Contributor')
+    (userRole === 'admin' || userRole === 'Admin' || userRole === 'Contributor')
   );
 }
 
@@ -251,7 +251,7 @@ export default async function BlogPage({
   if (userId) {
     try {
       const user = await currentUser();
-      userRole = user?.publicMetadata?.role as string;
+      userRole = user?.privateMetadata?.role as string;
     } catch (error) {
       console.error('Error fetching user role:', error);
     }
@@ -312,7 +312,7 @@ export default async function BlogPage({
                       {post.frontmatter.title}
                     </Link>
                   </h2>
-                  {(userRole === 'Admin' || userRole === 'Contributor') && post.frontmatter.status && (
+                  {(userRole === 'admin' || userRole === 'Admin' || userRole === 'Contributor') && post.frontmatter.status && (
                     <span
                       className={`whitespace-nowrap rounded-full px-2 py-1 text-xs font-medium self-start ${
                         post.frontmatter.status === 'public'

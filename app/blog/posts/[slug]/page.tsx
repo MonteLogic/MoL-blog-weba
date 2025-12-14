@@ -60,7 +60,7 @@ function canViewPost(
   }
 
   // If the post is private, only Admin and Contributor can view it
-  return userRole === 'Admin' || userRole === 'Contributor';
+  return userRole === 'admin' || userRole === 'Admin' || userRole === 'Contributor';
 }
 
 // Blog post page component
@@ -73,8 +73,8 @@ export default async function BlogPost({ params }: Readonly<{ params: BlogPostPa
   if (userId) {
     try {
       const user = await currentUser();
-      // Access publicMetadata for the role
-      userRole = user?.publicMetadata?.role as string;
+      // Access privateMetadata for the role
+      userRole = user?.privateMetadata?.role as string;
     } catch (error) {
       console.error('Error fetching user role:', error);
     }
@@ -139,7 +139,7 @@ export default async function BlogPost({ params }: Readonly<{ params: BlogPostPa
               </h1>
 
               {/* Show status badge for Admin and Contributor */}
-              {(userRole === 'Admin' || userRole === 'Contributor') && (
+              {(userRole === 'admin' || userRole === 'Admin' || userRole === 'Contributor') && (
                 <span
                   className={`rounded-full px-3 py-1 text-sm ${
                     postStatus === 'public'

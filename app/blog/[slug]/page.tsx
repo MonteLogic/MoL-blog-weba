@@ -107,7 +107,7 @@ function canViewPost(
 ): boolean {
   const effectiveStatus = postStatus === 'public' ? 'public' : 'private';
   if (effectiveStatus === 'public') return true;
-  return userRole === 'Admin' || userRole === 'Contributor';
+  return userRole === 'admin' || userRole === 'Admin' || userRole === 'Contributor';
 }
 
 // --- MDX Configuration ---
@@ -333,7 +333,7 @@ export default async function BlogPostPage({
               <h1 className="text-3xl font-extrabold leading-tight tracking-tight text-white md:text-4xl">
                 {frontmatter.title}
               </h1>
-              {(userRole === 'Admin' || userRole === 'Contributor') &&
+              {(userRole === 'admin' || userRole === 'Admin' || userRole === 'Contributor') &&
                 frontmatter.status && (
                   <span
                     className={`mt-1 self-start whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium sm:mt-0 ${

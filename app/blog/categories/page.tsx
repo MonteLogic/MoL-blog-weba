@@ -58,14 +58,14 @@ export default async function CategoriesPage() {
   if (userId) {
     try {
       const user = await currentUser();
-      userRole = user?.publicMetadata?.role as string;
+      userRole = user?.privateMetadata?.role as string;
     } catch (error) {
       console.error('Error fetching user role:', error);
     }
   }
   
   const categories = await getCategories();
-  const isAdmin = userRole === 'Admin';
+  const isAdmin = userRole === 'admin' || userRole === 'Admin';
   // GitHub URL for the schema file - Adjust repo/branch if needed, assuming standard structure or placeholder
   // Since I don't have the exact Repo URL in context, I'll use a relative path or construct a best-guess, 
   // but usually this needs to be a full HTTPS URL. 

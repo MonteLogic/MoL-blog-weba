@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import { AdminArea } from '../../[slug]/AdminArea';
 import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
@@ -239,7 +240,7 @@ function canViewPost(userRole: string | undefined, postStatus: string): boolean 
   }
   
   // If the post is private, only Admin and Contributor can view it
-  return userRole === 'Admin' || userRole === 'Contributor';
+  return userRole === 'admin' || userRole === 'Admin' || userRole === 'Contributor';
 }
 
 interface Props {
@@ -258,7 +259,7 @@ export default async function CategoryPage({ params: { slug }, searchParams }: P
   if (userId) {
     try {
       const user = await currentUser();
-      userRole = user?.publicMetadata?.role as string;
+      userRole = user?.privateMetadata?.role as string;
     } catch (error) {
       console.error('Error fetching user role:', error);
     }
@@ -325,7 +326,15 @@ export default async function CategoryPage({ params: { slug }, searchParams }: P
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      <h1 className="text-3xl font-bold text-white mb-8">{categoryDetails.name}</h1>
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-3xl font-bold text-white">{categoryDetails.name}</h1>
+        {(userRole === 'admin' || userRole === 'Admin') && (
+           <AdminArea
+             localFilePath="blog-schema/categories-schema.json"
+             copyLabel="Copy Dir Path"
+           />
+        )}
+      </div>
 
       <div className="space-y-6">
         {currentPosts.map((post: BlogPost) => (
@@ -343,7 +352,7 @@ export default async function CategoryPage({ params: { slug }, searchParams }: P
                 </Link>
               </h2>
 
-              {(userRole === 'Admin' || userRole === 'Contributor') && (
+              {(userRole === 'admin' || userRole === 'Admin' || userRole === 'Contributor') && (
                 <span className={`px-2 py-1 text-xs rounded-full ${
                   post.frontmatter.status === 'public'
                     ? 'bg-green-900/30 text-green-400 border border-green-800'
