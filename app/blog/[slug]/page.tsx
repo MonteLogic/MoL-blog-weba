@@ -269,7 +269,8 @@ export default async function BlogPostPage({
   if (userId) {
     try {
       const user = await currentUser();
-      userRole = user?.publicMetadata?.role as string;
+      // Role is stored in privateMetadata, not publicMetadata
+      userRole = user?.privateMetadata?.role as string;
     } catch (error) {
       console.error(`Error fetching user role for slug "${urlSlug}":`, error);
     }
@@ -312,7 +313,7 @@ export default async function BlogPostPage({
           >
             ← Back to all posts
           </Link>
-          {userRole === 'Admin' && (
+          {userRole === 'admin' && (
             <a
               href={githubFileUrl}
               target="_blank"
