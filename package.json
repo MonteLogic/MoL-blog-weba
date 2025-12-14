@@ -4,7 +4,6 @@
   "scripts": {
     "setup": "git submodule update --init --recursive && cd MoL-blog-content && pnpm i",
     "postinstall": "cd MoL-blog-content && pnpm install",
-    "build": "pnpm run generate-markdown-paths && next build",
     "dev": "next dev",
     "lint": "next lint",
     "stripe:listen": "stripe listen --forward-to localhost:3000/api/webhooks/stripe",
@@ -16,7 +15,9 @@
     "test:db": "tsx tests/sqlite-test/setup-test-db.ts",
     "test:playwright": " exec playwright test",
     "local-db-create": "node tests/db-create/index.ts",
-      "generate-markdown-paths": "ts-node -O '{\"module\": \"CommonJS\"}' scripts/generate.ts"
+    "generate-markdown-paths": "ts-node -O '{\"module\": \"CommonJS\"}' scripts/generate.ts",
+    "check-categories": "node scripts/check-categories.js",
+    "build": "pnpm run generate-markdown-paths && pnpm run check-categories && next build"
   },
   "git": {
     "pre-commit": "lint-staged"

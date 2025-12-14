@@ -9,6 +9,7 @@ import remarkGfm from 'remark-gfm';
 import { auth, currentUser } from '@clerk/nextjs';
 import { redirect } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
+import { AdminArea } from './AdminArea';
 // import { notFound } from 'next/navigation'; // Optional: for a custom 404 trigger
 
 // --- Type Definitions ---
@@ -106,7 +107,7 @@ function canViewPost(
 ): boolean {
   const effectiveStatus = postStatus === 'public' ? 'public' : 'private';
   if (effectiveStatus === 'public') return true;
-  return userRole === 'Admin' || userRole === 'Contributor';
+  return userRole === 'admin' || userRole === 'Admin' || userRole === 'Contributor';
 }
 
 // --- MDX Configuration ---
@@ -175,6 +176,7 @@ function getAllPostsWithUniqueSlugs(): Array<{
 
 async function getPostDataBySlug(urlSlug: string): Promise<{
   filePath: string;
+  relativeFilePath: string;
   isMdx: boolean;
   frontmatter: Frontmatter;
   content: string;
@@ -230,6 +232,7 @@ async function getPostDataBySlug(urlSlug: string): Promise<{
     const fileExtension = path.extname(fullPath).toLowerCase();
     return {
       filePath: fullPath,
+      relativeFilePath: filePath,
       isMdx: fileExtension === '.mdx',
       frontmatter,
       content,
@@ -267,7 +270,8 @@ export default async function BlogPostPage({
   if (userId) {
     try {
       const user = await currentUser();
-      userRole = user?.publicMetadata?.role as string;
+      // Role is stored in privateMetadata, not publicMetadata
+      userRole = user?.privateMetadata?.role as string;
     } catch (error) {
       console.error(`Error fetching user role for slug "${urlSlug}":`, error);
     }
@@ -285,7 +289,7 @@ export default async function BlogPostPage({
       );
     }
 
-    const { isMdx, frontmatter, content } = postData;
+    const { isMdx, frontmatter, content, relativeFilePath } = postData;
 
     if (!canViewPost(userRole, frontmatter.status)) {
       console.log(
@@ -298,16 +302,27 @@ export default async function BlogPostPage({
       redirect('/blog');
     }
 
+    // Construct GitHub URL for admin view
+    const githubFileUrl = `https://github.com/MonteLogic/MoL-blog-content/blob/main/${relativeFilePath.replace('MoL-blog-content/', '')}`;
+
     return (
       <div className="mx-auto max-w-4xl p-6">
-        <div className="mb-8">
+        <div className="mb-8 flex items-center justify-between">
           <Link
             href="/blog"
             className="text-blue-400 transition-colors hover:text-blue-300"
           >
             ← Back to all posts
           </Link>
+
+          {userRole === 'admin' && (
+            <AdminArea 
+              githubFileUrl={githubFileUrl} 
+              localFilePath={relativeFilePath} 
+            />
+          )}
         </div>
+
 
         <article className="prose prose-slate dark:prose-invert max-w-none">
           {' '}
@@ -318,7 +333,7 @@ export default async function BlogPostPage({
               <h1 className="text-3xl font-extrabold leading-tight tracking-tight text-white md:text-4xl">
                 {frontmatter.title}
               </h1>
-              {(userRole === 'Admin' || userRole === 'Contributor') &&
+              {(userRole === 'admin' || userRole === 'Admin' || userRole === 'Contributor') &&
                 frontmatter.status && (
                   <span
                     className={`mt-1 self-start whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium sm:mt-0 ${
@@ -347,6 +362,28 @@ export default async function BlogPostPage({
                 </span>
               )}
               {frontmatter.author && <span>By {frontmatter.author}</span>}
+              {/* Display Categories */}
+              {(frontmatter.categories || frontmatter.category) && (
+                 <div className="flex items-center gap-2">
+                    <span>in</span>
+                    {(Array.isArray(frontmatter.categories) ? frontmatter.categories : [frontmatter.category]).map((cat: string, idx: number) => {
+                        // Use explicit slug if available, otherwise fallback
+                         const catSlug = frontmatter['category-slug'] || (frontmatter['category-slugs'] && frontmatter['category-slugs'][idx])
+                            ? (frontmatter['category-slugs'] ? frontmatter['category-slugs'][idx] : frontmatter['category-slug'])
+                            : cat.toString().toLowerCase().trim().replace(/\s+/g, '-').replace(/[^\w\-]+/g, ''); 
+
+                        return (
+                            <Link 
+                                key={idx} 
+                                href={`/blog/categories/${catSlug}`}
+                                className="text-blue-400 hover:text-blue-300 hover:underline"
+                            >
+                                {cat}
+                            </Link>
+                        );
+                    })}
+                 </div>
+              )}
             </div>
             {frontmatter.tags && frontmatter.tags.length > 0 && (
               <div className="mt-6 flex flex-wrap gap-2">

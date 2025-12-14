@@ -110,7 +110,7 @@ function canViewPost(userRole: string | undefined, postStatus: string | undefine
   }
 
   // If the post is private or has no status, only Admin and Contributor can view it
-  return postStatus !== 'public' && (userRole === 'Admin' || userRole === 'Contributor');
+  return postStatus !== 'public' && (userRole === 'admin' || userRole === 'Admin' || userRole === 'Contributor');
 }
 
 export default async function BlogPage() {
@@ -121,8 +121,8 @@ export default async function BlogPage() {
   if (userId) {
     try {
       const user = await currentUser();
-      // Access publicMetadata for the role
-      userRole = user?.publicMetadata?.role as string;
+      // Access privateMetadata for the role
+      userRole = user?.privateMetadata?.role as string;
     } catch (error) {
       console.error('Error fetching user role:', error);
     }
@@ -171,7 +171,7 @@ export default async function BlogPage() {
               </h2>
 
               {/* Show status badge for Admin and Contributor */}
-              {(userRole === 'Admin' || userRole === 'Contributor') && (
+              {(userRole === 'admin' || userRole === 'Admin' || userRole === 'Contributor') && (
                 <span className={`px-2 py-1 text-xs rounded-full ${
                   Array.isArray(post.frontmatter.status) && post.frontmatter.status[0] === 'public'
                     ? 'bg-green-900/30 text-green-400 border border-green-800'
