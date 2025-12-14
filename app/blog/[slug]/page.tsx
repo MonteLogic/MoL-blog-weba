@@ -367,15 +367,11 @@ export default async function BlogPostPage({
                  <div className="flex items-center gap-2">
                     <span>in</span>
                     {(Array.isArray(frontmatter.categories) ? frontmatter.categories : [frontmatter.category]).map((cat: string, idx: number) => {
-                        // Simple slugify for link
-                         const catSlug = cat
-                            .toString()
-                            .toLowerCase()
-                            .trim()
-                            .replace(/\s+/g, '-')
-                            .replace(/[^\w\-]+/g, '')
-                            .replace(/\-\-+/g, '-');
-                        
+                        // Use explicit slug if available, otherwise fallback
+                         const catSlug = frontmatter['category-slug'] || (frontmatter['category-slugs'] && frontmatter['category-slugs'][idx])
+                            ? (frontmatter['category-slugs'] ? frontmatter['category-slugs'][idx] : frontmatter['category-slug'])
+                            : cat.toString().toLowerCase().trim().replace(/\s+/g, '-').replace(/[^\w\-]+/g, ''); 
+
                         return (
                             <Link 
                                 key={idx} 

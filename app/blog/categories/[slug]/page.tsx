@@ -50,72 +50,170 @@ async function getCategoryDetails(slug: string): Promise<{ name: string } | unde
 }
 
 // Function to safely get blog posts
+// Helper to generate base slug (matches main blog page logic)
+function generateBaseSlug(filePathFromJson: string): string {
+    const postsBaseDirString = 'MoL-blog-content/posts/';
+    let normalizedFilePath = filePathFromJson.replace(/\\/g, '/').trim();
+
+    let relativePathToPostsDir: string;
+    if (normalizedFilePath.startsWith(postsBaseDirString)) {
+        relativePathToPostsDir = normalizedFilePath.substring(postsBaseDirString.length);
+    } else {
+        console.warn(`Path "${normalizedFilePath}" (from JSON: "${filePathFromJson}") does not start with "${postsBaseDirString}". Slug generation might be affected.`);
+        relativePathToPostsDir = normalizedFilePath;
+    }
+
+    const fileExtension = path.posix.extname(relativePathToPostsDir);
+    const baseFilename = path.posix.basename(relativePathToPostsDir, fileExtension);
+
+    let slugCandidate: string;
+    if (baseFilename.toLowerCase() === 'index') {
+        const parentDirName = path.posix.basename(path.posix.dirname(relativePathToPostsDir));
+        slugCandidate = (parentDirName === '.' || parentDirName === '') ? 'home' : parentDirName; 
+    } else {
+        slugCandidate = baseFilename;
+    }
+    
+    const slug = slugCandidate
+      .replace(/-+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9-]/g, '');
+    
+    if (!slug) {
+        const pathHash = Buffer.from(filePathFromJson).toString('hex').substring(0, 8);
+        console.warn(`Generated empty base slug for path: ${filePathFromJson}. Using fallback: post-${pathHash}`);
+        return `post-${pathHash}`;
+    }
+    return slug;
+}
+
+// Helper function to format folder name into a title (kept for compatibility)
+function formatTitle(namePart: string): string {
+  const titleWithoutDate = namePart.replace(/^\d{2}-\d{2}-\d{4}-/, '');
+  return titleWithoutDate
+    .split('-')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
+// Robust getBlogPosts using markdown-paths.json
 async function getBlogPosts(): Promise<BlogPost[]> {
+  console.log('Starting getBlogPosts for Category Page...');
   try {
-    const postsDirectory = path.join(process.cwd(), 'MoL-blog-content/posts');
-    const postFolders = fs.readdirSync(postsDirectory, { withFileTypes: true })
-      .filter(dirent => dirent.isDirectory())
-      .map(dirent => dirent.name);
+    const jsonFilePath = path.join(process.cwd(), 'blog-schema/file-paths/markdown-paths.json');
+    if (!fs.existsSync(jsonFilePath)) {
+      console.error('CRITICAL: markdown-paths.json not found at:', jsonFilePath);
+      return [];
+    }
 
-    const posts: BlogPost[] = await Promise.all(
-      postFolders.map(async (folderName) => {
-        const mdxPath = path.join(postsDirectory, folderName, 'index.mdx');
-        const mdPath = path.join(postsDirectory, folderName, 'index.md');
+    const jsonFileContent = fs.readFileSync(jsonFilePath, 'utf8');
+    const markdownFilePaths: string[] = JSON.parse(jsonFileContent);
+    // console.log(`Found ${markdownFilePaths.length} paths in JSON file.`);
 
-        let filePath = '';
-        if (fs.existsSync(mdxPath)) {
-          filePath = mdxPath;
-        } else if (fs.existsSync(mdPath)) {
-          filePath = mdPath;
+    // Step 1: Generate base slugs and gather necessary info
+    const processedPaths = markdownFilePaths.map((filePathFromJson, index) => {
+        const currentFilePath = filePathFromJson.trim();
+        const baseSlug = generateBaseSlug(currentFilePath);
+
+        // Determine titleSource
+        const postsBaseDirString = 'MoL-blog-content/posts/';
+        let originalNormalizedPath = currentFilePath.replace(/\\/g, '/');
+        let originalRelativePath = originalNormalizedPath.startsWith(postsBaseDirString)
+            ? originalNormalizedPath.substring(postsBaseDirString.length)
+            : originalNormalizedPath;
+
+        const originalFileExt = path.posix.extname(originalRelativePath);
+        const originalBaseFileNameForTitle = path.posix.basename(originalRelativePath, originalFileExt);
+        const originalParentDirName = path.posix.basename(path.posix.dirname(originalRelativePath)); 
+
+        let titleSourceName: string;
+        if (originalBaseFileNameForTitle.toLowerCase() === 'index') {
+            titleSourceName = (originalParentDirName && originalParentDirName !== '.') ? originalParentDirName : originalBaseFileNameForTitle;
         } else {
-          return {
-            slug: folderName,
-            frontmatter: {
-              title: formatTitle(folderName),
-              status: 'private',
-            },
-          };
+            titleSourceName = originalBaseFileNameForTitle;
+        }
+        
+        return {
+            filePath: currentFilePath,
+            baseSlug: baseSlug,
+            titleSourceName: titleSourceName,
+            originalIndex: index
+        };
+    });
+
+    // Step 2: Create unique slugs and process each file
+    const posts: BlogPost[] = [];
+    const slugOccurrences: { [key: string]: number } = {};
+
+    for (const item of processedPaths) {
+        const { filePath, baseSlug, titleSourceName } = item;
+        
+        let finalUniqueSlug: string;
+        if (slugOccurrences[baseSlug] === undefined) {
+            slugOccurrences[baseSlug] = 0;
+            finalUniqueSlug = baseSlug;
+        } else {
+            slugOccurrences[baseSlug]++;
+            finalUniqueSlug = `${baseSlug}-${slugOccurrences[baseSlug]}`;
         }
 
-        const fileContent = fs.readFileSync(filePath, 'utf8');
-        const { data } = matter(fileContent);
+        const fullMarkdownPath = path.join(process.cwd(), filePath);
+        if (!fs.existsSync(fullMarkdownPath)) {
+            // console.warn(`Skipping missing file: ${fullMarkdownPath}`);
+            continue;
+        }
 
-        // Normalize categories: handle 'category' (string) and 'categories' (array)
+        if (fs.lstatSync(fullMarkdownPath).isDirectory()) {
+             console.warn(`Skipping directory in markdown-paths: ${fullMarkdownPath}`);
+             continue;
+        }
+
+        const fileContentRead = fs.readFileSync(fullMarkdownPath, 'utf8');
+        const { data } = matter(fileContentRead);
+        
+        // Normalize categories logic
         let rawCategories: string[] = [];
+        let categorySlugs: string[] = [];
+
+        // 1. Get Display Names
         if (data.categories && Array.isArray(data.categories)) {
             rawCategories = data.categories;
         } else if (data.category && typeof data.category === 'string') {
             rawCategories = [data.category];
         }
 
-        // Slugify helper: straightforward kebab-case
-        const slugify = (text: string) => text
-            .toString()
-            .toLowerCase()
-            .trim()
-            .replace(/\s+/g, '-')     // Replace spaces with -
-            .replace(/[^\w\-]+/g, '') // Remove all non-word chars
-            .replace(/\-\-+/g, '-');  // Replace multiple - with single -
-
-        const categories = rawCategories;
-        // Store normalized slugs for filtering
-        const categorySlugs = rawCategories.map(cat => slugify(cat));
-
+        // 2. Get Slugs
+        if (data['category-slug'] || data['category-slugs']) {
+             if (Array.isArray(data['category-slugs'])) {
+                categorySlugs = data['category-slugs'];
+            } else if (typeof data['category-slug'] === 'string') {
+                categorySlugs = [data['category-slug']];
+            }
+        } else {
+            // Fallback: slugify the display names
+             categorySlugs = rawCategories.map(cat => 
+                cat.toString().toLowerCase().trim()
+                .replace(/\//g, '-') // Replace slashes first
+                .replace(/\s+/g, '-')
+                .replace(/[^\w\-]+/g, '')
+                .replace(/\-\-+/g, '-')
+            );
+        }
 
         const frontmatter: BlogPost['frontmatter'] = {
           ...data,
-          title: data.title || formatTitle(folderName),
+          title: data.title || formatTitle(titleSourceName),
           status: data.status === 'public' ? 'public' : 'private',
-          categories: categories, 
-          categorySlugs: categorySlugs, // Add this to frontmatter for easier filtering
+          categories: rawCategories, 
+          categorySlugs: categorySlugs,
         };
 
-        return {
-          slug: folderName,
+        posts.push({
+          slug: finalUniqueSlug,
           frontmatter,
-        };
-      })
-    );
+        });
+    }
 
     return posts.sort((a, b) => {
       if (a.frontmatter.date && b.frontmatter.date) {
@@ -123,21 +221,14 @@ async function getBlogPosts(): Promise<BlogPost[]> {
       }
       return 0;
     });
+
   } catch (error) {
-    console.error('Error reading blog directory:', error);
+    console.error('Error in getBlogPosts (JSON-based):', error);
     if (process.env.NODE_ENV === 'production') {
       return [];
     }
     throw error;
   }
-}
-
-// Helper function to format folder name into a title
-function formatTitle(slug: string): string {
-  return slug
-    .split('-')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
 }
 
 // Helper function to check if user can view a post based on role and post status
@@ -180,12 +271,25 @@ export default async function CategoryPage({ params: { slug }, searchParams }: P
   }
 
   const allPosts = await getBlogPosts();
+  console.log(`[CategoryPage] Filtering for slug: "${slug}". Total posts: ${allPosts.length}`);
+
   const categoryPosts = allPosts.filter(post => {
     // Check if the current page slug matches any of the post's normalized category slugs
     // OR if it matches the raw category name (legacy support)
     const hasCategory = post.frontmatter.categorySlugs?.includes(slug) || 
                         post.frontmatter.categories?.includes(categoryDetails.name) || // Try matching name
                         post.frontmatter.categories?.includes(slug); // Try matching raw slug (legacy)
+
+    // Debugging logic for the specific problem post
+    if (post.frontmatter.title?.includes('Current Style of Generating PDFs')) {
+        console.log(`[DEBUG] Checking Post: "${post.frontmatter.title}"`);
+        console.log(`   - slugs:`, post.frontmatter.categorySlugs);
+        console.log(`   - categories:`, post.frontmatter.categories);
+        console.log(`   - target slug: "${slug}"`);
+        console.log(`   - hasCategory: ${hasCategory}`);
+        console.log(`   - status: ${post.frontmatter.status}`);
+        console.log(`   - canView: ${canViewPost(userRole, post.frontmatter.status || 'private')}`);
+    }
     
     return hasCategory && canViewPost(userRole, post.frontmatter.status || 'private');
   });

@@ -15,6 +15,8 @@ interface BlogPost {
     author?: string;
     status?: string;
     componentSets?: string[];
+    categories?: string[];
+    categorySlugs?: string[];
     [key: string]: any;
   };
 }
@@ -158,12 +160,33 @@ async function getBlogPosts(): Promise<BlogPost[]> {
         
         const { data: parsedFrontmatter } = matter(fileContentRead);
         
-        // Normalize categories logic (Same as in categories page - duplication acknowledged)
+        // Normalize categories logic
         let rawCategories: string[] = [];
+        let categorySlugs: string[] = [];
+
+        // 1. Get Display Names
         if (parsedFrontmatter.categories && Array.isArray(parsedFrontmatter.categories)) {
             rawCategories = parsedFrontmatter.categories;
         } else if (parsedFrontmatter.category && typeof parsedFrontmatter.category === 'string') {
             rawCategories = [parsedFrontmatter.category];
+        }
+
+        // 2. Get Slugs
+        if (parsedFrontmatter['category-slug'] || parsedFrontmatter['category-slugs']) {
+             if (Array.isArray(parsedFrontmatter['category-slugs'])) {
+                categorySlugs = parsedFrontmatter['category-slugs'];
+            } else if (typeof parsedFrontmatter['category-slug'] === 'string') {
+                categorySlugs = [parsedFrontmatter['category-slug']];
+            }
+        } else {
+            // Fallback: slugify the display names
+             categorySlugs = rawCategories.map(cat => 
+                cat.toString().toLowerCase().trim()
+                .replace(/\//g, '-') // Replace slashes first
+                .replace(/\s+/g, '-')
+                .replace(/[^\w\-]+/g, '')
+                .replace(/\-\-+/g, '-')
+            );
         }
 
         const frontmatter: BlogPost['frontmatter'] = {
@@ -171,6 +194,7 @@ async function getBlogPosts(): Promise<BlogPost[]> {
           title: parsedFrontmatter.title ?? formatTitle(titleSourceName),
           status: parsedFrontmatter.status === 'public' ? 'public' : 'private',
           categories: rawCategories,
+          categorySlugs: categorySlugs,
         };
         
         posts.push({
@@ -318,13 +342,11 @@ export default async function BlogPage({
                 {post.frontmatter.categories && post.frontmatter.categories.length > 0 && (
                      <div className="mb-3 flex flex-wrap gap-2">
                         {post.frontmatter.categories.map((cat: string, idx: number) => {
-                             const catSlug = cat
-                                .toString()
-                                .toLowerCase()
-                                .trim()
-                                .replace(/\s+/g, '-')
-                                .replace(/[^\w\-]+/g, '')
-                                .replace(/\-\-+/g, '-');
+                             // Use explicit slug if available, otherwise fallback (though fallback logic is handled in getBlogPosts now)
+                             const catSlug = post.frontmatter.categorySlugs && post.frontmatter.categorySlugs[idx] 
+                                ? post.frontmatter.categorySlugs[idx]
+                                : cat.toString().toLowerCase().trim().replace(/\s+/g, '-').replace(/[^\w\-]+/g, ''); // Fallback just in case
+
                             return (
                                  <Link 
                                     key={idx}
