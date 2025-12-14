@@ -207,7 +207,11 @@ function canViewPost(
 
 // --- BlogPage Component (Main Page Structure) ---
 // (This is largely the same as your provided code, with updated Link href)
-export default async function BlogPage() {
+export default async function BlogPage({
+  searchParams,
+}: {
+  searchParams: { [key: string]: string | string[] | undefined };
+}) {
   const { userId } = auth();
   let userRole: string | undefined;
 
@@ -228,90 +232,139 @@ export default async function BlogPage() {
   );
   console.log(`Total visible posts after role/status filtering: ${visiblePosts.length}`);
 
-  if (visiblePosts.length === 0) {
-    return (
-      <div className="mx-auto max-w-4xl p-6">
-        <h1 className="mb-8 text-3xl font-bold text-white">CBud Blog</h1>
-        <div className="rounded-lg border border-gray-700 bg-gray-800 p-6">
-          <p className="text-white">
-            {userId
-              ? 'No blog posts are currently available to view.'
-              : 'Please sign in to view blog posts or check back later for public content.'}
-          </p>
-        </div>
-      </div>
-    );
-  }
+  // Pagination Logic
+  const page = typeof searchParams.page === 'string' ? parseInt(searchParams.page, 10) : 1;
+  const POSTS_PER_PAGE = 10; // Adjust as needed
+  const totalPages = Math.ceil(visiblePosts.length / POSTS_PER_PAGE);
+  
+  const startIndex = (page - 1) * POSTS_PER_PAGE;
+  const endIndex = startIndex + POSTS_PER_PAGE;
+  const currentPosts = visiblePosts.slice(startIndex, endIndex);
 
   return (
     <div className="mx-auto max-w-4xl p-6">
-      <h1 className="mb-8 text-3xl font-bold text-white">CBud Blog</h1>
-      <div className="space-y-6">
-        {visiblePosts.map((post: BlogPost) => (
-          <article
-            key={post.slug}
-            className="rounded-lg border border-gray-800 bg-black p-6 transition-colors hover:border-gray-700"
-          >
-            <div className="flex items-start justify-between">
-              <h2 className="mb-3 text-xl font-semibold">
-                {/* UPDATED Link href to match /blog/[slug] structure */}
-                <Link
-                  href={`/blog/${post.slug}`} 
-                  className="text-blue-400 no-underline hover:text-blue-300"
-                >
-                  {post.frontmatter.title}
-                </Link>
-              </h2>
-              {(userRole === 'Admin' || userRole === 'Contributor') && post.frontmatter.status && (
-                <span
-                  className={`whitespace-nowrap rounded-full px-2 py-1 text-xs font-medium self-start ${
-                    post.frontmatter.status === 'public'
-                      ? 'border border-green-700 bg-green-900/50 text-green-300'
-                      : 'border border-yellow-700 bg-yellow-900/50 text-yellow-300'
-                  }`}
-                >
-                  {post.frontmatter.status}
-                </span>
-              )}
-            </div>
-            {post.frontmatter.description && (
-              <p className="mb-3 text-gray-300">
-                {post.frontmatter.description}
-              </p>
-            )}
-            {post.frontmatter.date && (
-              <div className="mb-3 text-sm text-gray-400">
-                {new Date(post.frontmatter.date).toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                })}
-              </div>
-            )}
-            {post.frontmatter.tags && post.frontmatter.tags.length > 0 && (
-              <div className="mb-3 flex flex-wrap gap-2">
-                {post.frontmatter.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="rounded-full bg-gray-800 px-2 py-1 text-xs text-gray-300"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            )}
-            <div>
-              {/* UPDATED Link href to match /blog/[slug] structure */}
-              <Link
-                href={`/blog/${post.slug}`}
-                className="inline-flex items-center gap-1 text-blue-400 no-underline hover:text-blue-300"
-              >
-                Read more<span aria-hidden="true">→</span>
-              </Link>
-            </div>
-          </article>
-        ))}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
+        <h1 className="text-3xl font-bold text-white mb-4 sm:mb-0">CBud Blog</h1>
+        <Link 
+          href="/blog/categories"
+          className="group inline-flex items-center text-blue-400 hover:text-blue-300 transition-colors"
+        >
+          View Categories
+          <span className="ml-2 transform transition-transform group-hover:translate-x-1">→</span>
+        </Link>
       </div>
+
+      {currentPosts.length === 0 ? (
+        <div className="rounded-lg border border-gray-700 bg-gray-800 p-6">
+          <p className="text-white">
+            {userId
+              ? 'No blog posts are currently available.'
+              : 'Please sign in to view blog posts or check back later for public content.'}
+          </p>
+        </div>
+      ) : (
+        <>
+          <div className="space-y-6">
+            {currentPosts.map((post: BlogPost) => (
+              <article
+                key={post.slug}
+                className="rounded-lg border border-gray-800 bg-black p-6 transition-colors hover:border-gray-700"
+              >
+                <div className="flex items-start justify-between">
+                  <h2 className="mb-3 text-xl font-semibold">
+                    <Link
+                      href={`/blog/${post.slug}`} 
+                      className="text-blue-400 no-underline hover:text-blue-300"
+                    >
+                      {post.frontmatter.title}
+                    </Link>
+                  </h2>
+                  {(userRole === 'Admin' || userRole === 'Contributor') && post.frontmatter.status && (
+                    <span
+                      className={`whitespace-nowrap rounded-full px-2 py-1 text-xs font-medium self-start ${
+                        post.frontmatter.status === 'public'
+                          ? 'border border-green-700 bg-green-900/50 text-green-300'
+                          : 'border border-yellow-700 bg-yellow-900/50 text-yellow-300'
+                      }`}
+                    >
+                      {post.frontmatter.status}
+                    </span>
+                  )}
+                </div>
+                {post.frontmatter.description && (
+                  <p className="mb-3 text-gray-300">
+                    {post.frontmatter.description}
+                  </p>
+                )}
+                {post.frontmatter.date && (
+                  <div className="mb-3 text-sm text-gray-400">
+                    {new Date(post.frontmatter.date).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })}
+                  </div>
+                )}
+                {post.frontmatter.tags && post.frontmatter.tags.length > 0 && (
+                  <div className="mb-3 flex flex-wrap gap-2">
+                    {post.frontmatter.tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="rounded-full bg-gray-800 px-2 py-1 text-xs text-gray-300"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <div>
+                  <Link
+                    href={`/blog/${post.slug}`}
+                    className="inline-flex items-center gap-1 text-blue-400 no-underline hover:text-blue-300"
+                  >
+                    Read more<span aria-hidden="true">→</span>
+                  </Link>
+                </div>
+              </article>
+            ))}
+          </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center space-x-4 mt-8">
+                {page > 1 ? (
+                   <Link
+                     href={`/blog?page=${page - 1}`}
+                     className="px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700 transition-colors"
+                   >
+                     Previous
+                   </Link>
+                ) : (
+                  <span className="px-4 py-2 bg-gray-800 text-gray-500 rounded cursor-not-allowed">
+                    Previous
+                  </span>
+                )}
+                
+                <span className="text-gray-400">
+                  Page {page} of {totalPages}
+                </span>
+
+                {page < totalPages ? (
+                  <Link
+                    href={`/blog?page=${page + 1}`}
+                    className="px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700 transition-colors"
+                  >
+                    Next
+                  </Link>
+                ) : (
+                  <span className="px-4 py-2 bg-gray-800 text-gray-500 rounded cursor-not-allowed">
+                    Next
+                  </span>
+                )}
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }
