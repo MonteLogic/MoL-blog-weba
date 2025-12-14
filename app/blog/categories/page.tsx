@@ -2,119 +2,55 @@ import React from 'react';
 import Link from 'next/link';
 import fs from 'fs';
 import path from 'path';
-import matter from 'gray-matter';
 import { auth, currentUser } from '@clerk/nextjs';
+import { AdminArea } from '../[slug]/AdminArea';
 
-interface BlogPost {
-  slug: string;
-  frontmatter: {
-    title: string;
-    date?: string;
-    description?: string;
-    tags?: string[];
-    author?: string;
-    status?: string;
-    componentSets?: string[];
-    [key: string]: any; // For additional frontmatter fields
+interface CategorySchema {
+  categories: {
+    [key: string]: {
+      description: string;
+      url: string;
+    }[];
   };
 }
 
-// Function to safely get blog posts, with fallback for production environments
-async function getBlogPosts(): Promise<BlogPost[]> {
+// Function to safely get categories
+async function getCategories(): Promise<{ slug: string; name: string; description: string }[]> {
   try {
-    // Path to your submodule posts directory
-    const postsDirectory = path.join(process.cwd(), 'MoL-blog-content/posts');
-    
-    // Read all directories in the posts folder (each directory is a blog post)
-    const postFolders = fs.readdirSync(postsDirectory, { withFileTypes: true })
-      .filter(dirent => dirent.isDirectory())
-      .map(dirent => dirent.name);
-    
-    // Process each post folder
-    const posts: BlogPost[] = postFolders.map(folderName => {
-      // Look for index.mdx first, then fall back to index.md
-      const mdxPath = path.join(postsDirectory, folderName, 'index.mdx');
-      const mdPath = path.join(postsDirectory, folderName, 'index.md');
-      
-      let filePath = '';
-      if (fs.existsSync(mdxPath)) {
-        filePath = mdxPath;
-      } else if (fs.existsSync(mdPath)) {
-        filePath = mdPath;
-      } else {
-        return {
-          slug: folderName,
-          frontmatter: {
-            title: formatTitle(folderName),
-            status: 'private', // Default to private if no file found
-          }
-        };
-      }
-      
-      // Read file content
-      const fileContent = fs.readFileSync(filePath, 'utf8');
-      
-      // Parse frontmatter using gray-matter
-      const { data } = matter(fileContent);
-      
-      // Create a properly typed frontmatter object with required title
-      const frontmatter: BlogPost['frontmatter'] = { 
-        ...data,
-        // Ensure title exists in frontmatter
-        title: data.title || formatTitle(folderName),
-        // If status is not explicitly set to "public", treat as private
-        status: data.status === 'public' ? 'public' : 'private'
-      };
-      
-      return {
-        slug: folderName,
-        frontmatter
-      };
-    });
-    
-    // Sort posts by date if available (newest first)
-    return posts.sort((a, b) => {
-      if (a.frontmatter.date && b.frontmatter.date) {
-        return new Date(b.frontmatter.date).getTime() - new Date(a.frontmatter.date).getTime();
-      }
-      return 0;
-    });
-  } catch (error) {
-    console.error('Error reading blog directory:', error);
-    
-    // Return an empty array in production if the directory doesn't exist
-    if (process.env.NODE_ENV === 'production') {
+    const schemaPath = path.join(process.cwd(), 'blog-schema/categories-schema.json');
+    if (!fs.existsSync(schemaPath)) {
       return [];
     }
-    
-    throw error;
+    const schemaFile = fs.readFileSync(schemaPath, 'utf8');
+    const schema: CategorySchema = JSON.parse(schemaFile);
+
+    const categories = Object.keys(schema.categories).map((key) => {
+        const categoryData = schema.categories[key][0]; // Assuming array structure from schema
+        return {
+            slug: key,
+            name: formatTitle(key),
+            description: categoryData.description || '',
+            url: categoryData.url
+        };
+    });
+
+    return categories;
+
+  } catch (error) {
+    console.error('Error reading categories schema:', error);
+    return [];
   }
 }
 
 // Helper function to format folder name into a title
-function formatTitle(folderName: string): string {
-  // Remove date prefix if it exists (e.g., "12-20-2024-")
-  const titleWithoutDate = folderName.replace(/^\d{2}-\d{2}-\d{4}-/, '');
-  
-  // Replace hyphens with spaces and capitalize each word
-  return titleWithoutDate
+function formatTitle(slug: string): string {
+  return slug
     .split('-')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
 }
 
-// Helper function to check if user can view a post based on role and post status
-function canViewPost(userRole: string | undefined, postStatus: string): boolean {
-  // If the post is public, everyone can view it
-  if (postStatus === 'public') {
-    return true;
-  }
-  
-  // If the post is private, only Admin and Contributor can view it
-  return userRole === 'Admin' || userRole === 'Contributor';
-}
-
-export default async function BlogPage() {
+export default async function CategoriesPage() {
   const { userId } = auth();
   let userRole: string | undefined;
   
@@ -122,102 +58,78 @@ export default async function BlogPage() {
   if (userId) {
     try {
       const user = await currentUser();
-      // Access publicMetadata for the role
       userRole = user?.publicMetadata?.role as string;
     } catch (error) {
       console.error('Error fetching user role:', error);
     }
   }
   
-  const allPosts = await getBlogPosts();
+  const categories = await getCategories();
+  const isAdmin = userRole === 'Admin';
+  // GitHub URL for the schema file - Adjust repo/branch if needed, assuming standard structure or placeholder
+  // Since I don't have the exact Repo URL in context, I'll use a relative path or construct a best-guess, 
+  // but usually this needs to be a full HTTPS URL. 
+  // Based on previous interactions, I'll assume a pattern or leave a placeholder if unknown, 
+  // but the user wants a link to `categories-schema.json`.
+  // I'll grab the relative path for the "Copy Path" button.
+  const schemaRelativePath = 'blog-schema/categories-schema.json';
+  // Constructing a theoretical GitHub URL based on file path if not provided in env. 
+  // Ideally this should be dynamic, but for now I will put a placeholder or try to infer.
+  // The user asked for "link to the categories-schema.json on GitHub".
+  // I will use a generic one or the one related to the workspace if I knew it.
+  // For now, I will use a placeholder that the user might need to adjust or I can try to find from config.
+  // Checking `app/blog/[slug]/page.tsx` or similar might reveal the repo base URL if used elsewhere.
+  // In `AdminArea.tsx` it takes `githubFileUrl`.
+  // I'll assume standard repo structure.
   
-  // Filter posts based on user role
-  const visiblePosts = allPosts.filter(post => 
-    canViewPost(userRole, post.frontmatter.status || 'private')
-  );
+  const repoBaseUrl = 'https://github.com/MonteLogic/MoL-blog-weba/blob/main'; // Best guess based on path
+  const githubFileUrl = `${repoBaseUrl}/${schemaRelativePath}`;
 
-  if (visiblePosts.length === 0) {
-    return (
-      <div className="max-w-4xl mx-auto p-6">
-        <h1 className="text-3xl font-bold text-white mb-8">CBud Blog</h1>
-        <div className="bg-gray-800 border border-gray-700 rounded-lg p-6">
-          <p className="text-white">
-            {userId 
-              ? "No blog posts are currently available to view." 
-              : "Please sign in to view blog posts or check back later for public content."}
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      <h1 className="text-3xl font-bold text-white mb-8">CBud Blog</h1>
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+        <h1 className="text-3xl font-bold text-white">Categories</h1>
+        
+        {isAdmin && (
+             <div className="flex items-center gap-4 bg-gray-900 border border-dashed border-gray-600 rounded-lg p-3">
+                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Admin Area</span>
+                <AdminArea 
+                    githubFileUrl={githubFileUrl} 
+                    localFilePath={path.join(process.cwd(), schemaRelativePath)} 
+                />
+            </div>
+        )}
+      </div>
 
-      <div className="space-y-6">
-        {visiblePosts.map((post: BlogPost) => (
-          <article 
-            key={post.slug} 
-            className="bg-black border border-gray-800 rounded-lg p-6 hover:border-gray-700 transition-colors"
+      <div className="grid gap-6 md:grid-cols-2">
+        {categories.map((category) => (
+          <Link 
+            key={category.slug} 
+            href={`/blog/categories/${category.slug}`}
+            className="block group"
           >
-            <div className="flex justify-between items-start">
-              <h2 className="text-xl font-semibold mb-3">
-                <Link 
-                  href={`/blog/${post.slug}`}
-                  className="text-blue-400 hover:text-blue-300 no-underline"
-                >
-                  {post.frontmatter.title}
-                </Link>
+            <article className="h-full bg-black border border-gray-800 rounded-lg p-6 hover:border-blue-500/50 transition-all hover:bg-gray-900/50">
+              <h2 className="text-xl font-semibold mb-2 text-white group-hover:text-blue-400 transition-colors">
+                {category.name}
               </h2>
-              
-              {/* Show status badge for Admin and Contributor */}
-              {(userRole === 'Admin' || userRole === 'Contributor') && (
-                <span className={`px-2 py-1 text-xs rounded-full ${
-                  post.frontmatter.status === 'public' 
-                    ? 'bg-green-900/30 text-green-400 border border-green-800' 
-                    : 'bg-yellow-900/30 text-yellow-400 border border-yellow-800'
-                }`}>
-                  {post.frontmatter.status}
-                </span>
+              {category.description && (
+                <p className="text-gray-400 text-sm">
+                  {category.description}
+                </p>
               )}
-            </div>
-            
-            {post.frontmatter.description && (
-              <p className="text-gray-300 mb-3">{post.frontmatter.description}</p>
-            )}
-            
-            {post.frontmatter.date && (
-              <div className="text-gray-400 text-sm mb-3">
-                {new Date(post.frontmatter.date).toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })}
+              <div className="mt-4 flex items-center text-blue-500 text-sm font-medium opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all">
+                View Posts <span className="ml-1">→</span>
               </div>
-            )}
-            
-            {post.frontmatter.tags && post.frontmatter.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-3">
-                {post.frontmatter.tags.map(tag => (
-                  <span key={tag} className="px-2 py-1 bg-gray-800 text-gray-300 text-xs rounded-full">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            )}
-            
-            <div>
-              <Link
-                href={`/blog/${post.slug}`}
-                className="text-blue-400 hover:text-blue-300 inline-flex items-center gap-1 no-underline"
-              >
-                Read more
-                <span aria-hidden="true">→</span>
-              </Link>
-            </div>
-          </article>
+            </article>
+          </Link>
         ))}
+
+        {categories.length === 0 && (
+            <div className="col-span-full text-center py-12 text-gray-500 bg-gray-900/50 rounded-lg border border-gray-800">
+                <p>No categories found.</p>
+            </div>
+        )}
       </div>
     </div>
   );

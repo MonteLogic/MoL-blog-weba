@@ -127,9 +127,12 @@ interface Props {
   params: {
     slug: string;
   };
+  searchParams: {
+    page?: string;
+  };
 }
 
-export default async function CategoryPage({ params: { slug } }: Props) {
+export default async function CategoryPage({ params: { slug }, searchParams }: Props) {
   const { userId } = auth();
   let userRole: string | undefined;
 
@@ -154,15 +157,30 @@ export default async function CategoryPage({ params: { slug } }: Props) {
     canViewPost(userRole, post.frontmatter.status || 'private')
   );
 
-  if (categoryPosts.length === 0) {
+  // Pagination Logic
+  const page = typeof searchParams.page === 'string' ? parseInt(searchParams.page, 10) : 1;
+  const POSTS_PER_PAGE = 5; 
+  const totalPages = Math.ceil(categoryPosts.length / POSTS_PER_PAGE);
+  
+  const startIndex = (page - 1) * POSTS_PER_PAGE;
+  const endIndex = startIndex + POSTS_PER_PAGE;
+  const currentPosts = categoryPosts.slice(startIndex, endIndex);
+
+  if (currentPosts.length === 0) {
     return (
       <div className="max-w-4xl mx-auto p-6">
         <h1 className="text-3xl font-bold text-white mb-8">{categoryDetails.name}</h1>
         <div className="bg-gray-800 border border-gray-700 rounded-lg p-6">
-          <p className="text-white">No posts found in this category.</p>
-          <Link href="/blog" className="text-blue-400 hover:text-blue-300 mt-4 inline-block">
-            Go back to the homepage
-          </Link>
+            {categoryPosts.length === 0 ? (
+                <>
+                <p className="text-white">No posts found in this category.</p>
+                <Link href="/blog" className="text-blue-400 hover:text-blue-300 mt-4 inline-block">
+                    Go back to the homepage
+                </Link>
+                </>
+            ) : (
+                 <p className="text-white">No posts found on this page.</p>
+            )}
         </div>
       </div>
     );
@@ -173,7 +191,7 @@ export default async function CategoryPage({ params: { slug } }: Props) {
       <h1 className="text-3xl font-bold text-white mb-8">{categoryDetails.name}</h1>
 
       <div className="space-y-6">
-        {categoryPosts.map((post: BlogPost) => (
+        {currentPosts.map((post: BlogPost) => (
           <article
             key={post.slug}
             className="bg-black border border-gray-800 rounded-lg p-6 hover:border-gray-700 transition-colors"
@@ -235,6 +253,43 @@ export default async function CategoryPage({ params: { slug } }: Props) {
           </article>
         ))}
       </div>
+
+       {/* Pagination Controls */}
+       {totalPages > 1 && (
+            <div className="flex justify-center items-center space-x-4 mt-8">
+                {page > 1 ? (
+                   <Link
+                    //  href={`/blog/categories/${slug}?page=${page - 1}`}
+                     href={`?page=${page - 1}`}
+                     className="px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700 transition-colors"
+                   >
+                     Previous
+                   </Link>
+                ) : (
+                  <span className="px-4 py-2 bg-gray-800 text-gray-500 rounded cursor-not-allowed">
+                    Previous
+                  </span>
+                )}
+                
+                <span className="text-gray-400">
+                  Page {page} of {totalPages}
+                </span>
+
+                {page < totalPages ? (
+                  <Link
+                    // href={`/blog/categories/${slug}?page=${page + 1}`}
+                    href={`?page=${page + 1}`}
+                    className="px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700 transition-colors"
+                  >
+                    Next
+                  </Link>
+                ) : (
+                  <span className="px-4 py-2 bg-gray-800 text-gray-500 rounded cursor-not-allowed">
+                    Next
+                  </span>
+                )}
+            </div>
+          )}
     </div>
   );
 }

@@ -234,7 +234,7 @@ export default async function BlogPage({
 
   // Pagination Logic
   const page = typeof searchParams.page === 'string' ? parseInt(searchParams.page, 10) : 1;
-  const POSTS_PER_PAGE = 10; // Adjust as needed
+  const POSTS_PER_PAGE = 5; // Adjust as needed
   const totalPages = Math.ceil(visiblePosts.length / POSTS_PER_PAGE);
   
   const startIndex = (page - 1) * POSTS_PER_PAGE;
