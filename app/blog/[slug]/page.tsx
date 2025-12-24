@@ -307,20 +307,31 @@ export default async function BlogPostPage({
 
     return (
       <div className="mx-auto max-w-4xl p-6">
-        <div className="mb-8 flex items-center justify-between">
-          <Link
-            href="/blog"
-            className="text-blue-400 transition-colors hover:text-blue-300"
-          >
-            ← Back to all posts
-          </Link>
+        <div className="mb-8 flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+             <Link
+              href="/blog"
+              className="text-blue-400 transition-colors hover:text-blue-300"
+            >
+              ← Back to all posts
+            </Link>
 
-          {userRole === 'admin' && (
-            <AdminArea 
-              githubFileUrl={githubFileUrl} 
-              localFilePath={relativeFilePath} 
-            />
-          )}
+            {userRole === 'admin' && (
+              <AdminArea 
+                githubFileUrl={githubFileUrl} 
+                localFilePath={relativeFilePath} 
+              />
+            )}
+          </div>
+          
+           {relativeFilePath.includes('/projects/') && (
+             <Link
+                href={`/blog/projects/${relativeFilePath.split('/projects/')[1].split('/')[0]}`}
+                className="text-blue-400 transition-colors hover:text-blue-300 self-start text-sm"
+              >
+                ← Back to {formatTitle(relativeFilePath.split('/projects/')[1].split('/')[0])} Project
+              </Link>
+           )}
         </div>
 
 
@@ -370,7 +381,7 @@ export default async function BlogPostPage({
                         // Use explicit slug if available, otherwise fallback
                          const catSlug = frontmatter['category-slug'] || (frontmatter['category-slugs'] && frontmatter['category-slugs'][idx])
                             ? (frontmatter['category-slugs'] ? frontmatter['category-slugs'][idx] : frontmatter['category-slug'])
-                            : cat.toString().toLowerCase().trim().replace(/\s+/g, '-').replace(/[^\w\-]+/g, ''); 
+                            : cat.toString().toLowerCase().trim().replace(/\s+/g, '-').replace(/[^\w-]+/g, ''); 
 
                         return (
                             <Link 
