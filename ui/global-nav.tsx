@@ -17,17 +17,17 @@ export function GlobalNav({ userData }: { userData?: UserData }): JSX.Element {
   const resolveSlug = useResolveSlug();
 
   return (
-    <div className="fixed top-0 z-10 flex w-full flex-col border-b border-gray-800 bg-black lg:bottom-0 lg:z-auto lg:w-72 lg:border-b-0 lg:border-r lg:border-gray-800">
+    <div className="fixed top-0 z-10 flex w-full flex-col border-b border-slate-200 bg-white shadow-sm lg:bottom-0 lg:z-auto lg:w-72 lg:border-b-0 lg:border-r lg:shadow-none">
       <div className="flex h-14 items-center px-4 py-4 lg:h-auto">
         <Link
           href="/"
           className="group flex w-full items-center gap-x-2.5"
           onClick={close}
         >
-          <div className="h-7 w-7 rounded-full border border-white/30 group-hover:border-white/50">
+          <div className="h-7 w-7 rounded-full border border-slate-300 group-hover:border-accent-purple transition-colors">
             <CBudLogo />
           </div>
-          <h3 className="font-semibold tracking-wide text-gray-400 group-hover:text-gray-50">
+          <h3 className="font-semibold tracking-wide text-charcoal group-hover:text-accent-purple transition-colors">
             Contractor Bud
           </h3>
         </Link>
@@ -37,18 +37,18 @@ export function GlobalNav({ userData }: { userData?: UserData }): JSX.Element {
         className="group absolute right-0 top-0 flex h-14 items-center gap-x-2 px-4 lg:hidden"
         onClick={() => setIsOpen(!isOpen)}
       >
-        <div className="font-medium text-gray-100 group-hover:text-gray-400">
+        <div className="font-medium text-charcoal group-hover:text-accent-purple transition-colors">
           Menu
         </div>
         {isOpen ? (
-          <XIcon className="block w-6 text-gray-400" />
+          <XIcon className="block w-6 text-charcoal-muted" />
         ) : (
-          <MenuAlt2Icon className="block w-6 text-gray-400" />
+          <MenuAlt2Icon className="block w-6 text-charcoal-muted" />
         )}
       </button>
       <div
         className={clsx('overflow-y-auto lg:static lg:block', {
-          'fixed inset-x-0 bottom-0 top-14 mt-px bg-black': isOpen,
+          'fixed inset-x-0 bottom-0 top-14 mt-px bg-white': isOpen,
           hidden: !isOpen,
         })}
       >
@@ -56,7 +56,7 @@ export function GlobalNav({ userData }: { userData?: UserData }): JSX.Element {
           {secondMenu.map((section) => {
             return (
               <div key={section.name}>
-                <div className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-400/80">
+                <div className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-charcoal-muted">
                   <div>{section.name}</div>
                 </div>
                 <div className="space-y-1">
@@ -97,10 +97,10 @@ function GlobalNavItem({
       onClick={close}
       href={href}
       className={clsx(
-        'block rounded-md px-3 py-2 text-sm font-medium hover:text-gray-300',
+        'block rounded-lg px-3 py-2 text-sm font-medium transition-all',
         {
-          'text-gray-400 hover:bg-gray-800': !isActive,
-          'text-white': isActive,
+          'text-charcoal-light hover:bg-cream-200 hover:text-charcoal': !isActive,
+          'bg-accent-purple/10 text-accent-purple font-semibold': isActive,
         },
       )}
     >
@@ -108,3 +108,4 @@ function GlobalNavItem({
     </Link>
   );
 }
+

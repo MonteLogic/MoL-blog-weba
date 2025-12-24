@@ -306,12 +306,12 @@ export default async function BlogPostPage({
     const githubFileUrl = `https://github.com/MonteLogic/MoL-blog-content/blob/main/${relativeFilePath.replace('MoL-blog-content/', '')}`;
 
     return (
-      <div className="mx-auto max-w-4xl p-6">
-        <div className="mb-8 flex flex-col gap-2">
+      <div className="mx-auto max-w-3xl">
+        <div className="mb-8 flex flex-col gap-3">
           <div className="flex items-center justify-between">
              <Link
               href="/blog"
-              className="text-blue-400 transition-colors hover:text-blue-300"
+              className="back-link text-accent-indigo"
             >
               ← Back to all posts
             </Link>
@@ -327,21 +327,21 @@ export default async function BlogPostPage({
            {relativeFilePath.includes('/projects/') && (
              <Link
                 href={`/blog/projects/${relativeFilePath.split('/projects/')[1].split('/')[0]}`}
-                className="text-blue-400 transition-colors hover:text-blue-300 self-start text-sm"
+                className="back-link text-accent-teal self-start text-sm"
               >
                 ← Back to {formatTitle(relativeFilePath.split('/projects/')[1].split('/')[0])} Project
-              </Link>
+             </Link>
            )}
         </div>
 
 
-        <article className="prose prose-slate dark:prose-invert max-w-none">
+        <article className="prose-blog max-w-none">
           {' '}
           {/* Apply prose classes here */}
-          <header className="mb-10 border-b border-gray-700 pb-8">
+          <header className="mb-12 border-b border-cream-300 pb-8">
             {/* ... (article header and content rendering, same as your last provided version) ... */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-              <h1 className="text-3xl font-extrabold leading-tight tracking-tight text-white md:text-4xl">
+              <h1 className="text-3xl font-extrabold leading-tight tracking-tight text-charcoal md:text-4xl">
                 {frontmatter.title}
               </h1>
               {(userRole === 'admin' || userRole === 'Admin' || userRole === 'Contributor') &&
@@ -349,8 +349,8 @@ export default async function BlogPostPage({
                   <span
                     className={`mt-1 self-start whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium sm:mt-0 ${
                       frontmatter.status === 'public'
-                        ? 'border border-green-700 bg-green-900/50 text-green-300'
-                        : 'border border-yellow-700 bg-yellow-900/50 text-yellow-300'
+                        ? 'badge-public'
+                        : 'badge-private'
                     }`}
                   >
                     {frontmatter.status}
@@ -358,11 +358,11 @@ export default async function BlogPostPage({
                 )}
             </div>
             {frontmatter.description && (
-              <p className="mt-4 text-xl text-gray-400">
+              <p className="mt-4 text-xl text-charcoal-light leading-relaxed">
                 {frontmatter.description}
               </p>
             )}
-            <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-500">
+            <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-charcoal-muted">
               {frontmatter.date && (
                 <span>
                   {new Date(frontmatter.date).toLocaleDateString('en-US', {
@@ -387,7 +387,7 @@ export default async function BlogPostPage({
                             <Link 
                                 key={idx} 
                                 href={`/blog/categories/${catSlug}`}
-                                className="text-blue-400 hover:text-blue-300 hover:underline"
+                                className="text-accent-indigo hover:text-accent-purple hover:underline transition-colors"
                             >
                                 {cat}
                             </Link>
@@ -401,7 +401,7 @@ export default async function BlogPostPage({
                 {frontmatter.tags.map((tag: string) => (
                   <span
                     key={tag}
-                    className="rounded-full bg-gray-800 px-3 py-1 text-xs font-semibold text-gray-300"
+                    className="tag-blog"
                   >
                     {tag}
                   </span>
@@ -433,19 +433,19 @@ export default async function BlogPostPage({
       error.message,
     );
     return (
-      <div className="mx-auto max-w-4xl p-6 text-center">
+      <div className="mx-auto max-w-3xl text-center">
         <div className="mb-6">
-          <Link href="/blog" className="text-blue-400 hover:text-blue-300">
+          <Link href="/blog" className="back-link text-accent-indigo">
             ← Back to all posts
           </Link>
         </div>
-        <div className="rounded-lg border border-red-700 bg-red-900/30 p-8">
-          <h1 className="mb-4 text-2xl font-bold text-red-400">Post Error</h1>
-          <p className="text-gray-300">
+        <div className="rounded-xl border border-red-200 bg-red-50 p-8">
+          <h1 className="mb-4 text-2xl font-bold text-red-600">Post Error</h1>
+          <p className="text-charcoal-light">
             The post you were looking for ({urlSlug}) could not be loaded.
           </p>
           {process.env.NODE_ENV === 'development' && (
-            <p className="mt-4 text-xs text-gray-500">
+            <p className="mt-4 text-xs text-charcoal-muted">
               Details: {error.message}
             </p>
           )}

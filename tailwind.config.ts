@@ -14,9 +14,25 @@ export default {
   theme: {
     extend: {
       colors: {
-        gray: colors.coolGray,
-        'gray-1000': '#f8f8f8', // Off-white
-        'gray-1100': '#f2f2f2', // Light gray
+        gray: colors.slate,
+        // Warm light mode palette
+        cream: {
+          50: '#FEFDFB',
+          100: '#FAF9F6',
+          200: '#F5F3EE',
+          300: '#EBE8E0',
+          400: '#DED9CD',
+        },
+        charcoal: {
+          DEFAULT: '#2D3748',
+          light: '#4A5568',
+          muted: '#718096',
+        },
+        accent: {
+          purple: '#805AD5',
+          teal: '#319795',
+          indigo: '#5A67D8',
+        },
         vercel: {
           pink: '#FF0080',
           blue: '#0070F3',
@@ -25,10 +41,14 @@ export default {
           violet: '#7928CA',
         },
       },
+      fontFamily: {
+        serif: ['Georgia', 'Cambria', 'Times New Roman', 'serif'],
+        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+      },
       backgroundImage: ({ theme }) => ({
         'vc-border-gradient': `radial-gradient(at left top, ${theme(
-          'colors.gray.1000',
-        )}, 50px, ${theme('colors.gray.1100')} 50%)`,
+          'colors.cream.200',
+        )}, 50px, ${theme('colors.cream.100')} 50%)`,
       }),
       keyframes: ({ theme }) => ({
         rerender: {
