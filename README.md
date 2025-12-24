@@ -2,15 +2,13 @@
 
 A Next.js blog that renders markdown content from a separate content repository.
 
-## Setup
+## Local Development Setup
 
 ### Prerequisites
 - Node.js 20.x
 - pnpm
 
 ### 1. Clone Both Repositories
-
-Clone the web app and content repo as siblings:
 
 ```bash
 cd /path/to/your/projects
@@ -20,48 +18,54 @@ git clone https://github.com/MonteLogic/MoL-blog-content.git
 
 ### 2. Create Symlink
 
-Link the content repo into the web app:
-
 ```bash
 cd MoL-blog-weba
-ln -s ../MoL-blog-content MoL-blog-content
+pnpm run setup   # Creates symlink to ../MoL-blog-content
 ```
 
-### 3. Generate Markdown Paths
+### 3. Install & Run
 
 ```bash
 pnpm install
-pnpm run generate-markdown-paths
-```
-
-### 4. Run Development Server
-
-```bash
 pnpm dev
 ```
 
+## Deployment (Vercel)
+
+No configuration needed! On `pnpm install`, the content repo is automatically cloned from the URL in `package.json`:
+
+```json
+"config": {
+  "contentRepo": "https://github.com/MonteLogic/MoL-blog-content.git"
+}
+```
+
+## Forking This Project
+
+1. Fork both repos: `MoL-blog-weba` and `MoL-blog-content`
+2. Edit `package.json` → `config.contentRepo` to point to your content fork
+3. Deploy to Vercel—it just works
+
 ## Working with Content
 
-The content repo is **independent**—commit and push to it separately:
+The content repo is **independent**—commit and push separately:
 
 ```bash
 cd ../MoL-blog-content
-# Add/edit posts...
 git add . && git commit -m "new post" && git push
 ```
 
-The web app repo does **not** track content commits, eliminating submodule conflicts.
+No submodule pointer commits needed—repos are fully decoupled.
 
 ## VS Code Multi-Repo Setup
 
 To see both repos in Source Control:
 1. **File > Add Folder to Workspace...**
 2. Select `MoL-blog-content`
-3. (Optional) **File > Save Workspace As...** to persist
 
 ---
 
 ## Notes
 
-- [WordPress Export to Markdown](https://github.com/lonekorean/wordpress-export-to-markdown) - useful for migrating, but exports `.md` not `.mdx`
+- [WordPress Export to Markdown](https://github.com/lonekorean/wordpress-export-to-markdown)
 - [Previous setup notes](https://gist.github.com/MonteLogic/13c02295d79aa31bb5d9eeb8035a3f1c)
