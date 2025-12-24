@@ -1,9 +1,12 @@
 {
   "private": true,
   "packageManager": "pnpm@9.x",
+  "config": {
+    "contentRepo": "https://github.com/MonteLogic/MoL-blog-content.git"
+  },
   "scripts": {
     "setup": "ln -sf ../MoL-blog-content MoL-blog-content",
-    "postinstall": "if [ ! -d MoL-blog-content ]; then git clone --depth 1 https://github.com/MonteLogic/MoL-blog-content.git MoL-blog-content; fi",
+    "postinstall": "if [ ! -d MoL-blog-content ]; then git clone --depth 1 \"${CONTENT_REPO_URL:-$npm_package_config_contentRepo}\" MoL-blog-content; fi",
     "dev": "next dev",
     "lint": "next lint",
     "stripe:listen": "stripe listen --forward-to localhost:3000/api/webhooks/stripe",
