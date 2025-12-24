@@ -5,6 +5,7 @@ import path from 'path';
 interface CategorySchema {
   categories: {
     [key: string]: {
+      name?: string;
       description: string;
       url: string;
     }[];
@@ -40,9 +41,10 @@ export async function getBlogCategoryTabs(): Promise<
 
     for (const categorySlug in schema.categories) {
       if (schema.categories.hasOwnProperty(categorySlug)) {
+        const categoryData = schema.categories[categorySlug][0];
         tabs.push({
-          text: formatTitle(categorySlug),
-          href: `/blog/categories/${categorySlug}`, // Construct the correct category URL
+          text: categoryData.name || formatTitle(categorySlug),
+          href: `/${categoryData.url}`,
         });
       }
     }

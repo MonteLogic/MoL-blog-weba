@@ -2,14 +2,16 @@
   "categories": {
     "projects": [
       {
+        "name": "View Projects",
         "description": "View posts organized by project",
-        "url": "blog/categories/projects"
+        "url": "blog/projects"
       }
     ],
     "categories": [
       {
+        "name": "View Categories",
         "description": "Browse posts by category topic",
-        "url": "blog/categories/categories"
+        "url": "blog/categories"
       }
     ]
   }
