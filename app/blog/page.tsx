@@ -184,8 +184,8 @@ async function getBlogPosts(): Promise<BlogPost[]> {
                 cat.toString().toLowerCase().trim()
                 .replace(/\//g, '-') // Replace slashes first
                 .replace(/\s+/g, '-')
-                .replace(/[^\w\-]+/g, '')
-                .replace(/\-\-+/g, '-')
+                .replace(/[^\w-]+/g, '')
+                .replace(/-+/g, '-')
             );
         }
 
@@ -258,7 +258,7 @@ export default async function BlogPage({
   }
 
   const allPosts = await getBlogPosts();
-  console.log(`Total posts returned by getBlogPosts for listing: ${allPosts.length}`);
+  console.log(`[BlogPage] Rendering with Projects Link. Total posts: ${allPosts.length}`);
 
   const visiblePosts = allPosts.filter((post) =>
     canViewPost(userRole, post.frontmatter.status)
@@ -278,13 +278,22 @@ export default async function BlogPage({
     <div className="mx-auto max-w-4xl p-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
         <h1 className="text-3xl font-bold text-white mb-4 sm:mb-0">CBud Blog</h1>
-        <Link 
-          href="/blog/categories"
-          className="group inline-flex items-center text-blue-400 hover:text-blue-300 transition-colors"
-        >
-          View Categories
-          <span className="ml-2 transform transition-transform group-hover:translate-x-1">→</span>
-        </Link>
+        <div className="flex flex-col items-end gap-1">
+          <Link 
+            href="/blog/categories"
+            className="group inline-flex items-center text-blue-400 hover:text-blue-300 transition-colors"
+          >
+            View Categories
+            <span className="ml-2 transform transition-transform group-hover:translate-x-1">→</span>
+          </Link>
+          <Link 
+            href="/blog/projects"
+            className="group inline-flex items-center text-blue-400 hover:text-blue-300 transition-colors"
+          >
+            View Projects
+            <span className="ml-2 transform transition-transform group-hover:translate-x-1">→</span>
+          </Link>
+        </div>
       </div>
 
       {currentPosts.length === 0 ? (
@@ -345,7 +354,7 @@ export default async function BlogPage({
                              // Use explicit slug if available, otherwise fallback (though fallback logic is handled in getBlogPosts now)
                              const catSlug = post.frontmatter.categorySlugs && post.frontmatter.categorySlugs[idx] 
                                 ? post.frontmatter.categorySlugs[idx]
-                                : cat.toString().toLowerCase().trim().replace(/\s+/g, '-').replace(/[^\w\-]+/g, ''); // Fallback just in case
+                                : cat.toString().toLowerCase().trim().replace(/\s+/g, '-').replace(/[^\w-]+/g, ''); // Fallback just in case
 
                             return (
                                  <Link 
