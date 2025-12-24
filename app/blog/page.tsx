@@ -4,6 +4,7 @@ import fs from 'fs';
 import path from 'path'; // Ensure path is imported
 import matter from 'gray-matter';
 import { auth, currentUser } from '@clerk/nextjs';
+import packageJson from '#/package.json';
 
 interface BlogPost {
   slug: string; // This will be the final, unique slug
@@ -277,7 +278,9 @@ export default async function BlogPage({
   return (
     <div className="mx-auto max-w-4xl">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-10">
-        <h1 className="text-3xl font-bold text-charcoal mb-4 sm:mb-0">CBud Blog</h1>
+        <h1 className="text-3xl font-bold mb-4 sm:mb-0" style={{ color: 'var(--text-primary)' }}>
+          {(packageJson as any).config?.niceNameOfProject || 'Blog'}
+        </h1>
         <div className="flex flex-col items-end gap-2">
           <Link 
             href="/blog/categories"
@@ -308,87 +311,76 @@ export default async function BlogPage({
         <>
           <div className="space-y-6">
             {currentPosts.map((post: BlogPost) => (
-              <article
+              <Link
                 key={post.slug}
-                className="card-blog group"
+                href={`/blog/${post.slug}`}
+                className="block"
               >
-                <div className="flex items-start justify-between gap-4">
-                  <h2 className="mb-2 text-xl font-semibold">
-                    <Link
-                      href={`/blog/${post.slug}`} 
-                      className="text-charcoal no-underline hover:text-accent-purple transition-colors"
-                    >
-                      {post.frontmatter.title}
-                    </Link>
-                  </h2>
-                  {(userRole === 'admin' || userRole === 'Admin' || userRole === 'Contributor') && post.frontmatter.status && (
-                    <span
-                      className={`whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium ${
-                        post.frontmatter.status === 'public'
-                          ? 'badge-public'
-                          : 'badge-private'
-                      }`}
-                    >
-                      {post.frontmatter.status}
-                    </span>
-                  )}
-                </div>
-                {post.frontmatter.description && (
-                  <p className="mb-3 text-charcoal-light leading-relaxed">
-                    {post.frontmatter.description}
-                  </p>
-                )}
-                {post.frontmatter.date && (
-                  <div className="mb-3 text-sm text-charcoal-muted">
-                    {new Date(post.frontmatter.date).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    })}
-                  </div>
-                )}
-                {/* Categories on Card */}
-                {post.frontmatter.categories && post.frontmatter.categories.length > 0 && (
-                     <div className="mb-3 flex flex-wrap gap-2">
-                        {post.frontmatter.categories.map((cat: string, idx: number) => {
-                             // Use explicit slug if available, otherwise fallback (though fallback logic is handled in getBlogPosts now)
-                             const catSlug = post.frontmatter.categorySlugs && post.frontmatter.categorySlugs[idx] 
-                                ? post.frontmatter.categorySlugs[idx]
-                                : cat.toString().toLowerCase().trim().replace(/\s+/g, '-').replace(/[^\w-]+/g, ''); // Fallback just in case
-
-                            return (
-                                 <Link 
-                                    key={idx}
-                                    href={`/blog/categories/${catSlug}`}
-                                    className="tag-blog"
-                                 >
-                                    #{cat}
-                                 </Link>
-                            );
-                        })}
-                     </div>
-                )}
-                {post.frontmatter.tags && post.frontmatter.tags.length > 0 && (
-                  <div className="mb-3 flex flex-wrap gap-2">
-                    {post.frontmatter.tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="tag-blog"
-                      >
-                        {tag}
+                <article className="card-blog group cursor-pointer">
+                  <div className="flex items-start justify-between gap-4">
+                    <h2 className="mb-2 text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>
+                      <span className="group-hover:text-accent-purple transition-colors">
+                        {post.frontmatter.title}
                       </span>
-                    ))}
+                    </h2>
+                    {(userRole === 'admin' || userRole === 'Admin' || userRole === 'Contributor') && post.frontmatter.status && (
+                      <span
+                        className={`whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium ${
+                          post.frontmatter.status === 'public'
+                            ? 'badge-public'
+                            : 'badge-private'
+                        }`}
+                      >
+                        {post.frontmatter.status}
+                      </span>
+                    )}
                   </div>
-                )}
-                <div className="pt-2">
-                  <Link
-                    href={`/blog/${post.slug}`}
-                    className="back-link text-accent-indigo"
-                  >
-                    Read more<span aria-hidden="true">→</span>
-                  </Link>
-                </div>
-              </article>
+                  {post.frontmatter.description && (
+                    <p className="mb-3 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                      {post.frontmatter.description}
+                    </p>
+                  )}
+                  {post.frontmatter.date && (
+                    <div className="mb-3 text-sm" style={{ color: 'var(--text-muted)' }}>
+                      {new Date(post.frontmatter.date).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                      })}
+                    </div>
+                  )}
+                  {/* Categories on Card */}
+                  {post.frontmatter.categories && post.frontmatter.categories.length > 0 && (
+                       <div className="mb-3 flex flex-wrap gap-2">
+                          {post.frontmatter.categories.map((cat: string, idx: number) => (
+                               <span 
+                                  key={idx}
+                                  className="tag-blog"
+                               >
+                                  #{cat}
+                               </span>
+                          ))}
+                       </div>
+                  )}
+                  {post.frontmatter.tags && post.frontmatter.tags.length > 0 && (
+                    <div className="mb-3 flex flex-wrap gap-2">
+                      {post.frontmatter.tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="tag-blog"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <div className="pt-2">
+                    <span className="back-link text-accent-indigo group-hover:gap-2">
+                      Read more<span aria-hidden="true">→</span>
+                    </span>
+                  </div>
+                </article>
+              </Link>
             ))}
           </div>
 
