@@ -1,16 +1,17 @@
-
 {
   "categories": {
     "work-notes": [
       {
+        "niceName": "View Projects",
         "description": "Work Notes of various projects",
-        "url": "blog/categories/work-notes"
+        "url": "blog/projects"
       }
     ],
     "project-notes": [
       {
+        "niceName": "View Categories",
         "description": "A larger scope view of the Project and the direction as well as where the Project has been.",
-        "url": "blog/categories/project-notes"
+        "url": "blog/categories"
       }
     ]
   }

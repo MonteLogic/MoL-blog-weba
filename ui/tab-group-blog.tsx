@@ -1,27 +1,58 @@
 'use client';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation'; // Use usePathname instead of useRouter
-import React from 'react';
+import { usePathname, useSearchParams } from 'next/navigation';
+import React, { useEffect, useState, useRef } from 'react';
 
 interface TabItem {
   text: string;
-  slug?: string; // Optional slug for dynamic routes (will be prioritized if provided)
-  href?: string; // Optional explicit href
+  slug?: string;
+  href?: string;
 }
 
 interface TabGroupBlogProps {
-  path: string; // Base path for the tabs (only used if href is not provided)
+  path: string;
   items: TabItem[];
 }
 
+// Loading spinner component
+function LoadingSpinner() {
+  return (
+    <div 
+      className="w-5 h-5 border-2 border-accent-purple border-t-transparent rounded-full animate-spin"
+      role="status"
+      aria-label="Loading"
+    />
+  );
+}
+
 export const TabGroupBlog: React.FC<TabGroupBlogProps> = ({ path, items }) => {
-  const pathname = usePathname(); // Get the pathname
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [isLoading, setIsLoading] = useState(false);
+  const targetPath = useRef<string | null>(null);
+
+  // Stop loading when route actually changes
+  useEffect(() => {
+    if (targetPath.current && pathname === targetPath.current) {
+      setIsLoading(false);
+      targetPath.current = null;
+    } else if (targetPath.current === null) {
+      // Route changed without our click (browser back/forward)
+      setIsLoading(false);
+    }
+  }, [pathname, searchParams]);
+
+  const handleClick = (href: string) => {
+    if (href !== pathname) {
+      targetPath.current = href;
+      setIsLoading(true);
+    }
+  };
 
   return (
-    <div className="border-b border-gray-200">
+    <div className="border-b flex items-center justify-between" style={{ borderColor: 'var(--border-color)' }}>
       <nav className="-mb-px flex space-x-8" aria-label="Tabs">
         {items.map((item, index) => {
-          // Use the explicit href if provided, otherwise generate based on slug and path
           const href = item.href ? item.href : (item.slug ? `${path}/${item.slug}` : path);
 
           const isActive =
@@ -34,17 +65,24 @@ export const TabGroupBlog: React.FC<TabGroupBlogProps> = ({ path, items }) => {
             <Link
               key={index}
               href={href}
-              className={`inline-block rounded-t-lg px-4 py-2 font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700 ${
+              className={`inline-block rounded-t-lg px-4 py-2 font-medium transition-colors ${
                 isActive
-                  ? 'border-b-2 border-indigo-500 font-semibold text-indigo-700'
+                  ? 'border-b-2 border-accent-purple font-semibold text-accent-purple'
                   : ''
               }`}
+              style={!isActive ? { color: 'var(--text-muted)' } : undefined}
+              onClick={() => handleClick(href)}
             >
               {item.text}
             </Link>
           );
         })}
       </nav>
+      
+      {/* Loading spinner in top-right corner */}
+      <div className="w-5 h-5 flex items-center justify-center">
+        {isLoading && <LoadingSpinner />}
+      </div>
     </div>
   );
 };

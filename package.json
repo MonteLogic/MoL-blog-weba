@@ -2,7 +2,8 @@
   "private": true,
   "packageManager": "pnpm@9.x",
   "config": {
-    "contentRepo": "https://github.com/MonteLogic/MoL-blog-content.git"
+    "contentRepo": "https://github.com/MonteLogic/MoL-blog-content.git",
+    "niceNameOfProject": "Mo99 Blog"
   },
   "scripts": {
     "setup": "ln -sf ../MoL-blog-content MoL-blog-content",

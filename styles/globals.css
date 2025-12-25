@@ -1,3 +1,360 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ==========================================================================
+   BLOG UI DESIGN SYSTEM - Warm Light Mode
+   Optimized for comfortable, long-form reading
+   ========================================================================== */
+
+:root {
+  /* Background Colors - Warm, paper-like tones */
+  --bg-primary: #FAF9F6;
+  /* Warm off-white */
+  --bg-secondary: #F5F3EE;
+  /* Slightly darker warm */
+  --bg-card: #FFFFFF;
+  /* Pure white for cards */
+  --bg-nav: #2D3748;
+  /* Dark slate for contrast nav */
+
+  /* Text Colors - Soft, easy on the eyes */
+  --text-primary: #2D3748;
+  /* Dark charcoal, not pure black */
+  --text-secondary: #4A5568;
+  /* Medium gray */
+  --text-muted: #718096;
+  /* Light gray for metadata */
+  --text-inverse: #F7FAFC;
+  /* Light text on dark bg */
+
+  /* Accent Colors - Warm, inspiring tones */
+  --accent-primary: #805AD5;
+  /* Soft purple */
+  --accent-secondary: #319795;
+  /* Teal */
+  --accent-link: #5A67D8;
+  /* Indigo for links */
+  --accent-link-hover: #4C51BF;
+
+  /* UI Elements */
+  --border-color: #E2E8F0;
+  --border-color-hover: #CBD5E0;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+  /* Typography */
+  --font-serif: 'Georgia', 'Cambria', 'Times New Roman', serif;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Dark Mode - Comfortable reading with reduced contrast */
+.dark {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-card: #1e293b;
+  --bg-nav: #0f172a;
+
+  --text-primary: #e2e8f0;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --text-inverse: #0f172a;
+
+  --accent-primary: #a78bfa;
+  --accent-secondary: #5eead4;
+  --accent-link: #818cf8;
+  --accent-link-hover: #a5b4fc;
+
+  --border-color: #334155;
+  --border-color-hover: #475569;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+}
+
+/* Base Styles */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Focus styles for accessibility */
+*:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #CBD5E0;
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #A0AEC0;
+}
+
+/* ==========================================================================
+   Typography - Prose Customizations
+   ========================================================================== */
+
+/* Article prose styling for optimal reading */
+.prose-blog {
+  color: var(--text-primary);
+  font-size: 1.125rem;
+  line-height: 1.8;
+}
+
+.prose-blog h1,
+.prose-blog h2,
+.prose-blog h3,
+.prose-blog h4,
+.prose-blog h5,
+.prose-blog h6 {
+  color: var(--text-primary);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  margin-top: 2em;
+  margin-bottom: 0.75em;
+}
+
+.prose-blog p {
+  color: var(--text-primary);
+  margin-bottom: 1.5em;
+}
+
+.prose-blog strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.prose-blog a {
+  color: var(--accent-link);
+  text-decoration: underline;
+  text-decoration-color: rgba(90, 103, 216, 0.3);
+  text-underline-offset: 3px;
+  transition: all 0.2s ease;
+}
+
+.prose-blog a:hover {
+  color: var(--accent-link-hover);
+  text-decoration-color: var(--accent-link-hover);
+}
+
+.prose-blog blockquote {
+  border-left: 4px solid var(--accent-primary);
+  background: var(--bg-secondary);
+  padding: 1rem 1.5rem;
+  border-radius: 0 8px 8px 0;
+  font-style: italic;
+  color: var(--text-secondary);
+}
+
+.prose-blog ul,
+.prose-blog ol {
+  color: var(--text-primary);
+  padding-left: 1.5em;
+}
+
+.prose-blog li {
+  color: var(--text-primary);
+  margin-bottom: 0.5em;
+}
+
+.prose-blog code {
+  background: var(--bg-secondary);
+  color: var(--accent-primary);
+  padding: 0.2em 0.4em;
+  border-radius: 4px;
+  font-size: 0.9em;
+  font-weight: 500;
+}
+
+.prose-blog pre {
+  background: #1a1b26 !important;
+  border-radius: 12px;
+  padding: 1.25rem !important;
+  overflow-x: auto;
+  box-shadow: var(--shadow-md);
+}
+
+.prose-blog pre code {
+  background: transparent;
+  padding: 0;
+  font-size: 0.875rem;
+  color: #e4e4e7;
+}
+
+.prose-blog img {
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+}
+
+.prose-blog hr {
+  border-color: var(--border-color);
+  margin: 3rem 0;
+}
+
+.prose-blog table {
+  color: var(--text-primary);
+}
+
+.prose-blog th {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.prose-blog td {
+  color: var(--text-primary);
+}
+
+/* ==========================================================================
+   Component Styles
+   ========================================================================== */
+
+/* Card styling */
+.card-blog {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 1.5rem;
+  transition: all 0.15s ease;
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+}
+
+.card-blog:hover {
+  border-color: var(--border-color-hover);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+/* Tactile click feedback - like butterfly keyboard */
+.card-blog:active {
+  transform: translateY(1px) scale(0.995);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.05s ease;
+}
+
+/* Tag styling */
+.tag-blog {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.tag-blog:hover {
+  background: var(--accent-primary);
+  color: white;
+}
+
+/* Navigation styling */
+.nav-blog {
+  background: var(--bg-nav);
+  color: var(--text-inverse);
+}
+
+.nav-link-blog {
+  color: rgba(247, 250, 252, 0.7);
+  transition: color 0.2s ease;
+}
+
+.nav-link-blog:hover {
+  color: var(--text-inverse);
+}
+
+.nav-link-blog.active {
+  color: var(--text-inverse);
+  font-weight: 600;
+}
+
+/* Button styles */
+.btn-primary {
+  background: var(--accent-primary);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+  background: #6B46C1;
+  transform: translateY(-1px);
+}
+
+/* Back link styling */
+.back-link {
+  color: var(--accent-link);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.back-link:hover {
+  color: var(--accent-link-hover);
+  gap: 0.25rem;
+}
+
+/* Status badges */
+.badge-public {
+  background: #C6F6D5;
+  color: #22543D;
+  border: 1px solid #9AE6B4;
+}
+
+.badge-private {
+  background: #FEFCBF;
+  color: #744210;
+  border: 1px solid #F6E05E;
+}
+
+/* ==========================================================================
+   Transitions & Animations
+   ========================================================================== */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+
+/* Smooth transitions for interactive elements */
+a,
+button,
+.card-blog {
+  transition: all 0.2s ease;
+}
