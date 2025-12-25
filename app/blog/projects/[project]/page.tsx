@@ -6,7 +6,7 @@ import matter from 'gray-matter';
 import { auth, currentUser } from '@clerk/nextjs';
 
 interface BlogPost {
-  slug: string;
+  slug: string;  // Project-relative slug
   frontmatter: {
     title: string;
     date?: string;
@@ -14,45 +14,32 @@ interface BlogPost {
     tags?: string[];
     author?: string;
     status?: string;
-    categories?: string[];
     [key: string]: any;
   };
 }
 
-// Helper to generate base slug (reused logic)
-function generateBaseSlug(filePathFromJson: string): string {
-    const postsBaseDirString = 'MoL-blog-content/posts/';
-    let normalizedFilePath = filePathFromJson.replace(/\\/g, '/').trim();
+// Generate a project-relative slug for a post
+function generateProjectRelativeSlug(filePath: string, projectDir: string): string {
+  const relativePath = path.relative(projectDir, filePath).replace(/\\/g, '/');
+  const ext = path.posix.extname(relativePath);
+  const withoutExt = relativePath.slice(0, -ext.length);
+  
+  // Replace directory separators with dashes
+  let slug = withoutExt.replace(/\//g, '-');
+  
+  // Handle index files
+  if (slug.endsWith('-index') || slug === 'index') {
+    slug = slug.replace(/-?index$/, '') || 'index';
+  }
+  
+  // Clean up the slug
+  slug = slug
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
 
-    let relativePathToPostsDir: string;
-    if (normalizedFilePath.startsWith(postsBaseDirString)) {
-        relativePathToPostsDir = normalizedFilePath.substring(postsBaseDirString.length);
-    } else {
-        relativePathToPostsDir = normalizedFilePath;
-    }
-
-    const fileExtension = path.posix.extname(relativePathToPostsDir);
-    const baseFilename = path.posix.basename(relativePathToPostsDir, fileExtension);
-
-    let slugCandidate: string;
-    if (baseFilename.toLowerCase() === 'index') {
-        const parentDirName = path.posix.basename(path.posix.dirname(relativePathToPostsDir));
-        slugCandidate = (parentDirName === '.' || parentDirName === '') ? 'home' : parentDirName; 
-    } else {
-        slugCandidate = baseFilename;
-    }
-    
-    const slug = slugCandidate
-      .replace(/-+/g, '-')
-      .replace(/^-+|-+$/g, '')
-      .toLowerCase()
-      .replace(/[^a-z0-9-]/g, '');
-    
-    if (!slug) {
-        const pathHash = Buffer.from(filePathFromJson).toString('hex').substring(0, 8);
-        return `post-${pathHash}`;
-    }
-    return slug;
+  return slug || 'post';
 }
 
 function formatTitle(namePart: string): string {
@@ -63,96 +50,75 @@ function formatTitle(namePart: string): string {
     .join(' ');
 }
 
-// Get blog posts
-async function getBlogPosts(): Promise<BlogPost[]> {
-    try {
-        const jsonFilePath = path.join(process.cwd(), 'blog-schema/file-paths/markdown-paths.json');
-        if (!fs.existsSync(jsonFilePath)) {
-          return [];
-        }
+// Get posts for a specific project by reading files directly from project directory
+async function getProjectPosts(projectSlug: string): Promise<BlogPost[]> {
+  const projectDir = path.join(
+    process.cwd(),
+    'MoL-blog-content/posts/categorized/projects',
+    projectSlug
+  );
+
+  if (!fs.existsSync(projectDir)) {
+    return [];
+  }
+
+  // Recursively find all markdown files in the project directory
+  function findMarkdownFiles(dir: string): string[] {
+    const files: string[] = [];
+    const items = fs.readdirSync(dir, { withFileTypes: true });
     
-        const jsonFileContent = fs.readFileSync(jsonFilePath, 'utf8');
-        const markdownFilePaths: string[] = JSON.parse(jsonFileContent);
-    
-        // Step 1: Generate base slugs and gather necessary info
-        const processedPaths = markdownFilePaths.map((filePathFromJson) => {
-            const currentFilePath = filePathFromJson.trim();
-            const baseSlug = generateBaseSlug(currentFilePath);
-    
-            // Determine titleSource
-            const postsBaseDirString = 'MoL-blog-content/posts/';
-            let originalNormalizedPath = currentFilePath.replace(/\\/g, '/');
-            let originalRelativePath = originalNormalizedPath.startsWith(postsBaseDirString)
-                ? originalNormalizedPath.substring(postsBaseDirString.length)
-                : originalNormalizedPath;
-    
-            const originalFileExt = path.posix.extname(originalRelativePath);
-            const originalBaseFileNameForTitle = path.posix.basename(originalRelativePath, originalFileExt);
-            const originalParentDirName = path.posix.basename(path.posix.dirname(originalRelativePath)); 
-    
-            let titleSourceName: string;
-            if (originalBaseFileNameForTitle.toLowerCase() === 'index') {
-                titleSourceName = (originalParentDirName && originalParentDirName !== '.') ? originalParentDirName : originalBaseFileNameForTitle;
-            } else {
-                titleSourceName = originalBaseFileNameForTitle;
-            }
-            
-            return {
-                filePath: currentFilePath,
-                baseSlug: baseSlug,
-                titleSourceName: titleSourceName,
-            };
-        });
-    
-        // Step 2: Create unique slugs and process each file
-        const posts: BlogPost[] = [];
-        const slugOccurrences: { [key: string]: number } = {};
-    
-        for (const item of processedPaths) {
-            const { filePath, baseSlug, titleSourceName } = item;
-            
-            let finalUniqueSlug: string;
-            if (slugOccurrences[baseSlug] === undefined) {
-                slugOccurrences[baseSlug] = 0;
-                finalUniqueSlug = baseSlug;
-            } else {
-                slugOccurrences[baseSlug]++;
-                finalUniqueSlug = `${baseSlug}-${slugOccurrences[baseSlug]}`;
-            }
-    
-            const fullMarkdownPath = path.join(process.cwd(), filePath);
-            if (!fs.existsSync(fullMarkdownPath) || fs.lstatSync(fullMarkdownPath).isDirectory()) {
-                continue;
-            }
-    
-            const fileContentRead = fs.readFileSync(fullMarkdownPath, 'utf8');
-            const { data } = matter(fileContentRead);
-            
-            // Add filePath to frontmatter for reliable filtering by path
-            const frontmatter: BlogPost['frontmatter'] = {
-              ...data,
-              title: data.title || formatTitle(titleSourceName),
-              status: (data.status === 'public' || data.status === undefined) ? 'public' : 'private',
-              _filePath: filePath // Internal use
-            };
-    
-            posts.push({
-              slug: finalUniqueSlug,
-              frontmatter,
-            });
-        }
-    
-        return posts.sort((a, b) => {
-          if (a.frontmatter.date && b.frontmatter.date) {
-            return new Date(b.frontmatter.date).getTime() - new Date(a.frontmatter.date).getTime();
-          }
-          return 0;
-        });
-    
-      } catch (error) {
-        console.error('Error in getBlogPosts:', error);
-        return [];
+    for (const item of items) {
+      const fullPath = path.join(dir, item.name);
+      if (item.isDirectory()) {
+        files.push(...findMarkdownFiles(fullPath));
+      } else if (item.name.endsWith('.md') || item.name.endsWith('.mdx')) {
+        files.push(fullPath);
       }
+    }
+    return files;
+  }
+
+  const markdownFiles = findMarkdownFiles(projectDir);
+  const posts: BlogPost[] = [];
+
+  for (const filePath of markdownFiles) {
+    try {
+      const content = fs.readFileSync(filePath, 'utf8');
+      const { data } = matter(content);
+      
+      const relativePath = path.relative(projectDir, filePath);
+      const basename = path.basename(filePath, path.extname(filePath));
+      
+      // Generate title from frontmatter or filename
+      let title = data.title;
+      if (!title) {
+        if (basename === 'index') {
+          title = formatTitle(path.basename(path.dirname(filePath)));
+        } else {
+          title = formatTitle(basename);
+        }
+      }
+
+      posts.push({
+        slug: generateProjectRelativeSlug(filePath, projectDir),
+        frontmatter: {
+          ...data,
+          title,
+          status: data.status === 'public' ? 'public' : (data.status === undefined ? 'public' : 'private'),
+        }
+      });
+    } catch (error) {
+      console.error(`Error reading file ${filePath}:`, error);
+    }
+  }
+
+  // Sort by date
+  return posts.sort((a, b) => {
+    if (a.frontmatter.date && b.frontmatter.date) {
+      return new Date(b.frontmatter.date).getTime() - new Date(a.frontmatter.date).getTime();
+    }
+    return 0;
+  });
 }
 
 function canViewPost(userRole: string | undefined, postStatus: string): boolean {
@@ -163,25 +129,25 @@ function canViewPost(userRole: string | undefined, postStatus: string): boolean 
 }
 
 function formatProjectName(slug: string): string {
-    if (slug.includes('-')) {
-        return slug
-          .split('-')
-          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-          .join(' ');
-    }
-    return slug.replace(/([A-Z])/g, ' $1').trim();
+  if (slug.includes('-')) {
+    return slug
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  }
+  return slug.replace(/([A-Z])/g, ' $1').trim();
 }
 
 interface Props {
   params: {
-    slug: string;
+    project: string;
   };
   searchParams: {
     page?: string;
   };
 }
 
-export default async function ProjectPage({ params: { slug }, searchParams }: Props) {
+export default async function ProjectPage({ params: { project }, searchParams }: Props) {
   const { userId } = auth();
   let userRole: string | undefined;
 
@@ -194,22 +160,13 @@ export default async function ProjectPage({ params: { slug }, searchParams }: Pr
     }
   }
 
-  const projectName = formatProjectName(slug);
-  const allPosts = await getBlogPosts();
+  const projectName = formatProjectName(project);
+  const allPosts = await getProjectPosts(project);
   
-  // Filter posts that are inside the project directory
-  // Path format: MoL-blog-content/posts/categorized/projects/[slug]/...
-  const projectPathPrefix = `MoL-blog-content/posts/categorized/projects/${slug}`;
-
-  const projectPosts = allPosts.filter(post => {
-    const postPath = post.frontmatter._filePath as string;
-    
-    // Normalize paths for comparison
-    const normalizedPostPath = postPath.replace(/\\/g, '/');
-    const matchesPath = normalizedPostPath.includes(projectPathPrefix);
-    
-    return matchesPath && canViewPost(userRole, post.frontmatter.status || 'private');
-  });
+  // Filter posts based on user permissions
+  const projectPosts = allPosts.filter(post => 
+    canViewPost(userRole, post.frontmatter.status || 'private')
+  );
 
   // Pagination
   const page = typeof searchParams.page === 'string' ? parseInt(searchParams.page, 10) : 1;
@@ -256,7 +213,7 @@ export default async function ProjectPage({ params: { slug }, searchParams }: Pr
         {currentPosts.map((post: BlogPost) => (
           <Link
             key={post.slug}
-            href={`/blog/${post.slug}`}
+            href={`/blog/projects/${project}/${post.slug}`}
             className="block"
           >
             <article className="card-blog group cursor-pointer">

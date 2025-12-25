@@ -135,6 +135,37 @@ body {
   margin-bottom: 0.75em;
 }
 
+/* Individual heading sizes for visual hierarchy */
+.prose-blog h1 {
+  font-size: 2.25rem;
+  line-height: 1.2;
+}
+
+.prose-blog h2 {
+  font-size: 1.75rem;
+  line-height: 1.3;
+}
+
+.prose-blog h3 {
+  font-size: 1.5rem;
+  line-height: 1.4;
+}
+
+.prose-blog h4 {
+  font-size: 1.25rem;
+  line-height: 1.5;
+}
+
+.prose-blog h5 {
+  font-size: 1.125rem;
+  line-height: 1.5;
+}
+
+.prose-blog h6 {
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
 .prose-blog p {
   color: var(--text-primary);
   margin-bottom: 1.5em;
