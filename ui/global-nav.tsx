@@ -23,7 +23,7 @@ export function GlobalNav({ userData }: { userData?: UserData }): JSX.Element {
 
   return (
     <div className="fixed top-0 z-10 flex w-full flex-col border-b shadow-sm lg:bottom-0 lg:z-auto lg:w-72 lg:border-b-0 lg:border-r lg:shadow-none" style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--bg-card)' }}>
-      <div className="flex h-14 items-center justify-between px-4 py-4 lg:h-auto">
+      <div className="flex h-14 items-center px-4 py-4 lg:h-auto">
         <Link
           href="/"
           className="group flex items-center gap-x-2.5"
@@ -36,7 +36,7 @@ export function GlobalNav({ userData }: { userData?: UserData }): JSX.Element {
             {projectName}
           </h3>
         </Link>
-        <div className="hidden lg:block">
+        <div className="ml-3">
           <DarkModeToggle />
         </div>
       </div>
