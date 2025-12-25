@@ -20,17 +20,31 @@ async function getProjects(): Promise<Project[]> {
 
   const items = fs.readdirSync(projectsDir, { withFileTypes: true });
   
-  const projects = items
-    .filter(item => item.isDirectory())
-    .map(item => {
-      // Try to read a description if available (optional enhancement)
-      // For now, just using the name
-      return {
-        slug: item.name,
-        name: formatTitle(item.name),
-        description: '' // Placeholder for now
-      };
+  const projects: Project[] = [];
+  
+  for (const item of items) {
+    if (!item.isDirectory()) continue;
+    
+    const infoPath = path.join(projectsDir, item.name, 'info.json');
+    
+    // Check if info.json exists - fail build if missing
+    if (!fs.existsSync(infoPath)) {
+      throw new Error(
+        `Build Error: Project "${item.name}" is missing a required info.json file. ` +
+        `Please create: MoL-blog-content/posts/categorized/projects/${item.name}/info.json`
+      );
+    }
+    
+    // Read info.json and parse it
+    const infoContent = fs.readFileSync(infoPath, 'utf-8');
+    const info = JSON.parse(infoContent);
+    
+    projects.push({
+      slug: item.name,
+      name: info.project || formatTitle(item.name),
+      description: info.description || ''
     });
+  }
 
   return projects;
 }
