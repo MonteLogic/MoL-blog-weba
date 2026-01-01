@@ -3,8 +3,8 @@
     "name": "AWS",
     "category": "Cloud",
     "currentLevel": "Staff Engineer",
-    "yearsOfExperience": 2,
-    "yearsOfProfessionalExperience": 2,
+    "yearsOfExperience": "<1",
+    "yearsOfProfessionalExperience": 0,
     "employabilityScore": 9,
     "description": "EC2, S3, Lambda, and basic infrastructure.",
     "projects": [

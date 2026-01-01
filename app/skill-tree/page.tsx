@@ -56,6 +56,17 @@ function getLevelColor(level: SkillLevel): string {
   return colors[level];
 }
 
+// Helper to parse experience values for sorting (handles "<1", "1-2", or numeric)
+function parseExperience(value: number | string): number {
+  if (typeof value === 'number') return value;
+  if (value.startsWith('<')) return parseFloat(value.slice(1)) - 0.5; // "<1" becomes 0.5
+  if (value.includes('-')) {
+    const [min, max] = value.split('-').map(Number);
+    return (min + max) / 2; // "1-2" becomes 1.5
+  }
+  return parseFloat(value) || 0;
+}
+
 function SkillCard({ skill }: { skill: Skill }) {
   const progress = getProgressPercentage(skill.currentLevel);
   const gradientClass = getLevelColor(skill.currentLevel);
@@ -183,7 +194,11 @@ function SkillCard({ skill }: { skill: Skill }) {
       <div className="mt-4 border-t pt-3" style={{ borderColor: 'var(--border-color)' }}>
         <Link
           href={`/skill-tree/${skill.id}`}
-          className={`inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r ${gradientClass} px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:shadow-md`}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium shadow-sm transition-all hover:shadow-md"
+          style={{
+            backgroundColor: 'var(--accent-primary)',
+            color: 'white',
+          }}
         >
           See Work
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -205,10 +220,10 @@ export default function SkillTreePage() {
       case 'easiest-to-employ':
         return skills.sort((a, b) => b.employabilityScore - a.employabilityScore);
       case 'years-of-experience':
-        return skills.sort((a, b) => b.yearsOfExperience - a.yearsOfExperience);
+        return skills.sort((a, b) => parseExperience(b.yearsOfExperience) - parseExperience(a.yearsOfExperience));
       case 'years-of-professional-experience':
         return skills.sort(
-          (a, b) => b.yearsOfProfessionalExperience - a.yearsOfProfessionalExperience
+          (a, b) => parseExperience(b.yearsOfProfessionalExperience) - parseExperience(a.yearsOfProfessionalExperience)
         );
       default:
         return skills;
@@ -226,34 +241,7 @@ export default function SkillTreePage() {
         </p>
       </div>
 
-      {/* Progress Legend */}
-      <div
-        className="mb-8 overflow-hidden rounded-xl border p-5"
-        style={{
-          borderColor: 'var(--border-color)',
-          backgroundColor: 'var(--bg-card)',
-        }}
-      >
-        <h2
-          className="mb-4 text-sm font-semibold uppercase tracking-wider"
-          style={{ color: 'var(--text-muted)' }}
-        >
-          Skill Levels
-        </h2>
-        <div className="flex flex-wrap gap-3">
-          {SKILL_LEVELS.map((level) => (
-            <div
-              key={level}
-              className={`flex items-center gap-2 rounded-lg bg-gradient-to-r ${getLevelColor(
-                level
-              )} px-4 py-2 text-sm font-medium text-white shadow-sm`}
-            >
-              <span className="text-white/80">{SKILL_LEVELS.indexOf(level) + 1}.</span>
-              {level}
-            </div>
-          ))}
-        </div>
-      </div>
+
 
       {/* Sort Controls */}
       <div className="mb-6 flex items-center gap-4">

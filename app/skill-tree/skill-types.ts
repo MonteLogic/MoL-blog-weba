@@ -24,9 +24,10 @@ export interface Skill {
   name: string;
   category: string;
   currentLevel: SkillLevel;
-  yearsOfExperience: number;
-  yearsOfProfessionalExperience: number;
+  yearsOfExperience: number | string; // Supports "<1", "1-2", or numeric values
+  yearsOfProfessionalExperience: number | string;
   employabilityScore: number; // 1-10, higher is easier to employ
+  employabilityScoreId?: string; // Reference to gist-defined score criteria
   description?: string;
   projects?: Project[];
 }

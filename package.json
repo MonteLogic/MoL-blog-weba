@@ -3,7 +3,8 @@
   "packageManager": "pnpm@9.x",
   "config": {
     "contentRepo": "https://github.com/MonteLogic/MoL-blog-content.git",
-    "niceNameOfProject": "Mo99 Blog"
+    "niceNameOfProject": "Mo99 Blog",
+    "skillsGistUrl": "https://gist.githubusercontent.com/YOUR_USERNAME/GIST_ID/raw/skills-employability.json"
   },
   "scripts": {
     "setup": "ln -sf ../MoL-blog-content MoL-blog-content",

@@ -77,6 +77,36 @@ export default function SkillTreeGradingPage() {
         </p>
       </div>
 
+      {/* Skill Levels Quick Reference */}
+      <div
+        className="mb-8 overflow-hidden rounded-xl border p-5"
+        style={{
+          borderColor: 'var(--border-color)',
+          backgroundColor: 'var(--bg-card)',
+        }}
+      >
+        <h2
+          className="mb-4 text-sm font-semibold uppercase tracking-wider"
+          style={{ color: 'var(--text-muted)' }}
+        >
+          Skill Levels
+        </h2>
+        <div className="flex flex-wrap gap-3">
+          {SKILL_LEVELS.map((level, index) => {
+            const details = LEVEL_DETAILS[level];
+            return (
+              <div
+                key={level}
+                className={`flex items-center gap-2 rounded-lg bg-gradient-to-r ${details.color} px-4 py-2 text-sm font-medium text-white shadow-sm`}
+              >
+                <span className="text-white/80">{index + 1}.</span>
+                {level}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Overview */}
       <div
         className="mb-8 overflow-hidden rounded-xl border p-6"
