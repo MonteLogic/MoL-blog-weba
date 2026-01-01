@@ -1,0 +1,17 @@
+{
+    "id": "postgresql",
+    "name": "PostgreSQL",
+    "category": "Databases",
+    "currentLevel": "Senior",
+    "yearsOfExperience": 4,
+    "yearsOfProfessionalExperience": 3,
+    "employabilityScore": 8,
+    "description": "Complex queries, optimization, and schema design.",
+    "projects": [
+        {
+            "title": "Database Design",
+            "description": "PostgreSQL database architecture",
+            "url": "#"
+        }
+    ]
+}

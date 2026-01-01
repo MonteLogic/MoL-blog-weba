@@ -13,6 +13,12 @@ export const SKILL_LEVELS: SkillLevel[] = [
   'Fellow',
 ];
 
+export interface Project {
+  title: string;
+  description: string;
+  url: string;
+}
+
 export interface Skill {
   id: string;
   name: string;
@@ -22,6 +28,7 @@ export interface Skill {
   yearsOfProfessionalExperience: number;
   employabilityScore: number; // 1-10, higher is easier to employ
   description?: string;
+  projects?: Project[];
 }
 
 export type SortOption = 

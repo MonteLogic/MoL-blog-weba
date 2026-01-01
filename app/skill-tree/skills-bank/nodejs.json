@@ -1,0 +1,17 @@
+{
+    "id": "nodejs",
+    "name": "Node.js",
+    "category": "Backend",
+    "currentLevel": "Staff Engineer",
+    "yearsOfExperience": 3,
+    "yearsOfProfessionalExperience": 2,
+    "employabilityScore": 8,
+    "description": "Server-side JavaScript, Express, and API development.",
+    "projects": [
+        {
+            "title": "API Development",
+            "description": "RESTful APIs with Express and Node.js",
+            "url": "#"
+        }
+    ]
+}

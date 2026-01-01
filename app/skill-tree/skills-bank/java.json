@@ -1,0 +1,17 @@
+{
+    "id": "java",
+    "name": "Java",
+    "category": "Languages",
+    "currentLevel": "Staff Engineer",
+    "yearsOfExperience": 2,
+    "yearsOfProfessionalExperience": 1,
+    "employabilityScore": 7,
+    "description": "Spring Boot, enterprise Java development.",
+    "projects": [
+        {
+            "title": "Java Services",
+            "description": "Spring Boot applications",
+            "url": "#"
+        }
+    ]
+}

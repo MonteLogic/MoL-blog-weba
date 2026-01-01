@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import Link from 'next/link';
 import {
   Skill,
   SKILL_LEVELS,
@@ -9,88 +10,30 @@ import {
   SkillLevel,
 } from './skill-types';
 
-// Sample skills data - replace with your actual skills
-const SAMPLE_SKILLS: Skill[] = [
-  {
-    id: '1',
-    name: 'React',
-    category: 'Frontend',
-    currentLevel: 'Senior',
-    yearsOfExperience: 5,
-    yearsOfProfessionalExperience: 4,
-    employabilityScore: 9,
-    description: 'Building complex UIs with React, hooks, and state management.',
-  },
-  {
-    id: '2',
-    name: 'TypeScript',
-    category: 'Languages',
-    currentLevel: 'Senior',
-    yearsOfExperience: 4,
-    yearsOfProfessionalExperience: 3,
-    employabilityScore: 9,
-    description: 'Strong typing, generics, and advanced type patterns.',
-  },
-  {
-    id: '3',
-    name: 'Node.js',
-    category: 'Backend',
-    currentLevel: 'Staff Engineer',
-    yearsOfExperience: 3,
-    yearsOfProfessionalExperience: 2,
-    employabilityScore: 8,
-    description: 'Server-side JavaScript, Express, and API development.',
-  },
-  {
-    id: '4',
-    name: 'Python',
-    category: 'Languages',
-    currentLevel: 'Staff Engineer',
-    yearsOfExperience: 3,
-    yearsOfProfessionalExperience: 2,
-    employabilityScore: 8,
-    description: 'Django, Flask, and data processing scripts.',
-  },
-  {
-    id: '5',
-    name: 'Docker',
-    category: 'DevOps',
-    currentLevel: 'Script Kitty',
-    yearsOfExperience: 2,
-    yearsOfProfessionalExperience: 1,
-    employabilityScore: 7,
-    description: 'Container basics and Docker Compose.',
-  },
-  {
-    id: '6',
-    name: 'AWS',
-    category: 'Cloud',
-    currentLevel: 'Staff Engineer',
-    yearsOfExperience: 2,
-    yearsOfProfessionalExperience: 2,
-    employabilityScore: 9,
-    description: 'EC2, S3, Lambda, and basic infrastructure.',
-  },
-  {
-    id: '7',
-    name: 'PostgreSQL',
-    category: 'Databases',
-    currentLevel: 'Senior',
-    yearsOfExperience: 4,
-    yearsOfProfessionalExperience: 3,
-    employabilityScore: 8,
-    description: 'Complex queries, optimization, and schema design.',
-  },
-  {
-    id: '8',
-    name: 'Rust',
-    category: 'Languages',
-    currentLevel: 'Script Kitty',
-    yearsOfExperience: 1,
-    yearsOfProfessionalExperience: 0,
-    employabilityScore: 6,
-    description: 'Learning systems programming and memory safety.',
-  },
+// Import all skills from skills-bank
+import reactSkill from './skills-bank/react.json';
+import typescriptSkill from './skills-bank/typescript.json';
+import nodejsSkill from './skills-bank/nodejs.json';
+import pythonSkill from './skills-bank/python.json';
+import dockerSkill from './skills-bank/docker.json';
+import dotnetSkill from './skills-bank/dotnet.json';
+import javaSkill from './skills-bank/java.json';
+import awsSkill from './skills-bank/aws.json';
+import postgresqlSkill from './skills-bank/postgresql.json';
+import rustSkill from './skills-bank/rust.json';
+
+// Load skills from JSON files
+const SKILLS: Skill[] = [
+  reactSkill as Skill,
+  typescriptSkill as Skill,
+  nodejsSkill as Skill,
+  pythonSkill as Skill,
+  dockerSkill as Skill,
+  dotnetSkill as Skill,
+  javaSkill as Skill,
+  awsSkill as Skill,
+  postgresqlSkill as Skill,
+  rustSkill as Skill,
 ];
 
 function getLevelIndex(level: SkillLevel): number {
@@ -235,6 +178,19 @@ function SkillCard({ skill }: { skill: Skill }) {
           </span>
         </div>
       </div>
+
+      {/* See Work Button */}
+      <div className="mt-4 border-t pt-3" style={{ borderColor: 'var(--border-color)' }}>
+        <Link
+          href={`/skill-tree/${skill.id}`}
+          className={`inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r ${gradientClass} px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:shadow-md`}
+        >
+          See Work
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </Link>
+      </div>
     </div>
   );
 }
@@ -243,7 +199,7 @@ export default function SkillTreePage() {
   const [sortBy, setSortBy] = useState<SortOption>('easiest-to-employ');
 
   const sortedSkills = useMemo(() => {
-    const skills = [...SAMPLE_SKILLS];
+    const skills = [...SKILLS];
 
     switch (sortBy) {
       case 'easiest-to-employ':
@@ -330,6 +286,32 @@ export default function SkillTreePage() {
         {sortedSkills.map((skill) => (
           <SkillCard key={skill.id} skill={skill} />
         ))}
+      </div>
+
+      {/* Grading System Explanation */}
+      <div
+        className="mt-12 overflow-hidden rounded-xl border p-6"
+        style={{
+          borderColor: 'var(--border-color)',
+          backgroundColor: 'var(--bg-card)',
+        }}
+      >
+        <h2 className="mb-3 text-lg font-semibold">Understanding the Grading System</h2>
+        <p className="mb-4" style={{ color: 'var(--text-secondary)' }}>
+          Skills are evaluated on a 5-level progression from <strong>Script Kitty</strong> (beginner) 
+          to <strong>Fellow</strong> (world-class expert). Each level represents not just years of 
+          experience, but depth of knowledge, professional application, and ability to mentor others.
+        </p>
+        <Link
+          href="/skill-tree/skill-tree-grading"
+          className="inline-flex items-center gap-2 font-medium transition-colors hover:opacity-80"
+          style={{ color: 'var(--accent-primary)' }}
+        >
+          Learn More About the Grading System
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </Link>
       </div>
     </div>
   );

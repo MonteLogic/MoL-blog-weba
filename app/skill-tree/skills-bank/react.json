@@ -1,0 +1,22 @@
+{
+    "id": "react",
+    "name": "React",
+    "category": "Frontend",
+    "currentLevel": "Senior",
+    "yearsOfExperience": 5,
+    "yearsOfProfessionalExperience": 4,
+    "employabilityScore": 9,
+    "description": "Building complex UIs with React, hooks, and state management.",
+    "projects": [
+        {
+            "title": "MoL Blog",
+            "description": "Personal blog built with Next.js and React",
+            "url": "/blog"
+        },
+        {
+            "title": "MySiddur",
+            "description": "Prayer app with complex React components",
+            "url": "/blog/projects/MySiddur"
+        }
+    ]
+}

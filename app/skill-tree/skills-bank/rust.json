@@ -1,0 +1,17 @@
+{
+    "id": "rust",
+    "name": "Rust",
+    "category": "Languages",
+    "currentLevel": "Script Kitty",
+    "yearsOfExperience": 1,
+    "yearsOfProfessionalExperience": 0,
+    "employabilityScore": 6,
+    "description": "Learning systems programming and memory safety.",
+    "projects": [
+        {
+            "title": "PDF Generation",
+            "description": "Rust WASM PDF generation endpoint",
+            "url": "#"
+        }
+    ]
+}
