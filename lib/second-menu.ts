@@ -28,9 +28,9 @@ export const getSecondMenu = (
         description: 'Schedule page.',
       },
       {
-        name: 'Employees',
-        slug: 'employees',
-        description: 'Employees page.',
+        name: 'Skill Tree',
+        slug: 'skill-tree',
+        description: 'View and track skill progression.',
       },
       {
         name: 'Time Card',
