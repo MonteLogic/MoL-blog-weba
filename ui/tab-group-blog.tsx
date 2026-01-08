@@ -51,7 +51,7 @@ export const TabGroupBlog: React.FC<TabGroupBlogProps> = ({ path, items }) => {
 
   return (
     <div className="border-b flex items-center justify-between" style={{ borderColor: 'var(--border-color)' }}>
-      <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+      <nav className="-mb-px flex space-x-8 overflow-x-auto scrollbar-hide" aria-label="Tabs">
         {items.map((item, index) => {
           const href = item.href ? item.href : (item.slug ? `${path}/${item.slug}` : path);
 

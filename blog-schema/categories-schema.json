@@ -1,5 +1,12 @@
 {
   "categories": {
+    "pain-points": [
+      {
+        "niceName": "View Pain Points",
+        "description": "Documented pain points and issues",
+        "url": "blog/pain-points"
+      }
+    ],
     "work-notes": [
       {
         "niceName": "View Projects",
