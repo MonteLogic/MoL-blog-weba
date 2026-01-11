@@ -143,7 +143,7 @@ export default function NewPainPointPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-primary)' }}>
-              How much do YOU want to have a solution for this pain point? (1-10)
+              How much do YOU want to a solution this Pain Point? (1-10)
             </label>
             <input
               type="number"
