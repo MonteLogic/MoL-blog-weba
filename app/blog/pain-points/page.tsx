@@ -107,8 +107,17 @@ export default async function PainPointsPage() {
   const painPoints = await getPainPoints();
   const isAdmin = userRole === 'admin' || userRole === 'Admin';
   
-  // GitHub URL for creating a new pain point
-  const addPainPointUrl = 'https://github.com/MonteLogic/MoL-blog-content/new/main/posts/categorized/pain-points';
+  // GitHub URL for creating a new pain point with pre-filled template
+  const today = new Date().toISOString().split('T')[0];
+  const template = JSON.stringify({
+    title: "",
+    description: "",
+    severity: "medium",
+    status: "open",
+    createdAt: today,
+    tags: []
+  }, null, 4);
+  const addPainPointUrl = `https://github.com/MonteLogic/MoL-blog-content/new/main/posts/categorized/pain-points?filename=new-pain-point.json&value=${encodeURIComponent(template)}`;
 
   return (
     <div className="max-w-4xl mx-auto">
