@@ -1,55 +1,112 @@
 import React from 'react';
 import Link from 'next/link';
-import fs from 'fs';
-import path from 'path';
 import { auth, currentUser } from '@clerk/nextjs';
+import YAML from 'yaml';
 
 interface PainPoint {
   slug: string;
   title: string;
-  description: string;
-  severity: 'low' | 'medium' | 'high' | 'critical';
-  status: 'open' | 'in-progress' | 'resolved';
+  inconvenience: string;
+  workaround: string;
+  limitation: string;
+  demandScore: number;
+  progressScore: number;
   createdAt: string;
   tags: string[];
 }
 
 async function getPainPoints(): Promise<PainPoint[]> {
   try {
-    const painPointsDir = path.join(process.cwd(), 'MoL-blog-content/posts/categorized/pain-points');
+    const owner = 'MonteLogic';
+    const repo = 'MoL-blog-content';
+    const path = 'posts/categorized/pain-points';
+    const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+
+    // Prepare headers for higher rate limits
+    const headers: HeadersInit = {
+      'Accept': 'application/vnd.github.v3+json',
+    };
     
-    if (!fs.existsSync(painPointsDir)) {
-      console.log('Pain points directory not found:', painPointsDir);
+    if (process.env.CONTENT_GH_TOKEN) {
+      headers['Authorization'] = `Bearer ${process.env.CONTENT_GH_TOKEN}`;
+    }
+
+    // Fetch list of files from GitHub
+    const res = await fetch(apiUrl, {
+      headers,
+      next: { revalidate: 60 },
+    });
+
+    if (!res.ok) {
+      if (res.status === 404) {
+         console.log('GitHub path not found:', path);
+         return [];
+      }
+      console.error('Failed to fetch from GitHub:', res.statusText);
       return [];
     }
 
-    const files = fs.readdirSync(painPointsDir).filter(file => file.endsWith('.json'));
+    const files = await res.json();
     
+    // Filter for valid files and exclude examples
+    const examples = ['slow-page-load.json', 'mobile-navigation-issues.json'];
+    const validFiles = Array.isArray(files) ? files.filter((file: any) => 
+      (file.name.endsWith('.yaml') || file.name.endsWith('.yml') || file.name.endsWith('.json')) &&
+      !examples.includes(file.name)
+    ) : [];
+
     const painPoints: PainPoint[] = [];
-    
-    for (const file of files) {
+
+    for (const fileItem of validFiles) {
       try {
-        const filePath = path.join(painPointsDir, file);
-        const content = fs.readFileSync(filePath, 'utf8');
-        const data = JSON.parse(content);
+        // Fetch raw content
+        // fileItem.download_url contains the raw content URL
+        const contentRes = await fetch(fileItem.download_url, {
+           headers,
+           next: { revalidate: 300 } // Cache content files a bit longer
+        });
+        const content = await contentRes.text();
         
-        // Generate slug from filename (remove .json extension)
-        const slug = file.replace('.json', '');
+        // Parse content
+        const isYaml = fileItem.name.endsWith('.yaml') || fileItem.name.endsWith('.yml');
+        const data = isYaml ? YAML.parse(content) : JSON.parse(content);
         
+        const slug = fileItem.name.replace(/\.(yaml|yml|json)$/, '');
+
+        // Fetch creation date (first commit date) via GitHub API
+        let createdAt = new Date().toISOString(); 
+        try {
+           const commitsUrl = `https://api.github.com/repos/${owner}/${repo}/commits?path=${path}/${fileItem.name}&page=1&per_page=1&order=asc`;
+           const commitsRes = await fetch(commitsUrl, {
+              headers,
+              next: { revalidate: 3600 } // Commit history rarely changes for creation date
+           });
+           if (commitsRes.ok) {
+             const commits = await commitsRes.json();
+             if (commits && commits.length > 0) {
+               createdAt = commits[0].commit.author.date;
+             }
+           }
+        } catch (e) {
+           console.warn(`Failed to fetch commits for ${fileItem.name}`, e);
+        }
+
         painPoints.push({
           slug,
           title: data.title || 'Untitled Pain Point',
-          description: data.description || '',
-          severity: data.severity || 'medium',
-          status: data.status || 'open',
-          createdAt: data.createdAt || '',
+          inconvenience: data['how does it inconvience you'] || '',
+          workaround: data['what have you done as a workaround'] || '',
+          limitation: data['how does this pain point limit what you want to do'] || '',
+          demandScore: parseInt(data['on a scale of 1 - 10 how badly would you want the solution to your paint point']) || 0,
+          progressScore: parseInt(data['how much progress have the tech you or someone you\'re working has gone to fixing the pain point']) || 0,
+          createdAt: createdAt,
           tags: data.tags || [],
         });
       } catch (parseError) {
-        console.error(`Error parsing pain point file ${file}:`, parseError);
+        console.error(`Error parsing remote file ${fileItem.name}:`, parseError);
       }
     }
-
+    
     // Sort by date (newest first)
     return painPoints.sort((a, b) => {
       if (a.createdAt && b.createdAt) {
@@ -58,36 +115,8 @@ async function getPainPoints(): Promise<PainPoint[]> {
       return 0;
     });
   } catch (error) {
-    console.error('Error reading pain points:', error);
+    console.error('Error fetching pain points:', error);
     return [];
-  }
-}
-
-function getSeverityBadgeClass(severity: string): string {
-  switch (severity) {
-    case 'critical':
-      return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
-    case 'high':
-      return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400';
-    case 'medium':
-      return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
-    case 'low':
-      return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
-    default:
-      return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400';
-  }
-}
-
-function getStatusBadgeClass(status: string): string {
-  switch (status) {
-    case 'resolved':
-      return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
-    case 'in-progress':
-      return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
-    case 'open':
-      return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400';
-    default:
-      return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400';
   }
 }
 
@@ -107,17 +136,32 @@ export default async function PainPointsPage() {
   const painPoints = await getPainPoints();
   const isAdmin = userRole === 'admin' || userRole === 'Admin';
   
-  // GitHub URL for creating a new pain point with pre-filled template
-  const today = new Date().toISOString().split('T')[0];
-  const template = JSON.stringify({
-    title: "",
-    description: "",
-    severity: "medium",
-    status: "open",
-    createdAt: today,
-    tags: []
-  }, null, 4);
-  const addPainPointUrl = `https://github.com/MonteLogic/MoL-blog-content/new/main/posts/categorized/pain-points?filename=new-pain-point.json&value=${encodeURIComponent(template)}`;
+  // GitHub URL for creating a new pain point with pre-filled YAML template
+  const template = `# Pain Point Title - be descriptive
+title: "I cannot [insert text here]"
+
+# Pain Point Description
+# What is the Pain Point in detail?
+how does it inconvience you: "I have to [insert text here]"
+
+what have you done as a workaround: "I have [insert text here]."
+
+how does this pain point limit what you want to do: "I am limited to/by [insert text here]."  
+
+
+# Pain Point personal affect. 
+on a scale of 1 - 10 how badly would you want the solution to your paint point: [insert number 1-10 here]
+
+# Progress on pain Point, 0 - 10
+how much progress have the tech you or someone you're working has gone to fixing the pain point: [insert number 0-10]
+
+# Tags for categorization (e.g., ux, performance, bug, feature-request)
+tags:
+  - [tag1]
+  - [tag2]
+  - [tag3]
+`;
+  const addPainPointUrl = `https://github.com/MonteLogic/MoL-blog-content/new/main/posts/categorized/pain-points?filename=pain-point-name-1.yaml&value=${encodeURIComponent(template)}`;
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -174,19 +218,40 @@ export default async function PainPointsPage() {
                   {painPoint.title}
                 </h2>
                 <div className="flex gap-2 flex-shrink-0">
-                  <span className={`px-2 py-1 text-xs font-medium rounded-full ${getSeverityBadgeClass(painPoint.severity)}`}>
-                    {painPoint.severity}
+                  <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                    Demand: {painPoint.demandScore}/10
                   </span>
-                  <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusBadgeClass(painPoint.status)}`}>
-                    {painPoint.status}
+                  <span className="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">
+                    Progress: {painPoint.progressScore}/10
                   </span>
                 </div>
               </div>
               
-              {painPoint.description && (
-                <p className="text-sm mb-3 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                  {painPoint.description}
-                </p>
+              {painPoint.inconvenience && (
+                <div className="mb-3">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Inconvenience</h3>
+                  <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                    {painPoint.inconvenience}
+                  </p>
+                </div>
+              )}
+
+              {painPoint.limitation && (
+                <div className="mb-3">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Limitation</h3>
+                  <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                    {painPoint.limitation}
+                  </p>
+                </div>
+              )}
+              
+              {painPoint.workaround && (
+                <div className="mb-3">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Workaround</h3>
+                  <p className="text-sm leading-relaxed italic" style={{ color: 'var(--text-secondary)' }}>
+                    {painPoint.workaround}
+                  </p>
+                </div>
               )}
               
               {painPoint.createdAt && (
