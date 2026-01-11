@@ -53,9 +53,9 @@ export const getSecondMenu = (
         description: 'Truck Routes',
       },
       {
-        name: 'Documentation',
-        slug: 'docs',
-        description: 'CBud Documentation',
+        name: 'View Pain Points',
+        slug: 'blog/pain-points',
+        description: 'View Pain Points',
       },
       {
         name: 'Blog',

@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { auth, currentUser } from '@clerk/nextjs';
 import YAML from 'yaml';
 import RefreshButton from './refresh-button';
+import PainPointsList from './pain-points-list';
 
 interface PainPoint {
   slug: string;
@@ -217,98 +218,7 @@ tags:
       )}
 
       {/* Pain Points List */}
-      <div className="grid gap-6">
-        {painPoints.map((painPoint) => (
-          <Link 
-            key={painPoint.slug} 
-            href={`/blog/pain-points/${painPoint.slug}`}
-            className="block group"
-          >
-            <article className="card-blog h-full hover:border-accent-purple/50 hover:shadow-md transition-all">
-              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-3">
-                <h2 className="text-xl font-semibold group-hover:text-accent-purple transition-colors" style={{ color: 'var(--text-primary)' }}>
-                  {painPoint.title}
-                </h2>
-                <div className="flex gap-2 flex-shrink-0 self-start sm:self-auto">
-                  <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
-                    Demand: {painPoint.demandScore}/10
-                  </span>
-                  <span className="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">
-                    Progress: {painPoint.progressScore}/10
-                  </span>
-                </div>
-              </div>
-              
-              {painPoint.inconvenience && (
-                <div className="mb-3">
-                  <h3 className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Inconvenience</h3>
-                  <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                    {painPoint.inconvenience}
-                  </p>
-                </div>
-              )}
-
-              {painPoint.limitation && (
-                <div className="mb-3">
-                  <h3 className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Limitation</h3>
-                  <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                    {painPoint.limitation}
-                  </p>
-                </div>
-              )}
-              
-              {painPoint.workaround && (
-                <div className="mb-3">
-                  <h3 className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Workaround</h3>
-                  <p className="text-sm leading-relaxed italic" style={{ color: 'var(--text-secondary)' }}>
-                    {painPoint.workaround}
-                  </p>
-                </div>
-              )}
-              
-              {painPoint.createdAt && (
-                <div className="text-xs mb-3" style={{ color: 'var(--text-muted)' }}>
-                  {new Date(painPoint.createdAt).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  })}
-                </div>
-              )}
-
-              {painPoint.tags && painPoint.tags.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {painPoint.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="tag-blog"
-                    >
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              <div className="mt-4 flex items-center text-accent-indigo text-sm font-medium opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all">
-                View Details <span className="ml-1">→</span>
-              </div>
-            </article>
-          </Link>
-        ))}
-
-        {painPoints.length === 0 && (
-          <div className="col-span-full text-center py-12 rounded-xl border border-slate-200 dark:border-slate-700" style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-muted)' }}>
-            <p>No pain points found.</p>
-            {isAdmin && (
-              <p className="mt-2 text-sm">
-                <a href={addPainPointUrl} target="_blank" rel="noopener noreferrer" className="text-accent-indigo hover:underline">
-                  Add your first pain point →
-                </a>
-              </p>
-            )}
-          </div>
-        )}
-      </div>
+      <PainPointsList initialPainPoints={painPoints} />
     </div>
   );
 }
