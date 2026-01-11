@@ -1,63 +1,108 @@
 import React from 'react';
 import Link from 'next/link';
-import fs from 'fs';
-import path from 'path';
 import { auth, currentUser } from '@clerk/nextjs';
 import { notFound } from 'next/navigation';
+import YAML from 'yaml';
 
-interface PainPointData {
+interface PainPoint {
+  slug: string;
   title: string;
-  description: string;
-  severity: 'low' | 'medium' | 'high' | 'critical';
-  status: 'open' | 'in-progress' | 'resolved';
+  inconvenience: string;
+  workaround: string;
+  limitation: string;
+  demandScore: number;
+  progressScore: number;
   createdAt: string;
   tags: string[];
-  details?: string;
-  stepsToReproduce?: string[];
-  proposedSolution?: string;
 }
 
-async function getPainPoint(slug: string): Promise<PainPointData | null> {
+async function getPainPoint(slug: string): Promise<PainPoint | null> {
   try {
-    const filePath = path.join(process.cwd(), 'MoL-blog-content/posts/categorized/pain-points', `${slug}.json`);
+    const owner = 'MonteLogic';
+    const repo = 'MoL-blog-content';
+    const path = 'posts/categorized/pain-points';
     
-    if (!fs.existsSync(filePath)) {
-      return null;
+    // Attempt to fetch as YAML first, then JSON (since we support both)
+    // We try to guess the extension or check the directory. 
+    // A more robust way is to list files and find the match, but for a detail page 
+    // checking specific extensions is faster if we assume convention.
+    // However, listing first ensures we get the right file extension.
+    
+    const headers: HeadersInit = {
+      'Accept': 'application/vnd.github.v3+json',
+    };
+    
+    if (process.env.CONTENT_GH_TOKEN) {
+      headers['Authorization'] = `Bearer ${process.env.CONTENT_GH_TOKEN}`;
     }
 
-    const content = fs.readFileSync(filePath, 'utf8');
-    return JSON.parse(content);
+    // List files to find the correct extension for this slug
+    const dirUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+    const dirRes = await fetch(dirUrl, {
+       headers,
+       next: { revalidate: 60 } 
+    });
+    
+    if (!dirRes.ok) return null;
+    
+    const files = await dirRes.json();
+    
+    // Explicitly look for YAML first, then JSON
+    // This handles the case where both exist (e.g. new-pain-point.yaml and new-pain-point.json)
+    // and prevents picking up a broken JSON file if a valid YAML one exists.
+    let fileMatch = Array.isArray(files) ? files.find((f: any) => f.name === `${slug}.yaml` || f.name === `${slug}.yml`) : null;
+    
+    if (!fileMatch) {
+       fileMatch = Array.isArray(files) ? files.find((f: any) => f.name === `${slug}.json`) : null;
+    }
+
+    if (!fileMatch) return null;
+
+    // Fetch Content
+    const contentRes = await fetch(fileMatch.download_url, {
+       headers,
+       next: { revalidate: 300 }
+    });
+    
+    if (!contentRes.ok) return null;
+    
+    const content = await contentRes.text();
+    const isYaml = fileMatch.name.endsWith('.yaml') || fileMatch.name.endsWith('.yml');
+    const data = isYaml ? YAML.parse(content) : JSON.parse(content);
+
+    // Fetch creation date via commits
+    let createdAt = new Date().toISOString();
+    try {
+        const commitsUrl = `https://api.github.com/repos/${owner}/${repo}/commits?path=${path}/${fileMatch.name}&page=1&per_page=1&order=asc`;
+        const commitsRes = await fetch(commitsUrl, {
+            headers,
+            next: { revalidate: 3600 }
+        });
+        if (commitsRes.ok) {
+            const commits = await commitsRes.json();
+            if (commits && commits.length > 0) {
+            createdAt = commits[0].commit.author.date;
+            }
+        }
+    } catch (e) {
+        console.warn(`Failed to fetch commits for ${slug}`);
+    }
+
+    return {
+        slug,
+        title: data.title || 'Untitled Pain Point',
+        inconvenience: data['how does it inconvience you'] || '',
+        workaround: data['what have you done as a workaround'] || '',
+        limitation: data['how does this pain point limit what you want to do'] || '',
+        demandScore: parseInt(data['on a scale of 1 - 10 how badly would you want the solution to your paint point']) || 0,
+        progressScore: parseInt(data['how much progress have the tech you or someone you\'re working has gone to fixing the pain point']) || 0,
+        createdAt: createdAt,
+        tags: data.tags || [],
+    };
+
   } catch (error) {
-    console.error('Error reading pain point:', error);
+    console.error('Error fetching pain point:', error);
     return null;
-  }
-}
-
-function getSeverityBadgeClass(severity: string): string {
-  switch (severity) {
-    case 'critical':
-      return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
-    case 'high':
-      return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400';
-    case 'medium':
-      return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
-    case 'low':
-      return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
-    default:
-      return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400';
-  }
-}
-
-function getStatusBadgeClass(status: string): string {
-  switch (status) {
-    case 'resolved':
-      return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
-    case 'in-progress':
-      return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
-    case 'open':
-      return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400';
-    default:
-      return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400';
   }
 }
 
@@ -86,8 +131,8 @@ export default async function PainPointDetailPage({
 
   const isAdmin = userRole === 'admin' || userRole === 'Admin';
   
-  // GitHub URL for editing this pain point
-  const editOnGitHubUrl = `https://github.com/MonteLogic/MoL-blog-content/edit/main/posts/categorized/pain-points/${params.slug}.json`;
+  // GitHub URL for editing this pain point (guessing .yaml as default/modern standard)
+  const editOnGitHubUrl = `https://github.com/MonteLogic/MoL-blog-content/blob/main/posts/categorized/pain-points/${params.slug}.yaml`;
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -106,12 +151,12 @@ export default async function PainPointDetailPage({
             {painPoint.title}
           </h1>
           <div className="flex gap-2 flex-shrink-0">
-            <span className={`px-3 py-1.5 text-sm font-medium rounded-full ${getSeverityBadgeClass(painPoint.severity)}`}>
-              {painPoint.severity}
-            </span>
-            <span className={`px-3 py-1.5 text-sm font-medium rounded-full ${getStatusBadgeClass(painPoint.status)}`}>
-              {painPoint.status}
-            </span>
+             <span className="px-3 py-1.5 text-sm font-medium rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                Demand: {painPoint.demandScore}/10
+             </span>
+             <span className="px-3 py-1.5 text-sm font-medium rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">
+                Progress: {painPoint.progressScore}/10
+             </span>
           </div>
         </div>
 
@@ -125,42 +170,31 @@ export default async function PainPointDetailPage({
           </div>
         )}
 
-        {painPoint.description && (
+        {painPoint.inconvenience && (
           <div className="mb-6">
-            <h2 className="text-lg font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>Description</h2>
+            <h2 className="text-lg font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>Inconvenience</h2>
             <p className="leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-              {painPoint.description}
+              {painPoint.inconvenience}
             </p>
           </div>
         )}
 
-        {painPoint.details && (
+        {painPoint.limitation && (
           <div className="mb-6">
-            <h2 className="text-lg font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>Details</h2>
+            <h2 className="text-lg font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>Limitation</h2>
             <p className="leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-              {painPoint.details}
+              {painPoint.limitation}
             </p>
           </div>
         )}
 
-        {painPoint.stepsToReproduce && painPoint.stepsToReproduce.length > 0 && (
-          <div className="mb-6">
-            <h2 className="text-lg font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>Steps to Reproduce</h2>
-            <ol className="list-decimal list-inside space-y-1" style={{ color: 'var(--text-secondary)' }}>
-              {painPoint.stepsToReproduce.map((step, index) => (
-                <li key={index}>{step}</li>
-              ))}
-            </ol>
-          </div>
-        )}
-
-        {painPoint.proposedSolution && (
-          <div className="mb-6">
-            <h2 className="text-lg font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>Proposed Solution</h2>
-            <p className="leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-              {painPoint.proposedSolution}
+        {painPoint.workaround && (
+            <div className="mb-6">
+            <h2 className="text-lg font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>Workaround</h2>
+            <p className="leading-relaxed italic" style={{ color: 'var(--text-secondary)' }}>
+                {painPoint.workaround}
             </p>
-          </div>
+            </div>
         )}
 
         {painPoint.tags && painPoint.tags.length > 0 && (
