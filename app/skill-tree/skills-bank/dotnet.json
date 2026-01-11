@@ -1,0 +1,17 @@
+{
+    "id": "dotnet",
+    "name": ".NET",
+    "category": "Backend",
+    "currentLevel": "Staff Engineer",
+    "yearsOfExperience": 3,
+    "yearsOfProfessionalExperience": 2,
+    "employabilityScore": 8,
+    "description": "C# development, ASP.NET Core, and enterprise applications.",
+    "projects": [
+        {
+            "title": "Enterprise Applications",
+            "description": ".NET backend services and APIs",
+            "url": "#"
+        }
+    ]
+}

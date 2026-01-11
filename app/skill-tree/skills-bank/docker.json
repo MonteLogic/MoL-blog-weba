@@ -1,0 +1,17 @@
+{
+    "id": "docker",
+    "name": "Docker",
+    "category": "DevOps",
+    "currentLevel": "Script Kitty",
+    "yearsOfExperience": 2,
+    "yearsOfProfessionalExperience": 1,
+    "employabilityScore": 7,
+    "description": "Container basics and Docker Compose.",
+    "projects": [
+        {
+            "title": "Container Deployments",
+            "description": "Dockerized application deployments",
+            "url": "#"
+        }
+    ]
+}

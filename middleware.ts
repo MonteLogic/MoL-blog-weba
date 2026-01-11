@@ -7,7 +7,7 @@ export default authMiddleware({
   publicRoutes: [
     '/api/uploadthing', 
         /^\/blog(\/.*)?$/, // This is the key change
-    
+    /^\/skill-tree(\/.*)?$/, // Skill Tree page is public
     
     '/', '/api/webhooks(.*)'],
 });

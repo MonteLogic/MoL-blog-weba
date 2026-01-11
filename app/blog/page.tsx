@@ -296,6 +296,13 @@ export default async function BlogPage({
             View Projects
             <span className="ml-2 transform transition-transform group-hover:translate-x-1">→</span>
           </Link>
+          <Link 
+            href="/blog/pain-points"
+            className="group inline-flex items-center text-accent-indigo hover:text-accent-purple transition-colors font-medium"
+          >
+            View Pain Points
+            <span className="ml-2 transform transition-transform group-hover:translate-x-1">→</span>
+          </Link>
         </div>
       </div>
 

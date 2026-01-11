@@ -1,0 +1,17 @@
+{
+    "id": "typescript",
+    "name": "TypeScript",
+    "category": "Languages",
+    "currentLevel": "Senior",
+    "yearsOfExperience": 4,
+    "yearsOfProfessionalExperience": 3,
+    "employabilityScore": 9,
+    "description": "Strong typing, generics, and advanced type patterns.",
+    "projects": [
+        {
+            "title": "MoL Blog",
+            "description": "Full TypeScript implementation",
+            "url": "/blog"
+        }
+    ]
+}

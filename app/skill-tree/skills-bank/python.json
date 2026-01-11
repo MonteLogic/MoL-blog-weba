@@ -1,0 +1,17 @@
+{
+    "id": "python",
+    "name": "Python",
+    "category": "Languages",
+    "currentLevel": "Staff Engineer",
+    "yearsOfExperience": 3,
+    "yearsOfProfessionalExperience": 2,
+    "employabilityScore": 8,
+    "description": "Django, Flask, and data processing scripts.",
+    "projects": [
+        {
+            "title": "Backend Services",
+            "description": "Python backend development",
+            "url": "#"
+        }
+    ]
+}

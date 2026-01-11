@@ -1,0 +1,17 @@
+{
+    "id": "aws",
+    "name": "AWS",
+    "category": "Cloud",
+    "currentLevel": "Staff Engineer",
+    "yearsOfExperience": "<1",
+    "yearsOfProfessionalExperience": 0,
+    "employabilityScore": 9,
+    "description": "EC2, S3, Lambda, and basic infrastructure.",
+    "projects": [
+        {
+            "title": "Cloud Infrastructure",
+            "description": "AWS deployments and services",
+            "url": "#"
+        }
+    ]
+}
