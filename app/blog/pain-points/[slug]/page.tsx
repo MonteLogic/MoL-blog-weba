@@ -8,6 +8,8 @@ interface PainPointUpdate {
     file: string;
     description: string;
     date: string;
+    demand?: number;
+    progress?: number;
 }
 
 interface PainPoint {
@@ -107,10 +109,16 @@ async function getPainPoint(slug: string): Promise<PainPoint | null> {
                              const uData = YAML.parse(uText);
                              
                              // Get date from file creation or frontmatter
+                             // Get date from file creation or frontmatter
+                             const demandVal = uData.demand !== undefined ? parseFloat(uData.demand) : undefined;
+                             const progressVal = uData.progress !== undefined ? parseFloat(uData.progress) : undefined;
+
                              return {
                                  file: f.name,
                                  description: uData.description || uData.content || '',
-                                 date: uData.date || new Date().toISOString() // Fallback
+                                 date: uData.date || new Date().toISOString(), // Fallback
+                                 demand: demandVal,
+                                 progress: progressVal
                              };
                         });
                     
@@ -146,14 +154,26 @@ async function getPainPoint(slug: string): Promise<PainPoint | null> {
         console.warn(`Failed to fetch commits for ${slug}`);
     }
 
+    // Calculate current scores (Base + Deltas)
+    let currentDemandScore = parseInt(data['on a scale of 1 - 10 how badly would you want the solution to your paint point']) || 0;
+    let currentProgressScore = parseInt(data['how much progress have the tech you or someone you\'re working has gone to fixing the pain point']) || 0;
+
+    updates.forEach(u => {
+        if (u.demand !== undefined) currentDemandScore += u.demand;
+        if (u.progress !== undefined) currentProgressScore += u.progress;
+    });
+
+    // Helper to clamp values between 0 and 10
+    const clamp = (val: number) => Math.min(10, Math.max(0, val));
+
     return {
         slug,
         title: data.title || 'Untitled Pain Point',
         inconvenience: data['how does it inconvience you'] || '',
         workaround: data['what have you done as a workaround'] || '',
         limitation: data['how does this pain point limit what you want to do'] || '',
-        demandScore: parseInt(data['on a scale of 1 - 10 how badly would you want the solution to your paint point']) || 0,
-        progressScore: parseInt(data['how much progress have the tech you or someone you\'re working has gone to fixing the pain point']) || 0,
+        demandScore: clamp(currentDemandScore),
+        progressScore: clamp(currentProgressScore),
         createdAt: createdAt,
         tags: data.tags || [],
         updates: updates,
@@ -198,6 +218,8 @@ export default async function PainPointDetailPage({
   const updateDate = new Date().toISOString().split('T')[0];
   const updateTemplate = `date: "${updateDate}"
 description: "Describe the update here..."
+progress: 0 # Add/Subtract progress (e.g. +2 or -1). Leave 0 for no change.
+demand: 0 # Add/Subtract demand (e.g. +2 or -1). Leave 0 for no change.
 `;
   const addUpdateUrl = `https://github.com/MonteLogic/MoL-blog-content/new/main/posts/categorized/pain-points/${params.slug}/updates?filename=update-${updateDate}.yaml&value=${encodeURIComponent(updateTemplate)}`;
 
@@ -302,8 +324,18 @@ description: "Describe the update here..."
                         {painPoint.updates.map((update, idx) => (
                             <div key={idx} className="relative pl-8 pb-6 border-l-2 border-slate-200 dark:border-slate-700 last:border-0 last:pb-0">
                                 <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-slate-300 dark:bg-slate-600 ring-4 ring-white dark:ring-gray-900" />
-                                <div className="text-sm text-slate-500 dark:text-slate-400 mb-1">
-                                    {new Date(update.date).toLocaleDateString()}
+                                <div className="flex flex-wrap items-baseline gap-x-2 text-sm text-slate-500 dark:text-slate-400 mb-1">
+                                    <span>{new Date(update.date).toLocaleDateString()}</span>
+                                    {update.progress !== undefined && update.progress !== 0 && (
+                                        <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${update.progress > 0 ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'}`}>
+                                            Progress: {update.progress > 0 ? '+' : ''}{update.progress}
+                                        </span>
+                                    )}
+                                    {update.demand !== undefined && update.demand !== 0 && (
+                                        <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${update.demand > 0 ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'}`}>
+                                            Demand: {update.demand > 0 ? '+' : ''}{update.demand}
+                                        </span>
+                                    )}
                                 </div>
                                 <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-800/50">
                                     <p className="text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{update.description}</p>
