@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { auth, currentUser } from '@clerk/nextjs';
 import { notFound } from 'next/navigation';
 import YAML from 'yaml';
+import SubPainPointsTabs from './sub-pain-points-tabs';
 
 interface PainPointUpdate {
     file: string;
@@ -10,6 +11,16 @@ interface PainPointUpdate {
     date: string;
     demand?: number;
     progress?: number;
+    source: string; // "main" or sub pain point slug
+}
+
+interface SubPainPoint {
+    slug: string;
+    title: string;
+    description: string;
+    demandScore: number;
+    progressScore: number;
+    tags: string[];
 }
 
 interface PainPoint {
@@ -23,6 +34,7 @@ interface PainPoint {
   createdAt: string;
   tags: string[];
   updates: PainPointUpdate[];
+  subPainPoints: SubPainPoint[];
 }
 
 async function getPainPoint(slug: string): Promise<PainPoint | null> {
@@ -30,12 +42,6 @@ async function getPainPoint(slug: string): Promise<PainPoint | null> {
     const owner = 'MonteLogic';
     const repo = 'MoL-blog-content';
     const basePath = 'posts/categorized/pain-points';
-    
-    // Attempt to fetch as YAML first, then JSON (since we support both)
-    // We try to guess the extension or check the directory. 
-    // A more robust way is to list files and find the match, but for a detail page 
-    // checking specific extensions is faster if we assume convention.
-    // However, listing first ensures we get the right file extension.
     
     const headers: HeadersInit = {
       'Accept': 'application/vnd.github.v3+json',
@@ -45,30 +51,23 @@ async function getPainPoint(slug: string): Promise<PainPoint | null> {
       headers['Authorization'] = `Bearer ${process.env.CONTENT_GH_TOKEN}`;
     }
 
-    // logic:
-    // 1. Try to fetch as directory: posts/categorized/pain-points/[slug]/
-    // 2. If valid dir, look for [slug].yaml or [slug].yml or index.yaml inside.
-    // 3. fetch updates from [slug]/updates/
-
     let contentUrl: string | null = null;
     let filePath: string | null = null;
     let isDir = false;
 
     // Check directory existence and contents
     try {
-        const dirUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${basePath}/${slug}`; // Check if slug is a dir
+        const dirUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${basePath}/${slug}`;
         const dirRes = await fetch(dirUrl, { headers, next: { revalidate: 60 } });
         
         if (dirRes.ok) {
             const dirFiles = await dirRes.json();
             if (Array.isArray(dirFiles)) {
-                 // It is a directory. Find the main file.
-                 // Expected: [slug].yaml
                  const mainFile = dirFiles.find((f: any) => 
                      f.name === `${slug}.yaml` || 
                      f.name === `${slug}.yml` || 
                      f.name === `index.yaml` ||
-                     f.name === `${slug}.json` // Support migrated json too
+                     f.name === `${slug}.json`
                  );
                  if (mainFile) {
                      contentUrl = mainFile.download_url;
@@ -89,8 +88,10 @@ async function getPainPoint(slug: string): Promise<PainPoint | null> {
     const isYaml = filePath.endsWith('.yaml') || filePath.endsWith('.yml');
     const data = isYaml ? YAML.parse(content) : JSON.parse(content);
 
-    // Fetch Updates if isDir (Always true now, but keep check for safety)
-    const updates: PainPointUpdate[] = [];
+    // All updates (from main pain point and sub pain points)
+    const allUpdates: PainPointUpdate[] = [];
+
+    // Fetch Main Pain Point Updates
     if (isDir) {
         try {
             const updatesUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${basePath}/${slug}/updates`;
@@ -98,8 +99,6 @@ async function getPainPoint(slug: string): Promise<PainPoint | null> {
             if (updatesRes.ok) {
                 const updateFiles = await updatesRes.json();
                 if (Array.isArray(updateFiles)) {
-                    // Fetch each update content
-                    // Parallel fetch
                     const updatePromises = updateFiles
                         .filter((f: any) => f.name.endsWith('.yaml') || f.name.endsWith('.yml'))
                         .map(async (f: any) => {
@@ -108,33 +107,112 @@ async function getPainPoint(slug: string): Promise<PainPoint | null> {
                              const uText = await uRes.text();
                              const uData = YAML.parse(uText);
                              
-                             // Get date from file creation or frontmatter
-                             // Get date from file creation or frontmatter
                              const demandVal = uData.demand !== undefined ? parseFloat(uData.demand) : undefined;
                              const progressVal = uData.progress !== undefined ? parseFloat(uData.progress) : undefined;
 
                              return {
                                  file: f.name,
                                  description: uData.description || uData.content || '',
-                                 date: uData.date || new Date().toISOString(), // Fallback
+                                 date: uData.date || new Date().toISOString(),
                                  demand: demandVal,
-                                 progress: progressVal
+                                 progress: progressVal,
+                                 source: 'main'
                              };
                         });
                     
                     const fetchedUpdates = await Promise.all(updatePromises);
                     fetchedUpdates.forEach(u => {
-                        if (u) updates.push(u);
+                        if (u) allUpdates.push(u);
                     });
-                    
-                    // Sort updates by date descending
-                    updates.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
                 }
             }
         } catch (e) {
             // No updates folder or other error, ignore
         }
     }
+
+    // Fetch Sub Pain Points and their updates
+    const subPainPoints: SubPainPoint[] = [];
+    if (isDir) {
+        try {
+            const subUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${basePath}/${slug}/sub-pain-points`;
+            const subRes = await fetch(subUrl, { headers, next: { revalidate: 60 } });
+            if (subRes.ok) {
+                const subFiles = await subRes.json();
+                if (Array.isArray(subFiles)) {
+                    // Filter for directories (sub pain point folders)
+                    const subDirs = subFiles.filter((f: any) => f.type === 'dir');
+                    const subYamlFiles = subFiles.filter((f: any) => f.name.endsWith('.yaml') || f.name.endsWith('.yml'));
+
+                    // Process YAML files as sub pain points (flat structure)
+                    const subPromises = subYamlFiles.map(async (f: any) => {
+                        const sRes = await fetch(f.download_url, { headers, next: { revalidate: 300 } });
+                        if (!sRes.ok) return null;
+                        const sText = await sRes.text();
+                        const sData = YAML.parse(sText);
+                        
+                        const subSlug = f.name.replace(/\.(yaml|yml)$/, '');
+
+                        return {
+                            slug: subSlug,
+                            title: sData.title || 'Untitled',
+                            description: sData.description || '',
+                            demandScore: parseInt(sData.demandScore) || 0,
+                            progressScore: parseInt(sData.progressScore) || 0,
+                            tags: sData.tags || [],
+                        };
+                    });
+                    
+                    const fetchedSubs = await Promise.all(subPromises);
+                    fetchedSubs.forEach(s => {
+                        if (s) subPainPoints.push(s);
+                    });
+
+                    // For each sub pain point directory, fetch its updates
+                    for (const subDir of subDirs) {
+                        try {
+                            const subUpdatesUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${basePath}/${slug}/sub-pain-points/${subDir.name}/updates`;
+                            const subUpdatesRes = await fetch(subUpdatesUrl, { headers, next: { revalidate: 60 } });
+                            if (subUpdatesRes.ok) {
+                                const subUpdateFiles = await subUpdatesRes.json();
+                                if (Array.isArray(subUpdateFiles)) {
+                                    const subUpdatePromises = subUpdateFiles
+                                        .filter((f: any) => f.name.endsWith('.yaml') || f.name.endsWith('.yml'))
+                                        .map(async (f: any) => {
+                                            const uRes = await fetch(f.download_url, { headers, next: { revalidate: 300 } });
+                                            if (!uRes.ok) return null;
+                                            const uText = await uRes.text();
+                                            const uData = YAML.parse(uText);
+                                            
+                                            return {
+                                                file: f.name,
+                                                description: uData.description || uData.content || '',
+                                                date: uData.date || new Date().toISOString(),
+                                                demand: uData.demand !== undefined ? parseFloat(uData.demand) : undefined,
+                                                progress: uData.progress !== undefined ? parseFloat(uData.progress) : undefined,
+                                                source: subDir.name
+                                            };
+                                        });
+                                    
+                                    const fetchedSubUpdates = await Promise.all(subUpdatePromises);
+                                    fetchedSubUpdates.forEach(u => {
+                                        if (u) allUpdates.push(u);
+                                    });
+                                }
+                            }
+                        } catch (e) {
+                            // No updates for this sub pain point, ignore
+                        }
+                    }
+                }
+            }
+        } catch (e) {
+            // No sub-pain-points folder or other error, ignore
+        }
+    }
+
+    // Sort all updates by date descending
+    allUpdates.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
     // Fetch creation date via commits
     let createdAt = new Date().toISOString();
@@ -154,11 +232,11 @@ async function getPainPoint(slug: string): Promise<PainPoint | null> {
         console.warn(`Failed to fetch commits for ${slug}`);
     }
 
-    // Calculate current scores (Base + Deltas)
+    // Calculate current scores (Base + Deltas from main updates only)
     let currentDemandScore = parseInt(data['on a scale of 1 - 10 how badly would you want the solution to your paint point']) || 0;
     let currentProgressScore = parseInt(data['how much progress have the tech you or someone you\'re working has gone to fixing the pain point']) || 0;
 
-    updates.forEach(u => {
+    allUpdates.filter(u => u.source === 'main').forEach(u => {
         if (u.demand !== undefined) currentDemandScore += u.demand;
         if (u.progress !== undefined) currentProgressScore += u.progress;
     });
@@ -176,7 +254,8 @@ async function getPainPoint(slug: string): Promise<PainPoint | null> {
         progressScore: clamp(currentProgressScore),
         createdAt: createdAt,
         tags: data.tags || [],
-        updates: updates,
+        updates: allUpdates,
+        subPainPoints: subPainPoints,
     };
   } catch (error) {
     console.error('Error fetching pain point:', error);
@@ -209,19 +288,8 @@ export default async function PainPointDetailPage({
 
   const isAdmin = userRole === 'admin' || userRole === 'Admin';
   
-  // GitHub URL for editing this pain point (guessing .yaml as default/modern standard)
+  // GitHub URL for editing this pain point
   const editOnGitHubUrl = `https://github.com/MonteLogic/MoL-blog-content/blob/main/posts/categorized/pain-points/${params.slug}/${params.slug}.yaml`;
-
-  // Add Update URL:
-  // new/main/posts/categorized/pain-points/[slug]/updates/new?filename=update-YYYY-MM-DD.yaml
-  // We need to encode the value as well for a template
-  const updateDate = new Date().toISOString().split('T')[0];
-  const updateTemplate = `date: "${updateDate}"
-description: "Describe the update here..."
-progress: 0 # Add/Subtract progress (e.g. +2 or -1). Leave 0 for no change.
-demand: 0 # Add/Subtract demand (e.g. +2 or -1). Leave 0 for no change.
-`;
-  const addUpdateUrl = `https://github.com/MonteLogic/MoL-blog-content/new/main/posts/categorized/pain-points/${params.slug}/updates?filename=update-${updateDate}.yaml&value=${encodeURIComponent(updateTemplate)}`;
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -301,53 +369,63 @@ demand: 0 # Add/Subtract demand (e.g. +2 or -1). Leave 0 for no change.
           </div>
         )}
 
-        {/* Updates Section */}
-        {(painPoint.updates && painPoint.updates.length > 0) || true ? (
-            <div className="mt-8 pt-8 border-t-2 border-slate-100 dark:border-slate-800">
-                <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Updates</h2>
-                     <a 
-                        href={addUpdateUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 transition-colors"
-                     >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                        </svg>
-                        Add Update
-                     </a>
-                </div>
+        {/* Sub Pain Points Section - Tabbed */}
+        <div className="mt-8 pt-8 border-t-2 border-slate-100 dark:border-slate-800">
+            <h2 className="text-2xl font-bold mb-4" style={{ color: 'var(--text-primary)' }}>Sub Pain Points</h2>
+            <SubPainPointsTabs 
+                subPainPoints={painPoint.subPainPoints} 
+                parentSlug={params.slug} 
+            />
+        </div>
 
-                {painPoint.updates && painPoint.updates.length > 0 ? (
-                    <div className="space-y-6">
-                        {painPoint.updates.map((update, idx) => (
-                            <div key={idx} className="relative pl-8 pb-6 border-l-2 border-slate-200 dark:border-slate-700 last:border-0 last:pb-0">
-                                <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-slate-300 dark:bg-slate-600 ring-4 ring-white dark:ring-gray-900" />
-                                <div className="flex flex-wrap items-baseline gap-x-2 text-sm text-slate-500 dark:text-slate-400 mb-1">
-                                    <span>{new Date(update.date).toLocaleDateString()}</span>
-                                    {update.progress !== undefined && update.progress !== 0 && (
-                                        <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${update.progress > 0 ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'}`}>
-                                            Progress: {update.progress > 0 ? '+' : ''}{update.progress}
-                                        </span>
-                                    )}
-                                    {update.demand !== undefined && update.demand !== 0 && (
-                                        <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${update.demand > 0 ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'}`}>
-                                            Demand: {update.demand > 0 ? '+' : ''}{update.demand}
-                                        </span>
-                                    )}
-                                </div>
-                                <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-800/50">
-                                    <p className="text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{update.description}</p>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                ) : (
-                    <p className="text-slate-500 italic">No updates yet.</p>
-                )}
+        {/* Updates Section - Shows ALL updates */}
+        <div className="mt-8 pt-8 border-t-2 border-slate-100 dark:border-slate-800">
+            <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>All Updates</h2>
+                 <Link 
+                    href={`/blog/pain-points/${params.slug}/add-update`}
+                    className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 transition-colors"
+                 >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Add Update
+                 </Link>
             </div>
-        ) : null}
+
+            {painPoint.updates && painPoint.updates.length > 0 ? (
+                <div className="space-y-6">
+                    {painPoint.updates.map((update, idx) => (
+                        <div key={idx} className="relative pl-8 pb-6 border-l-2 border-slate-200 dark:border-slate-700 last:border-0 last:pb-0">
+                            <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-slate-300 dark:bg-slate-600 ring-4 ring-white dark:ring-gray-900" />
+                            <div className="flex flex-wrap items-baseline gap-x-2 text-sm text-slate-500 dark:text-slate-400 mb-1">
+                                <span>{new Date(update.date).toLocaleDateString()}</span>
+                                {update.source !== 'main' && (
+                                    <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400">
+                                        Sub: {update.source}
+                                    </span>
+                                )}
+                                {update.progress !== undefined && update.progress !== 0 && (
+                                    <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${update.progress > 0 ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'}`}>
+                                        Progress: {update.progress > 0 ? '+' : ''}{update.progress}
+                                    </span>
+                                )}
+                                {update.demand !== undefined && update.demand !== 0 && (
+                                    <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${update.demand > 0 ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'}`}>
+                                        Demand: {update.demand > 0 ? '+' : ''}{update.demand}
+                                    </span>
+                                )}
+                            </div>
+                            <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+                                <p className="text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{update.description}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <p className="text-slate-500 italic">No updates yet.</p>
+            )}
+        </div>
 
         {/* Admin Area */}
         {isAdmin && (

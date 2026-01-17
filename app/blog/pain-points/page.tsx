@@ -14,6 +14,7 @@ interface PainPoint {
   demandScore: number;
   progressScore: number;
   createdAt: string;
+  lastUpdated?: string;
   tags: string[];
 }
 
@@ -117,6 +118,41 @@ async function getPainPoints(): Promise<PainPoint[]> {
            console.warn(`Failed to fetch commits for ${slug}`, e);
         }
 
+        // Fetch last update date from updates folder
+        let lastUpdated: string | undefined;
+        try {
+          const updatesUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}/${slug}/updates`;
+          const updatesRes = await fetch(updatesUrl, { headers, next: { revalidate: 300 } });
+          if (updatesRes.ok) {
+            const updateFiles = await updatesRes.json();
+            if (Array.isArray(updateFiles) && updateFiles.length > 0) {
+              // Get dates from update files by parsing them
+              const updateDates: string[] = [];
+              for (const uFile of updateFiles.filter((f: any) => f.name.endsWith('.yaml') || f.name.endsWith('.yml'))) {
+                try {
+                  const uRes = await fetch(uFile.download_url, { headers, next: { revalidate: 300 } });
+                  if (uRes.ok) {
+                    const uText = await uRes.text();
+                    const uData = YAML.parse(uText);
+                    if (uData.date) {
+                      updateDates.push(uData.date);
+                    }
+                  }
+                } catch (e) {
+                  // Ignore individual update fetch errors
+                }
+              }
+              // Find the most recent date
+              if (updateDates.length > 0) {
+                updateDates.sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+                lastUpdated = updateDates[0];
+              }
+            }
+          }
+        } catch (e) {
+          // No updates folder, ignore
+        }
+
         painPoints.push({
           slug,
           title: data.title || 'Untitled Pain Point',
@@ -126,6 +162,7 @@ async function getPainPoints(): Promise<PainPoint[]> {
           demandScore: parseInt(data['on a scale of 1 - 10 how badly would you want the solution to your paint point']) || 0,
           progressScore: parseInt(data['how much progress have the tech you or someone you\'re working has gone to fixing the pain point']) || 0,
           createdAt: createdAt,
+          lastUpdated: lastUpdated,
           tags: data.tags || [],
         });
       } catch (parseError) {

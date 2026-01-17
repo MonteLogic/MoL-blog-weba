@@ -12,11 +12,12 @@ interface PainPoint {
   demandScore: number;
   progressScore: number;
   createdAt: string;
+  lastUpdated?: string;
   tags: string[];
 }
 
 export default function PainPointsList({ initialPainPoints }: { initialPainPoints: PainPoint[] }) {
-  const [sortBy, setSortBy] = useState<'date' | 'demand' | 'progress'>('date');
+  const [sortBy, setSortBy] = useState<'date' | 'demand' | 'progress' | 'lastUpdated'>('date');
 
   const sortedPainPoints = useMemo(() => {
     return [...initialPainPoints].sort((a, b) => {
@@ -28,6 +29,24 @@ export default function PainPointsList({ initialPainPoints }: { initialPainPoint
          const diff = b.progressScore - a.progressScore;
          if (diff !== 0) return diff;
       }
+      if (sortBy === 'lastUpdated') {
+        // Prioritize items that have updates
+        const aHasUpdate = !!a.lastUpdated;
+        const bHasUpdate = !!b.lastUpdated;
+        
+        // If one has update and other doesn't, prioritize the one with update
+        if (aHasUpdate && !bHasUpdate) return -1;
+        if (!aHasUpdate && bHasUpdate) return 1;
+        
+        // Both have updates - sort by most recent
+        if (aHasUpdate && bHasUpdate) {
+          const aTime = new Date(a.lastUpdated!).getTime();
+          const bTime = new Date(b.lastUpdated!).getTime();
+          return bTime - aTime;
+        }
+        
+        // Neither has updates - fall through to createdAt sort
+      }
       // Default to date sort (newest first) as secondary or primary sort
       if (a.createdAt && b.createdAt) {
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
@@ -38,8 +57,18 @@ export default function PainPointsList({ initialPainPoints }: { initialPainPoint
 
   return (
     <div>
-      <div className="flex justify-end gap-2 mb-6">
+      <div className="flex flex-wrap justify-end gap-2 mb-6">
         <span className="text-sm font-medium self-center mr-2" style={{ color: 'var(--text-muted)' }}>Sort by:</span>
+        <button
+          onClick={() => setSortBy('lastUpdated')}
+          className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+            sortBy === 'lastUpdated'
+              ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border border-green-200 dark:border-green-900'
+              : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'
+          }`}
+        >
+          Last Updated
+        </button>
         <button
           onClick={() => setSortBy('demand')}
           className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
