@@ -50,38 +50,62 @@ async function getPainPoints(): Promise<PainPoint[]> {
 
     const files = await res.json();
     
-    // Filter for valid files and exclude examples
-    const examples = ['slow-page-load.json', 'mobile-navigation-issues.json'];
+    // Filter for valid directories
+    // We exclude specific examples if needed.
     const validFiles = Array.isArray(files) ? files.filter((file: any) => 
-      (file.name.endsWith('.yaml') || file.name.endsWith('.yml') || file.name.endsWith('.json')) &&
-      !examples.includes(file.name)
+      file.type === 'dir'
     ) : [];
 
     const painPoints: PainPoint[] = [];
 
     for (const fileItem of validFiles) {
       try {
+        const slug = fileItem.name;
+        
+        // Construct path to expected main YAML file: [slug]/[slug].yaml
+        
+        // Construct path to expected main YAML file: [slug]/[slug].yaml
+        // We assume the file inside has the same name as the folder
+        // We try .yaml, then .yml, then .json
+        // To be efficient, we can fetch contents of the dir first? Or just try fetch directly.
+        // Fetching dir contents is safer to know the extension.
+        
+        const dirUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}/${slug}`;
+        const dirRes = await fetch(dirUrl, { headers, next: { revalidate: 300 } });
+        
+        if (!dirRes.ok) continue;
+        
+        const dirFiles = await dirRes.json();
+        
+        if (!Array.isArray(dirFiles)) continue;
+        
+        const mainFile = dirFiles.find((f: any) => 
+            f.name === `${slug}.yaml` || 
+            f.name === `${slug}.yml` || 
+            f.name === `${slug}.json` ||
+            f.name === `index.yaml`
+        );
+        
+        if (!mainFile) continue;
+
         // Fetch raw content
-        // fileItem.download_url contains the raw content URL
-        const contentRes = await fetch(fileItem.download_url, {
+        const contentRes = await fetch(mainFile.download_url, {
            headers,
-           next: { revalidate: 300 } // Cache content files a bit longer
+           next: { revalidate: 300 } 
         });
         const content = await contentRes.text();
         
         // Parse content
-        const isYaml = fileItem.name.endsWith('.yaml') || fileItem.name.endsWith('.yml');
+        const isYaml = mainFile.name.endsWith('.yaml') || mainFile.name.endsWith('.yml');
         const data = isYaml ? YAML.parse(content) : JSON.parse(content);
-        
-        const slug = fileItem.name.replace(/\.(yaml|yml|json)$/, '');
 
         // Fetch creation date (first commit date) via GitHub API
         let createdAt = new Date().toISOString(); 
         try {
-           const commitsUrl = `https://api.github.com/repos/${owner}/${repo}/commits?path=${path}/${fileItem.name}&page=1&per_page=1&order=asc`;
+           const commitsUrl = `https://api.github.com/repos/${owner}/${repo}/commits?path=${path}/${slug}/${mainFile.name}&page=1&per_page=1&order=asc`;
            const commitsRes = await fetch(commitsUrl, {
               headers,
-              next: { revalidate: 3600 } // Commit history rarely changes for creation date
+              next: { revalidate: 3600 } 
            });
            if (commitsRes.ok) {
              const commits = await commitsRes.json();
@@ -90,7 +114,7 @@ async function getPainPoints(): Promise<PainPoint[]> {
              }
            }
         } catch (e) {
-           console.warn(`Failed to fetch commits for ${fileItem.name}`, e);
+           console.warn(`Failed to fetch commits for ${slug}`, e);
         }
 
         painPoints.push({
@@ -105,7 +129,7 @@ async function getPainPoints(): Promise<PainPoint[]> {
           tags: data.tags || [],
         });
       } catch (parseError) {
-        console.error(`Error parsing remote file ${fileItem.name}:`, parseError);
+        console.error(`Error parsing pain point ${fileItem.name}:`, parseError);
       }
     }
     

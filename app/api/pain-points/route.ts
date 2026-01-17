@@ -38,7 +38,8 @@ export async function POST(request: Request) {
 
     const owner = 'MonteLogic';
     const repo = 'MoL-blog-content';
-    const path = `posts/categorized/pain-points/${filename}`;
+    // New Structure: posts/categorized/pain-points/[slug]/[slug].yaml
+    const path = `posts/categorized/pain-points/${slug}/${filename}`;
     const token = process.env.CONTENT_GH_TOKEN;
 
     if (!token) {
