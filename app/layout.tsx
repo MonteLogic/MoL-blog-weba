@@ -29,7 +29,7 @@ export const metadata: Metadata = {
 };
 
 const getUserData = cache(async () => {
-  const { userId: clerkUserId } = auth();
+  const { userId: clerkUserId } = await auth();
 
   if (!clerkUserId) {
     return {
@@ -51,23 +51,32 @@ export default async function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en" suppressHydrationWarning>
-        <body className="overflow-y-scroll pb-36" style={{ backgroundColor: 'var(--bg-primary)' }}>
+        <body
+          className="overflow-y-scroll pb-36"
+          style={{ backgroundColor: 'var(--bg-primary)' }}
+        >
           <GlobalNav userData={userData} />
           <div className="lg:pl-72">
             <div className="mx-auto max-w-4xl space-y-8 px-2 pt-20 lg:px-8 lg:py-8">
-              <div 
-                className="rounded-xl shadow-sm border border-slate-200 dark:border-slate-700" 
+              <div
+                className="rounded-xl border border-slate-200 shadow-sm dark:border-slate-700"
                 style={{ backgroundColor: 'var(--bg-card)' }}
               >
-                <div className="rounded-xl" style={{ backgroundColor: 'var(--bg-card)' }}>
+                <div
+                  className="rounded-xl"
+                  style={{ backgroundColor: 'var(--bg-card)' }}
+                >
                   <AddressBar />
                 </div>
               </div>
-              <div 
-                className="rounded-xl shadow-sm border border-slate-200 dark:border-slate-700" 
+              <div
+                className="rounded-xl border border-slate-200 shadow-sm dark:border-slate-700"
                 style={{ backgroundColor: 'var(--bg-card)' }}
               >
-                <div className="rounded-xl p-4 lg:p-8" style={{ backgroundColor: 'var(--bg-card)' }}>
+                <div
+                  className="rounded-xl p-4 lg:p-8"
+                  style={{ backgroundColor: 'var(--bg-card)' }}
+                >
                   {children}
                   <Analytics />
                 </div>
@@ -80,5 +89,3 @@ export default async function RootLayout({
     </ClerkProvider>
   );
 }
-
-

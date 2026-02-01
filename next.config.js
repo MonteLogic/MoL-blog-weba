@@ -4,6 +4,7 @@ const webpack = require('webpack');
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  turbopack: {},
   webpack: (config, { dev, isServer }) => {
     (config.resolve = {
       ...config.resolve,
@@ -45,7 +46,6 @@ const nextConfig = {
       test: /\.d\.ts$/,
       loader: 'ignore-loader',
     });
-
 
     return config;
   },
