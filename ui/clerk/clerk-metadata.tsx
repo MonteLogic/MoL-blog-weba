@@ -14,7 +14,7 @@ export const useTimecardsMetadata = () => {
   useEffect(() => {
     if (user) {
       const currentCount =
-        (user.unsafeMetadata?.timecardsGenerated as number) || 0;
+        (user.unsafeMetadata?.['timecardsGenerated'] as number) || 0;
       setCount(currentCount);
     }
   }, [user]);
@@ -24,7 +24,7 @@ export const useTimecardsMetadata = () => {
 
     try {
       const currentCount =
-        (user.unsafeMetadata?.timecardsGenerated as number) || 0;
+        (user.unsafeMetadata?.['timecardsGenerated'] as number) || 0;
       const newCount = currentCount + 1;
 
       await user.update({

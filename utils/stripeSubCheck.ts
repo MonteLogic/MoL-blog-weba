@@ -7,7 +7,7 @@ import { auth, clerkClient } from '@clerk/nextjs/server';
 import Stripe from 'stripe';
 
 /** Initialize Stripe client */
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+const stripe = new Stripe(process.env['STRIPE_SECRET_KEY']!, {
   //@ts-ignore
   apiVersion: '2024-12-18.acacia',
 });
@@ -28,7 +28,7 @@ async function getSubscriptionStatus() {
 
     const client = await clerkClient();
     const user = await client.users.getUser(userId);
-    const stripeCustomerId = user.privateMetadata.stripeCustomerId as string;
+    const stripeCustomerId = user.privateMetadata['stripeCustomerId'] as string;
     if (!stripeCustomerId) return { isActive: false };
 
     const subscriptions = await stripe.subscriptions.list({
@@ -41,6 +41,9 @@ async function getSubscriptionStatus() {
     if (!subscriptions.data.length) return { isActive: false };
 
     const subscription = subscriptions.data[0];
+    if (!subscription?.items?.data?.[0]?.price?.product)
+      return { isActive: false };
+
     const priceId = subscription.items.data[0].price.product as string;
 
     // Fetch product details separately

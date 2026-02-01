@@ -3,7 +3,7 @@
 import styles from './styles.module.css';
 
 const SkeletonCard = () => (
-  <div className={styles.skeleton}>
+  <div className={styles['skeleton']}>
     <div className={styles['skeleton-img']} />
     <div className={styles['skeleton-btn']} />
     <div className={styles['skeleton-line-one']} />
@@ -17,7 +17,7 @@ export default function Page() {
       <h1 className="text-xl font-medium text-gray-400/80">
         Styled with CSS Modules
       </h1>
-      <div className={styles.container}>
+      <div className={styles['container']}>
         <SkeletonCard />
         <SkeletonCard />
         <SkeletonCard />

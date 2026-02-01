@@ -43,7 +43,7 @@ export async function syncClerkAndLocalDb(clerkUserId: string, orgId: string) {
   }
 
   // User exists, update the record with Clerk ID if necessary
-  if (existingUser[0].id !== clerkUserId) {
+  if (existingUser[0]?.id !== clerkUserId) {
     await db
       .update(users)
       .set({ id: clerkUserId })

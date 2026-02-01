@@ -7,9 +7,22 @@ import YAML from 'yaml';
 const projectRoot = process.cwd();
 // Try to find the content directory similar to generate.ts logic
 const possiblePaths = [
-  process.env.CONTENT_DIR,
-  path.join(projectRoot, 'MoL-blog-content', 'posts', 'categorized', 'pain-points'),
-  path.join(projectRoot, '..', 'MoL-blog-content', 'posts', 'categorized', 'pain-points'),
+  process.env['CONTENT_DIR'],
+  path.join(
+    projectRoot,
+    'MoL-blog-content',
+    'posts',
+    'categorized',
+    'pain-points',
+  ),
+  path.join(
+    projectRoot,
+    '..',
+    'MoL-blog-content',
+    'posts',
+    'categorized',
+    'pain-points',
+  ),
 ].filter(Boolean);
 
 let painPointsDir: string | null = null;
@@ -28,9 +41,9 @@ if (!painPointsDir) {
 
 console.log(`Validating pain points in: ${painPointsDir}`);
 
-const files = fs.readdirSync(painPointsDir).filter(file => 
-  file.endsWith('.yaml') || file.endsWith('.yml')
-);
+const files = fs
+  .readdirSync(painPointsDir)
+  .filter((file) => file.endsWith('.yaml') || file.endsWith('.yml'));
 
 // Define forbidden placeholder patterns
 const forbiddenPatterns = [
@@ -40,19 +53,19 @@ const forbiddenPatterns = [
   /\[tag1\]/i,
   /\[tag2\]/i,
   /\[tag3\]/i,
-  /I cannot \[insert text here\]/i
+  /I cannot \[insert text here\]/i,
 ];
 
 let hasErrors = false;
 
-files.forEach(file => {
+files.forEach((file) => {
   const filePath = path.join(painPointsDir!, file);
   const content = fs.readFileSync(filePath, 'utf8');
-  
+
   // Check raw content for placeholders
   const errors: string[] = [];
-  
-  forbiddenPatterns.forEach(pattern => {
+
+  forbiddenPatterns.forEach((pattern) => {
     if (pattern.test(content)) {
       errors.push(`Found placeholder matching ${pattern}`);
     }
@@ -60,7 +73,7 @@ files.forEach(file => {
 
   if (errors.length > 0) {
     console.error(`\n❌ Validation Error in ${file}:`);
-    errors.forEach(err => console.error(`  - ${err}`));
+    errors.forEach((err) => console.error(`  - ${err}`));
     hasErrors = true;
   } else {
     // Optional: Parse YAML to check values specifically if needed
@@ -69,7 +82,9 @@ files.forEach(file => {
 });
 
 if (hasErrors) {
-  console.error('\nBuild failed: Pain point files contain placeholder text. Please update them.');
+  console.error(
+    '\nBuild failed: Pain point files contain placeholder text. Please update them.',
+  );
   process.exit(1);
 } else {
   console.log('✅ Pain point validation passed.');

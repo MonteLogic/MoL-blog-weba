@@ -10,7 +10,7 @@ export async function updateUserSubscriptionMetadata(
     const user = await client.users.getUser(userId);
 
     // Get existing metadata to merge with new data
-    const existingMetadata = user.privateMetadata?.subscription || {};
+    const existingMetadata = user.privateMetadata?.['subscription'] || {};
 
     // Merge existing metadata with new subscription data
     const updatedMetadata = {

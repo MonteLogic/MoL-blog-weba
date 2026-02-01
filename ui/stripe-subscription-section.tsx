@@ -39,7 +39,7 @@ interface SubscriptionStatus {
  */
 const getPlanDetails = (planId: PlanId = 'base'): ProductPlan => {
   const env =
-    process.env.NEXT_PUBLIC_APP_ENV === 'production'
+    process.env['NEXT_PUBLIC_APP_ENV'] === 'production'
       ? 'production'
       : 'development';
   return typedProducts[env][planId];
