@@ -68,8 +68,8 @@ function canViewPost(
 // Blog post page component
 export default async function BlogPost({
   params,
-}: Readonly<{ params: BlogPostParams }>) {
-  const { slug } = params;
+}: Readonly<{ params: Promise<BlogPostParams> }>) {
+  const { slug } = await params;
   const { userId } = await auth();
   let userRole: string | undefined;
 

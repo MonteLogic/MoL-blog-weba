@@ -300,9 +300,13 @@ interface Props {
 }
 
 export default async function CategoryPage({
-  params: { slug },
+  params,
   searchParams,
-}: Props) {
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: { page?: string };
+}) {
+  const { slug } = await params;
   const { userId } = await auth();
   let userRole: string | undefined;
 
