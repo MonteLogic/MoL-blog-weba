@@ -25,7 +25,12 @@
     "generate-markdown-paths": "ts-node -O '{\"module\": \"CommonJS\"}' scripts/generate.ts",
     "validate-pain-points": "ts-node -O '{\"module\": \"CommonJS\"}' scripts/validate-pain-points.ts",
     "check-categories": "node scripts/check-categories.js",
-    "build": "pnpm run generate-markdown-paths && pnpm run validate-pain-points && pnpm run check-categories && next build"
+    "build": "pnpm run generate-markdown-paths && pnpm run validate-pain-points && pnpm run check-categories && next build",
+    "type-check": "tsc --noEmit --pretty",
+    "type-check:watch": "tsc --noEmit --watch --pretty",
+    "tsgo:check": "tsgo --noEmit",
+    "tsgo:check:watch": "tsgo --noEmit --watch",
+    "lint:strict": "eslint . --cache"
   },
   "git": {
     "pre-commit": "lint-staged"
@@ -72,7 +77,6 @@
     "dotenv": "16.4.5",
     "drizzle-kit": "0.23.0",
     "drizzle-orm": "0.33.0",
-    "eslint": "8.30.0",
     "eslint-config-next": "16.1.6",
     "fs": "0.0.1-security",
     "glob": "13.0.0",
@@ -121,6 +125,8 @@
   "devDependencies": {
     "@clerk/clerk-js": "5.6.0",
     "@clerk/testing": "1.1.6",
+    "@eslint/eslintrc": "3.3.3",
+    "@next/eslint-plugin-next": "16.1.6",
     "@playwright/test": "1.44.1",
     "@testing-library/jest-dom": "6.6.3",
     "@testing-library/react": "16.0.0",
@@ -130,11 +136,17 @@
     "@types/ms": "0.7.31",
     "@types/react-dom": "19.0.0",
     "@types/testing-library__react": "10.2.0",
+    "@typescript-eslint/eslint-plugin": "8.54.0",
+    "@typescript-eslint/parser": "8.54.0",
+    "@typescript/native-preview": "7.0.0-dev.20260201.1",
     "@vercel/git-hooks": "1.0.0",
     "@vitejs/plugin-react": "4.3.3",
     "baseline-browser-mapping": "2.9.19",
-    "eslint": "8.30.0",
+    "eslint": "9.39.2",
     "eslint-config-next": "16.0.0",
+    "eslint-plugin-import": "2.32.0",
+    "eslint-plugin-react": "7.37.5",
+    "eslint-plugin-react-hooks": "7.0.1",
     "html-loader": "5.1.0",
     "ignore-loader": "0.1.2",
     "jsdom": "24.1.0",
@@ -147,6 +159,7 @@
     "tsconfig-paths": "4.2.0",
     "tsx": "4.19.2",
     "typescript": "5.9.3",
+    "typescript-eslint": "8.54.0",
     "vitest": "2.1.4"
   }
 }
