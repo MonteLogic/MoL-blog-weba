@@ -8,11 +8,11 @@ import { clerkClient } from '@clerk/nextjs/server';
 import Stripe from 'stripe';
 import { headers } from 'next/headers';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+const stripe = new Stripe(process.env['STRIPE_SECRET_KEY']!, {
   apiVersion: '2024-12-18.acacia',
 });
 
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
+const webhookSecret = process.env['STRIPE_WEBHOOK_SECRET']!;
 
 /**
  * Parse raw body for Stripe webhook
@@ -67,7 +67,7 @@ export async function POST(req: Request) {
         const session = event.data.object as Stripe.Checkout.Session;
 
         // Get the Clerk user ID from metadata
-        const userId = session.metadata?.userId;
+        const userId = session.metadata?.['userId'];
         if (!userId) {
           console.error('No userId in session metadata');
           return NextResponse.json(

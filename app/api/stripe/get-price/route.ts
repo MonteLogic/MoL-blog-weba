@@ -6,7 +6,7 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+const stripe = new Stripe(process.env['STRIPE_SECRET_KEY']!, {
   apiVersion: '2024-12-18.acacia',
 });
 
@@ -42,6 +42,13 @@ export async function GET(request: Request): Promise<NextResponse> {
     }
 
     const price = prices.data[0];
+
+    if (!price) {
+      return NextResponse.json(
+        { error: 'No price found for this product' },
+        { status: 404 },
+      );
+    }
 
     return NextResponse.json({
       price: price.unit_amount,

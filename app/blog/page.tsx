@@ -218,15 +218,15 @@ async function getBlogPosts(): Promise<BlogPost[]> {
 
       // 1. Get Display Names
       if (
-        parsedFrontmatter.categories &&
-        Array.isArray(parsedFrontmatter.categories)
+        parsedFrontmatter['categories'] &&
+        Array.isArray(parsedFrontmatter['categories'])
       ) {
-        rawCategories = parsedFrontmatter.categories;
+        rawCategories = parsedFrontmatter['categories'];
       } else if (
-        parsedFrontmatter.category &&
-        typeof parsedFrontmatter.category === 'string'
+        parsedFrontmatter['category'] &&
+        typeof parsedFrontmatter['category'] === 'string'
       ) {
-        rawCategories = [parsedFrontmatter.category];
+        rawCategories = [parsedFrontmatter['category']];
       }
 
       // 2. Get Slugs
@@ -255,8 +255,9 @@ async function getBlogPosts(): Promise<BlogPost[]> {
 
       const frontmatter: BlogPost['frontmatter'] = {
         ...(parsedFrontmatter as object),
-        title: parsedFrontmatter.title ?? formatTitle(titleSourceName),
-        status: parsedFrontmatter.status === 'private' ? 'private' : 'public',
+        title: parsedFrontmatter['title'] ?? formatTitle(titleSourceName),
+        status:
+          parsedFrontmatter['status'] === 'private' ? 'private' : 'public',
         categories: rawCategories,
         categorySlugs: categorySlugs,
       };
@@ -319,7 +320,7 @@ export default async function BlogPage({
   if (userId) {
     try {
       const user = await currentUser();
-      userRole = user?.privateMetadata?.role as string;
+      userRole = user?.privateMetadata?.['role'] as string;
     } catch (error) {
       console.error('Error fetching user role:', error);
     }
@@ -339,7 +340,9 @@ export default async function BlogPage({
 
   // Pagination Logic
   const page =
-    typeof searchParams.page === 'string' ? parseInt(searchParams.page, 10) : 1;
+    typeof searchParams['page'] === 'string'
+      ? parseInt(searchParams['page'], 10)
+      : 1;
   const POSTS_PER_PAGE = 5; // Adjust as needed
   const totalPages = Math.ceil(visiblePosts.length / POSTS_PER_PAGE);
 

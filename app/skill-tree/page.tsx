@@ -49,9 +49,9 @@ function getLevelColor(level: SkillLevel): string {
   const colors: Record<SkillLevel, string> = {
     'Script Kitty': 'from-rose-500 to-orange-400',
     'Staff Engineer': 'from-amber-500 to-yellow-400',
-    'Senior': 'from-emerald-500 to-teal-400',
+    Senior: 'from-emerald-500 to-teal-400',
     'Distinguished Engineer': 'from-blue-500 to-cyan-400',
-    'Fellow': 'from-violet-500 to-purple-400',
+    Fellow: 'from-violet-500 to-purple-400',
   };
   return colors[level];
 }
@@ -61,8 +61,13 @@ function parseExperience(value: number | string): number {
   if (typeof value === 'number') return value;
   if (value.startsWith('<')) return parseFloat(value.slice(1)) - 0.5; // "<1" becomes 0.5
   if (value.includes('-')) {
-    const [min, max] = value.split('-').map(Number);
-    return (min + max) / 2; // "1-2" becomes 1.5
+    const [minStr, maxStr] = value.split('-');
+    const min = Number(minStr);
+    const max = Number(maxStr);
+    if (!isNaN(min) && !isNaN(max)) {
+      return (min + max) / 2; // "1-2" becomes 1.5
+    }
+    return 0;
   }
   return parseFloat(value) || 0;
 }
@@ -154,7 +159,10 @@ function SkillCard({ skill }: { skill: Skill }) {
       </div>
 
       {/* Stats */}
-      <div className="mt-4 flex gap-4 border-t pt-3" style={{ borderColor: 'var(--border-color)' }}>
+      <div
+        className="mt-4 flex gap-4 border-t pt-3"
+        style={{ borderColor: 'var(--border-color)' }}
+      >
         <div className="flex flex-col">
           <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
             Experience
@@ -191,7 +199,10 @@ function SkillCard({ skill }: { skill: Skill }) {
       </div>
 
       {/* See Work Button */}
-      <div className="mt-4 border-t pt-3" style={{ borderColor: 'var(--border-color)' }}>
+      <div
+        className="mt-4 border-t pt-3"
+        style={{ borderColor: 'var(--border-color)' }}
+      >
         <Link
           href={`/skill-tree/${skill.id}`}
           className="inline-flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium shadow-sm transition-all hover:shadow-md"
@@ -201,8 +212,18 @@ function SkillCard({ skill }: { skill: Skill }) {
           }}
         >
           See Work
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          <svg
+            className="h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 5l7 7-7 7"
+            />
           </svg>
         </Link>
       </div>
@@ -218,12 +239,20 @@ export default function SkillTreePage() {
 
     switch (sortBy) {
       case 'easiest-to-employ':
-        return skills.sort((a, b) => b.employabilityScore - a.employabilityScore);
+        return skills.sort(
+          (a, b) => b.employabilityScore - a.employabilityScore,
+        );
       case 'years-of-experience':
-        return skills.sort((a, b) => parseExperience(b.yearsOfExperience) - parseExperience(a.yearsOfExperience));
+        return skills.sort(
+          (a, b) =>
+            parseExperience(b.yearsOfExperience) -
+            parseExperience(a.yearsOfExperience),
+        );
       case 'years-of-professional-experience':
         return skills.sort(
-          (a, b) => parseExperience(b.yearsOfProfessionalExperience) - parseExperience(a.yearsOfProfessionalExperience)
+          (a, b) =>
+            parseExperience(b.yearsOfProfessionalExperience) -
+            parseExperience(a.yearsOfProfessionalExperience),
         );
       default:
         return skills;
@@ -241,8 +270,6 @@ export default function SkillTreePage() {
         </p>
       </div>
 
-
-
       {/* Sort Controls */}
       <div className="mb-6 flex items-center gap-4">
         <label
@@ -254,7 +281,7 @@ export default function SkillTreePage() {
         <select
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value as SortOption)}
-          className="rounded-lg border px-4 py-2 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent-purple"
+          className="focus:ring-accent-purple rounded-lg border px-4 py-2 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-2"
           style={{
             borderColor: 'var(--border-color)',
             backgroundColor: 'var(--bg-card)',
@@ -284,11 +311,15 @@ export default function SkillTreePage() {
           backgroundColor: 'var(--bg-card)',
         }}
       >
-        <h2 className="mb-3 text-lg font-semibold">Understanding the Grading System</h2>
+        <h2 className="mb-3 text-lg font-semibold">
+          Understanding the Grading System
+        </h2>
         <p className="mb-4" style={{ color: 'var(--text-secondary)' }}>
-          Skills are evaluated on a 5-level progression from <strong>Script Kitty</strong> (beginner) 
-          to <strong>Fellow</strong> (world-class expert). Each level represents not just years of 
-          experience, but depth of knowledge, professional application, and ability to mentor others.
+          Skills are evaluated on a 5-level progression from{' '}
+          <strong>Script Kitty</strong> (beginner) to <strong>Fellow</strong>{' '}
+          (world-class expert). Each level represents not just years of
+          experience, but depth of knowledge, professional application, and
+          ability to mentor others.
         </p>
         <Link
           href="/skill-tree/skill-tree-grading"
@@ -296,8 +327,18 @@ export default function SkillTreePage() {
           style={{ color: 'var(--accent-primary)' }}
         >
           Learn More About the Grading System
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          <svg
+            className="h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 5l7 7-7 7"
+            />
           </svg>
         </Link>
       </div>

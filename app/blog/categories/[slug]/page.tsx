@@ -215,10 +215,10 @@ async function getBlogPosts(): Promise<BlogPost[]> {
       let categorySlugs: string[] = [];
 
       // 1. Get Display Names
-      if (data.categories && Array.isArray(data.categories)) {
-        rawCategories = data.categories;
-      } else if (data.category && typeof data.category === 'string') {
-        rawCategories = [data.category];
+      if (data['categories'] && Array.isArray(data['categories'])) {
+        rawCategories = data['categories'];
+      } else if (data['category'] && typeof data['category'] === 'string') {
+        rawCategories = [data['category']];
       }
 
       // 2. Get Slugs
@@ -244,8 +244,8 @@ async function getBlogPosts(): Promise<BlogPost[]> {
 
       const frontmatter: BlogPost['frontmatter'] = {
         ...data,
-        title: data.title || formatTitle(titleSourceName),
-        status: data.status === 'public' ? 'public' : 'private',
+        title: data['title'] || formatTitle(titleSourceName),
+        status: data['status'] === 'public' ? 'public' : 'private',
         categories: rawCategories,
         categorySlugs: categorySlugs,
       };
@@ -313,7 +313,7 @@ export default async function CategoryPage({
   if (userId) {
     try {
       const user = await currentUser();
-      userRole = user?.privateMetadata?.role as string;
+      userRole = user?.privateMetadata?.['role'] as string;
     } catch (error) {
       console.error('Error fetching user role:', error);
     }
@@ -334,14 +334,14 @@ export default async function CategoryPage({
     // Check if the current page slug matches any of the post's normalized category slugs
     // OR if it matches the raw category name (legacy support)
     const hasCategory =
-      post.frontmatter.categorySlugs?.includes(slug) ||
+      post.frontmatter['categorySlugs']?.includes(slug) ||
       post.frontmatter.categories?.includes(categoryDetails.name) || // Try matching name
       post.frontmatter.categories?.includes(slug); // Try matching raw slug (legacy)
 
     // Debugging logic for the specific problem post
     if (post.frontmatter.title?.includes('Current Style of Generating PDFs')) {
       console.log(`[DEBUG] Checking Post: "${post.frontmatter.title}"`);
-      console.log(`   - slugs:`, post.frontmatter.categorySlugs);
+      console.log(`   - slugs:`, post.frontmatter['categorySlugs']);
       console.log(`   - categories:`, post.frontmatter.categories);
       console.log(`   - target slug: "${slug}"`);
       console.log(`   - hasCategory: ${hasCategory}`);

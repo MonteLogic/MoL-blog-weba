@@ -40,8 +40,8 @@ async function getPainPoints(): Promise<PainPoint[]> {
       Accept: 'application/vnd.github.v3+json',
     };
 
-    if (process.env.CONTENT_GH_TOKEN) {
-      headers['Authorization'] = `Bearer ${process.env.CONTENT_GH_TOKEN}`;
+    if (process.env['CONTENT_GH_TOKEN']) {
+      headers['Authorization'] = `Bearer ${process.env['CONTENT_GH_TOKEN']}`;
     }
 
     // Fetch list of files from GitHub

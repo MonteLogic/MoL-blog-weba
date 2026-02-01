@@ -42,28 +42,38 @@ function getLevelColor(level: SkillLevel): string {
   const colors: Record<SkillLevel, string> = {
     'Script Kitty': 'from-rose-500 to-orange-400',
     'Staff Engineer': 'from-amber-500 to-yellow-400',
-    'Senior': 'from-emerald-500 to-teal-400',
+    Senior: 'from-emerald-500 to-teal-400',
     'Distinguished Engineer': 'from-blue-500 to-cyan-400',
-    'Fellow': 'from-violet-500 to-purple-400',
+    Fellow: 'from-violet-500 to-purple-400',
   };
   return colors[level];
 }
 
 export default function SkillDetailPage() {
   const params = useParams();
-  const skillId = params.skillId as string;
+  const skillId = params['skillId'] as string;
   const skill = SKILLS_MAP[skillId];
 
   if (!skill) {
     return (
       <div style={{ color: 'var(--text-primary)' }}>
-        <Link 
+        <Link
           href="/skill-tree"
           className="mb-4 inline-flex items-center gap-2 text-sm font-medium transition-colors hover:opacity-80"
           style={{ color: 'var(--text-secondary)' }}
         >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          <svg
+            className="h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 19l-7-7 7-7"
+            />
           </svg>
           Back to Skill Tree
         </Link>
@@ -81,13 +91,23 @@ export default function SkillDetailPage() {
   return (
     <div style={{ color: 'var(--text-primary)' }}>
       {/* Back Link */}
-      <Link 
+      <Link
         href="/skill-tree"
         className="mb-6 inline-flex items-center gap-2 text-sm font-medium transition-colors hover:opacity-80"
         style={{ color: 'var(--text-secondary)' }}
       >
-        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        <svg
+          className="h-4 w-4"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M15 19l-7-7 7-7"
+          />
         </svg>
         Back to Skill Tree
       </Link>
@@ -102,7 +122,10 @@ export default function SkillDetailPage() {
             {skill.currentLevel}
           </span>
         </div>
-        <p className="text-sm uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
+        <p
+          className="text-sm uppercase tracking-wider"
+          style={{ color: 'var(--text-muted)' }}
+        >
           {skill.category}
         </p>
       </div>
@@ -148,7 +171,9 @@ export default function SkillDetailPage() {
             <div
               key={level}
               className={`flex flex-col items-center ${
-                getLevelIndex(skill.currentLevel) >= index ? 'opacity-100' : 'opacity-40'
+                getLevelIndex(skill.currentLevel) >= index
+                  ? 'opacity-100'
+                  : 'opacity-40'
               }`}
             >
               <div
@@ -163,7 +188,10 @@ export default function SkillDetailPage() {
                     : undefined
                 }
               />
-              <span className="mt-1 hidden text-xs sm:block" style={{ color: 'var(--text-muted)' }}>
+              <span
+                className="mt-1 hidden text-xs sm:block"
+                style={{ color: 'var(--text-muted)' }}
+              >
                 {level.split(' ')[0]}
               </span>
             </div>
@@ -181,23 +209,47 @@ export default function SkillDetailPage() {
       >
         <h2 className="mb-4 text-lg font-semibold">Experience</h2>
         <div className="grid gap-4 sm:grid-cols-3">
-          <div className="rounded-lg border p-4" style={{ borderColor: 'var(--border-color)' }}>
-            <div className="text-2xl font-bold" style={{ color: 'var(--accent-primary)' }}>
+          <div
+            className="rounded-lg border p-4"
+            style={{ borderColor: 'var(--border-color)' }}
+          >
+            <div
+              className="text-2xl font-bold"
+              style={{ color: 'var(--accent-primary)' }}
+            >
               {skill.yearsOfExperience}
             </div>
-            <div className="text-sm" style={{ color: 'var(--text-muted)' }}>Years of Experience</div>
+            <div className="text-sm" style={{ color: 'var(--text-muted)' }}>
+              Years of Experience
+            </div>
           </div>
-          <div className="rounded-lg border p-4" style={{ borderColor: 'var(--border-color)' }}>
-            <div className="text-2xl font-bold" style={{ color: 'var(--accent-primary)' }}>
+          <div
+            className="rounded-lg border p-4"
+            style={{ borderColor: 'var(--border-color)' }}
+          >
+            <div
+              className="text-2xl font-bold"
+              style={{ color: 'var(--accent-primary)' }}
+            >
               {skill.yearsOfProfessionalExperience}
             </div>
-            <div className="text-sm" style={{ color: 'var(--text-muted)' }}>Years Professional</div>
+            <div className="text-sm" style={{ color: 'var(--text-muted)' }}>
+              Years Professional
+            </div>
           </div>
-          <div className="rounded-lg border p-4" style={{ borderColor: 'var(--border-color)' }}>
-            <div className="text-2xl font-bold" style={{ color: 'var(--accent-primary)' }}>
+          <div
+            className="rounded-lg border p-4"
+            style={{ borderColor: 'var(--border-color)' }}
+          >
+            <div
+              className="text-2xl font-bold"
+              style={{ color: 'var(--accent-primary)' }}
+            >
               {skill.employabilityScore}/10
             </div>
-            <div className="text-sm" style={{ color: 'var(--text-muted)' }}>Employability Score</div>
+            <div className="text-sm" style={{ color: 'var(--text-muted)' }}>
+              Employability Score
+            </div>
           </div>
         </div>
       </div>
@@ -220,8 +272,13 @@ export default function SkillDetailPage() {
                 className="group rounded-lg border p-4 transition-all hover:shadow-md"
                 style={{ borderColor: 'var(--border-color)' }}
               >
-                <h3 className="mb-2 font-semibold group-hover:opacity-80">{project.title}</h3>
-                <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                <h3 className="mb-2 font-semibold group-hover:opacity-80">
+                  {project.title}
+                </h3>
+                <p
+                  className="text-sm"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
                   {project.description}
                 </p>
                 <span
@@ -229,8 +286,18 @@ export default function SkillDetailPage() {
                   style={{ color: 'var(--accent-primary)' }}
                 >
                   View Project
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  <svg
+                    className="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
                   </svg>
                 </span>
               </Link>

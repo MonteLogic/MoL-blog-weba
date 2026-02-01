@@ -9,7 +9,7 @@ import Stripe from 'stripe';
 import { headers } from 'next/headers';
 
 /** Initialize Stripe with the secret key */
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+const stripe = new Stripe(process.env['STRIPE_SECRET_KEY']!, {
   // @ts-ignore
   apiVersion: '2024-12-18.acacia',
 });
@@ -52,6 +52,21 @@ export async function POST(request: Request): Promise<NextResponse> {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    if (!user.emailAddresses || user.emailAddresses.length === 0) {
+      return NextResponse.json(
+        { error: 'User email not found' },
+        { status: 400 },
+      );
+    }
+
+    const primaryEmail = user.emailAddresses[0]?.emailAddress;
+    if (!primaryEmail) {
+      return NextResponse.json(
+        { error: 'User email not found' },
+        { status: 400 },
+      );
+    }
+
     const { productId }: CreateSubscriptionRequest = await request.json();
 
     // Create Stripe customer if it doesn't exist
@@ -62,7 +77,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       // For now, we'll create a new customer each time
       // In production, you'd want to store and retrieve this
       const customer = await stripe.customers.create({
-        email: user.emailAddresses[0].emailAddress,
+        email: primaryEmail,
         metadata: {
           clerkUserId: userId,
         },
@@ -93,12 +108,20 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     const baseUrl = getBaseUrl();
 
+    const priceId = prices.data[0]?.id;
+    if (!priceId) {
+      return NextResponse.json(
+        { error: 'No price found for this product' },
+        { status: 404 },
+      );
+    }
+
     // Create Checkout session
     const session = await stripe.checkout.sessions.create({
       customer: stripeCustomerId,
       line_items: [
         {
-          price: prices.data[0].id,
+          price: priceId,
           quantity: 1,
         },
       ],

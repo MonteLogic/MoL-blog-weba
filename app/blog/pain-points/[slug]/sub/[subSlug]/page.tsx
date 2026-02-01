@@ -42,8 +42,8 @@ async function getSubPainPoint(
       Accept: 'application/vnd.github.v3+json',
     };
 
-    if (process.env.CONTENT_GH_TOKEN) {
-      headers['Authorization'] = `Bearer ${process.env.CONTENT_GH_TOKEN}`;
+    if (process.env['CONTENT_GH_TOKEN']) {
+      headers['Authorization'] = `Bearer ${process.env['CONTENT_GH_TOKEN']}`;
     }
 
     // Try to fetch the sub pain point file

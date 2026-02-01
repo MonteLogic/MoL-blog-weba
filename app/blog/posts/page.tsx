@@ -48,31 +48,38 @@ async function getBlogPosts(): Promise<BlogPost[]> {
     const allMarkdownFiles = getAllMarkdownFiles(postsDirectory);
 
     // Process each markdown file
-    const posts: BlogPost[] = allMarkdownFiles.map((filePath) => {
-      // Extract the folder name (slug) from the file path
-      const parts = filePath.split(path.sep);
-      const folderName = parts[parts.length - 2];
+    const posts: BlogPost[] = allMarkdownFiles
+      .map((filePath) => {
+        // Extract the folder name (slug) from the file path
+        const parts = filePath.split(path.sep);
+        const folderName = parts[parts.length - 2];
 
-      // Read file content
-      const fileContent = fs.readFileSync(filePath, 'utf8');
+        // Skip if folderName is undefined
+        if (!folderName) {
+          return null;
+        }
 
-      // Parse frontmatter using gray-matter
-      const { data } = matter(fileContent);
+        // Read file content
+        const fileContent = fs.readFileSync(filePath, 'utf8');
 
-      // Create a properly typed frontmatter object with required title
-      const frontmatter: BlogPost['frontmatter'] = {
-        ...data,
-        // Ensure title exists in frontmatter
-        title: data.title ?? formatTitle(folderName),
-        // If status is not explicitly set to "public", treat as private
-        status: data.status === 'public' ? ['public'] : ['private'],
-      };
+        // Parse frontmatter using gray-matter
+        const { data } = matter(fileContent);
 
-      return {
-        slug: folderName,
-        frontmatter,
-      };
-    });
+        // Create a properly typed frontmatter object with required title
+        const frontmatter: BlogPost['frontmatter'] = {
+          ...data,
+          // Ensure title exists in frontmatter
+          title: data['title'] ?? formatTitle(folderName),
+          // If status is not explicitly set to "public", treat as private
+          status: data['status'] === 'public' ? ['public'] : ['private'],
+        };
+
+        return {
+          slug: folderName,
+          frontmatter,
+        };
+      })
+      .filter((post): post is BlogPost => post !== null);
 
     // Sort posts by date if available (newest first)
     return posts.sort((a, b) => {
@@ -134,7 +141,7 @@ export default async function BlogPage() {
     try {
       const user = await currentUser();
       // Access privateMetadata for the role
-      userRole = user?.privateMetadata?.role as string;
+      userRole = user?.privateMetadata?.['role'] as string;
     } catch (error) {
       console.error('Error fetching user role:', error);
     }

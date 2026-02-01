@@ -8,7 +8,7 @@ import { auth, clerkClient } from '@clerk/nextjs/server';
 import Stripe from 'stripe';
 
 /** Initialize Stripe client */
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+const stripe = new Stripe(process.env['STRIPE_SECRET_KEY']!, {
   apiVersion: '2024-12-18.acacia',
 });
 
@@ -27,7 +27,7 @@ export async function GET(): Promise<NextResponse> {
     // Get user's Stripe customer ID from Clerk metadata
     const client = await clerkClient();
     const user = await client.users.getUser(userId);
-    const stripeCustomerId = user.privateMetadata.stripeCustomerId as string;
+    const stripeCustomerId = user.privateMetadata['stripeCustomerId'] as string;
 
     if (!stripeCustomerId) {
       return NextResponse.json({ isActive: false });
@@ -45,6 +45,10 @@ export async function GET(): Promise<NextResponse> {
     }
 
     const subscription = subscriptions.data[0];
+
+    if (!subscription || !subscription.items.data[0]) {
+      return NextResponse.json({ isActive: false });
+    }
 
     return NextResponse.json({
       isActive: true,

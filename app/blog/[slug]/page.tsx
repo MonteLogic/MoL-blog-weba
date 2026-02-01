@@ -273,7 +273,7 @@ export default async function BlogPostPage({
     try {
       const user = await currentUser();
       // Role is stored in privateMetadata, not publicMetadata
-      userRole = user?.privateMetadata?.role as string;
+      userRole = user?.privateMetadata?.['role'] as string;
     } catch (error) {
       console.error(`Error fetching user role for slug "${urlSlug}":`, error);
     }
@@ -326,20 +326,19 @@ export default async function BlogPostPage({
             )}
           </div>
 
-          {relativeFilePath.includes('/projects/') && (
-            <Link
-              href={`/blog/projects/${
-                relativeFilePath.split('/projects/')[1].split('/')[0]
-              }`}
-              className="back-link text-accent-teal self-start text-sm"
-            >
-              ← Back to{' '}
-              {formatTitle(
-                relativeFilePath.split('/projects/')[1].split('/')[0],
-              )}{' '}
-              Project
-            </Link>
-          )}
+          {relativeFilePath.includes('/projects/') &&
+            (() => {
+              const projectParts = relativeFilePath.split('/projects/');
+              const projectName = projectParts[1]?.split('/')[0];
+              return projectName ? (
+                <Link
+                  href={`/blog/projects/${projectName}`}
+                  className="back-link text-accent-teal self-start text-sm"
+                >
+                  ← Back to {formatTitle(projectName)} Project
+                </Link>
+              ) : null;
+            })()}
         </div>
 
         <article className="prose-blog max-w-none">
@@ -383,12 +382,12 @@ export default async function BlogPostPage({
               )}
               {frontmatter.author && <span>By {frontmatter.author}</span>}
               {/* Display Categories */}
-              {(frontmatter.categories || frontmatter.category) && (
+              {(frontmatter['categories'] || frontmatter['category']) && (
                 <div className="flex items-center gap-2">
                   <span>in</span>
-                  {(Array.isArray(frontmatter.categories)
-                    ? frontmatter.categories
-                    : [frontmatter.category]
+                  {(Array.isArray(frontmatter['categories'])
+                    ? frontmatter['categories']
+                    : [frontmatter['category']]
                   ).map((cat: string, idx: number) => {
                     // Use explicit slug if available, otherwise fallback
                     const catSlug =

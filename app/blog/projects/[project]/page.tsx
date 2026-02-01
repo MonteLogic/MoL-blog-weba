@@ -93,7 +93,7 @@ async function getProjectPosts(projectSlug: string): Promise<BlogPost[]> {
       const basename = path.basename(filePath, path.extname(filePath));
 
       // Generate title from frontmatter or filename
-      let title = data.title;
+      let title = data['title'];
       if (!title) {
         if (basename === 'index') {
           title = formatTitle(path.basename(path.dirname(filePath)));
@@ -108,9 +108,9 @@ async function getProjectPosts(projectSlug: string): Promise<BlogPost[]> {
           ...data,
           title,
           status:
-            data.status === 'public'
+            data['status'] === 'public'
               ? 'public'
-              : data.status === undefined
+              : data['status'] === undefined
               ? 'public'
               : 'private',
         },
@@ -177,7 +177,7 @@ export default async function ProjectPage({
   if (userId) {
     try {
       const user = await currentUser();
-      userRole = user?.privateMetadata?.role as string;
+      userRole = user?.privateMetadata?.['role'] as string;
     } catch (error) {
       console.error('Error fetching user role:', error);
     }
