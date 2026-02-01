@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 
-import type { Category } from './category';
+import { type Category } from './category';
 
 export async function getCategories({ parent }: { parent?: string } = {}) {
   const res = await fetch(
@@ -38,7 +38,7 @@ export async function getCategory({ slug }: { slug: string }) {
 
   const category = (await res.json()) as Category | null;
 
-  if (!category?.slug) {
+  if (!category || category.slug.length === 0) {
     // Render the closest `not-found.js` Error Boundary
     notFound();
   }

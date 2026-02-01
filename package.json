@@ -13,7 +13,7 @@
     "postinstall": "if [ ! -d MoL-blog-content ]; then git clone --depth 1 \"${CONTENT_REPO_URL:-$npm_package_config_contentRepo}\" MoL-blog-content; fi",
     "predev": "pnpm run generate-markdown-paths",
     "dev": "next dev",
-    "lint": "next lint",
+    "lint": "biome check .",
     "stripe:listen": "stripe listen --forward-to localhost:3000/api/webhooks/stripe",
     "lint-staged": "lint-staged",
     "prettier": "prettier --write --ignore-unknown .",
@@ -31,8 +31,9 @@
     "type-check:watch": "tsc --noEmit --watch --pretty",
     "tsgo:check": "tsgo --noEmit",
     "tsgo:check:watch": "tsgo --noEmit --watch",
-    "lint:strict": "eslint . --cache",
-    "lint:watch": "chokidar \"**/*.{ts,tsx,js,jsx}\" -i \"node_modules\" -i \".next\" -i \"MoL-blog-content\" -c \"eslint . --cache\" --initial"
+    "lint:strict": "biome check --reporter=github .",
+    "lint:watch": "chokidar \"**/*.{ts,tsx,js,jsx}\" -i \"node_modules\" -i \".next\" -i \"MoL-blog-content\" -c \"biome check --reporter=github .\" --initial",
+    "lint:fix": "biome check --write ."
   },
   "git": {
     "pre-commit": "lint-staged"
@@ -79,7 +80,6 @@
     "dotenv": "16.4.5",
     "drizzle-kit": "0.23.0",
     "drizzle-orm": "0.33.0",
-    "eslint-config-next": "16.1.6",
     "fs": "0.0.1-security",
     "glob": "13.0.0",
     "gray-matter": "4.0.3",
@@ -125,10 +125,9 @@
     "yaml": "2.8.2"
   },
   "devDependencies": {
+    "@biomejs/biome": "1.9.4",
     "@clerk/clerk-js": "5.6.0",
     "@clerk/testing": "1.1.6",
-    "@eslint/eslintrc": "3.3.3",
-    "@next/eslint-plugin-next": "16.1.6",
     "@playwright/test": "1.44.1",
     "@testing-library/jest-dom": "6.6.3",
     "@testing-library/react": "16.0.0",
@@ -138,18 +137,11 @@
     "@types/ms": "0.7.31",
     "@types/react-dom": "19.0.0",
     "@types/testing-library__react": "10.2.0",
-    "@typescript-eslint/eslint-plugin": "8.54.0",
-    "@typescript-eslint/parser": "8.54.0",
     "@typescript/native-preview": "7.0.0-dev.20260201.1",
     "@vercel/git-hooks": "1.0.0",
     "@vitejs/plugin-react": "4.3.3",
     "baseline-browser-mapping": "2.9.19",
     "chokidar-cli": "3.0.0",
-    "eslint": "9.39.2",
-    "eslint-config-next": "16.0.0",
-    "eslint-plugin-import": "2.32.0",
-    "eslint-plugin-react": "7.37.5",
-    "eslint-plugin-react-hooks": "7.0.1",
     "html-loader": "5.1.0",
     "ignore-loader": "0.1.2",
     "jsdom": "24.1.0",
@@ -162,7 +154,6 @@
     "tsconfig-paths": "4.2.0",
     "tsx": "4.19.2",
     "typescript": "5.9.3",
-    "typescript-eslint": "8.54.0",
     "vitest": "2.1.4"
   }
 }

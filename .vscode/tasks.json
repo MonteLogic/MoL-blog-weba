@@ -36,9 +36,20 @@
     {
       "type": "npm",
       "script": "lint:strict",
-      "problemMatcher": "$eslint-stylish",
-      "label": "ESLint: Strict Check",
-      "detail": "Strict ESLint with no-any rules and 125-line function limit",
+      "problemMatcher": {
+        "owner": "biome",
+        "fileLocation": ["relative", "${workspaceFolder}"],
+        "pattern": {
+          "regexp": "^::(?:error|warning)\\s+file=([^,]+),line=(\\d+),col=(\\d+),endColumn=(\\d+)::(.+)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "endColumn": 4,
+          "message": 5
+        }
+      },
+      "label": "Biome: Strict Check",
+      "detail": "Rust-based linter - fast strict checking",
       "presentation": {
         "group": "build",
         "reveal": "silent"
@@ -47,19 +58,30 @@
     {
       "type": "npm",
       "script": "lint:watch",
-      "problemMatcher": "$eslint-stylish",
+      "problemMatcher": {
+        "owner": "biome",
+        "fileLocation": ["relative", "${workspaceFolder}"],
+        "pattern": {
+          "regexp": "^::(?:error|warning)\\s+file=([^,]+),line=(\\d+),col=(\\d+),endColumn=(\\d+)::(.+)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "endColumn": 4,
+          "message": 5
+        }
+      },
       "isBackground": true,
-      "label": "ESLint: Watch Mode",
-      "detail": "Runs ESLint on file changes",
+      "label": "Biome: Watch Mode",
+      "detail": "Runs Biome on file changes",
       "presentation": {
         "group": "build",
         "reveal": "never"
       }
     },
     {
-      "label": "All Checks: tsgo + ESLint",
+      "label": "All Checks: tsgo + Biome",
       "dependsOrder": "parallel",
-      "dependsOn": ["tsgo: Type Check (Watch)", "ESLint: Watch Mode"],
+      "dependsOn": ["tsgo: Type Check (Watch)", "Biome: Watch Mode"],
       "group": {
         "kind": "build",
         "isDefault": true
