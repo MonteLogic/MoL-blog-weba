@@ -263,9 +263,9 @@ export async function generateStaticParams(): Promise<BlogPostParams[]> {
 export default async function BlogPostPage({
   params,
 }: {
-  params: BlogPostParams;
+  params: Promise<BlogPostParams>;
 }) {
-  const { slug: urlSlug } = params;
+  const { slug: urlSlug } = await params;
   const { userId } = await auth();
   let userRole: string | undefined;
 

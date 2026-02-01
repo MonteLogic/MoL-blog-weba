@@ -256,7 +256,7 @@ async function getBlogPosts(): Promise<BlogPost[]> {
       const frontmatter: BlogPost['frontmatter'] = {
         ...(parsedFrontmatter as object),
         title: parsedFrontmatter.title ?? formatTitle(titleSourceName),
-        status: parsedFrontmatter.status === 'public' ? 'public' : 'private',
+        status: parsedFrontmatter.status === 'private' ? 'private' : 'public',
         categories: rawCategories,
         categorySlugs: categorySlugs,
       };

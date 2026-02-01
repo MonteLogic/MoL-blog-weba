@@ -92,7 +92,13 @@ async function getPainPoint(slug: string): Promise<PainPoint | null> {
     if (!contentRes.ok) return null;
     const content = await contentRes.text();
     const isYaml = filePath.endsWith('.yaml') || filePath.endsWith('.yml');
-    const data = isYaml ? YAML.parse(content) : JSON.parse(content);
+    let data;
+    try {
+      data = isYaml ? YAML.parse(content) : JSON.parse(content);
+    } catch (e) {
+      console.warn(`[PainPointDetail] malformed content for ${slug}:`, e);
+      return null;
+    }
 
     // All updates (from main pain point and sub pain points)
     const allUpdates: PainPointUpdate[] = [];
@@ -326,8 +332,9 @@ async function getPainPoint(slug: string): Promise<PainPoint | null> {
 export default async function PainPointDetailPage({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
+  const { slug } = await params;
   const { userId } = await auth();
   let userRole: string | undefined;
 
@@ -340,7 +347,7 @@ export default async function PainPointDetailPage({
     }
   }
 
-  const painPoint = await getPainPoint(params.slug);
+  const painPoint = await getPainPoint(slug);
 
   if (!painPoint) {
     notFound();
