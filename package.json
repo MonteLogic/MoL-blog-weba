@@ -31,7 +31,8 @@
     "type-check:watch": "tsc --noEmit --watch --pretty",
     "tsgo:check": "tsgo --noEmit",
     "tsgo:check:watch": "tsgo --noEmit --watch",
-    "lint:strict": "eslint . --cache"
+    "lint:strict": "eslint . --cache",
+    "lint:watch": "chokidar \"**/*.{ts,tsx,js,jsx}\" -i \"node_modules\" -i \".next\" -i \"MoL-blog-content\" -c \"eslint . --cache\" --initial"
   },
   "git": {
     "pre-commit": "lint-staged"
@@ -143,6 +144,7 @@
     "@vercel/git-hooks": "1.0.0",
     "@vitejs/plugin-react": "4.3.3",
     "baseline-browser-mapping": "2.9.19",
+    "chokidar-cli": "3.0.0",
     "eslint": "9.39.2",
     "eslint-config-next": "16.0.0",
     "eslint-plugin-import": "2.32.0",

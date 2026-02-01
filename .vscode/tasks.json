@@ -45,9 +45,21 @@
       }
     },
     {
+      "type": "npm",
+      "script": "lint:watch",
+      "problemMatcher": "$eslint-stylish",
+      "isBackground": true,
+      "label": "ESLint: Watch Mode",
+      "detail": "Runs ESLint on file changes",
+      "presentation": {
+        "group": "build",
+        "reveal": "never"
+      }
+    },
+    {
       "label": "All Checks: tsgo + ESLint",
-      "dependsOrder": "sequence",
-      "dependsOn": ["tsgo: Type Check (Watch)", "ESLint: Strict Check"],
+      "dependsOrder": "parallel",
+      "dependsOn": ["tsgo: Type Check (Watch)", "ESLint: Watch Mode"],
       "group": {
         "kind": "build",
         "isDefault": true
