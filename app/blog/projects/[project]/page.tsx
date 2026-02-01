@@ -164,9 +164,13 @@ interface Props {
 }
 
 export default async function ProjectPage({
-  params: { project },
+  params,
   searchParams,
-}: Props) {
+}: {
+  params: Promise<{ project: string }>;
+  searchParams: { page?: string };
+}) {
+  const { project } = await params;
   const { userId } = await auth();
   let userRole: string | undefined;
 

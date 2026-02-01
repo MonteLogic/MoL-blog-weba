@@ -22,8 +22,8 @@ interface PainPoint {
 
 async function getPainPoints(): Promise<PainPoint[]> {
   try {
-    const owner = 'MonteLogic';
-    const repo = 'MoL-blog-content';
+    const owner = process.env.NEXT_PUBLIC_GITHUB_OWNER || 'MonteLogic';
+    const repo = process.env.NEXT_PUBLIC_GITHUB_REPO || 'MoL-blog-content';
     const path = 'posts/categorized/pain-points';
     const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
 

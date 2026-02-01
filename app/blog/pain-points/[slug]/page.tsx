@@ -39,8 +39,8 @@ interface PainPoint {
 
 async function getPainPoint(slug: string): Promise<PainPoint | null> {
   try {
-    const owner = 'MonteLogic';
-    const repo = 'MoL-blog-content';
+    const owner = process.env.NEXT_PUBLIC_GITHUB_OWNER || 'MonteLogic';
+    const repo = process.env.NEXT_PUBLIC_GITHUB_REPO || 'MoL-blog-content';
     const basePath = 'posts/categorized/pain-points';
 
     const headers: HeadersInit = {
@@ -356,7 +356,9 @@ export default async function PainPointDetailPage({
   const isAdmin = userRole === 'admin' || userRole === 'Admin';
 
   // GitHub URL for editing this pain point
-  const editOnGitHubUrl = `https://github.com/MonteLogic/MoL-blog-content/blob/main/posts/categorized/pain-points/${params.slug}/${params.slug}.yaml`;
+  const owner = process.env.NEXT_PUBLIC_GITHUB_OWNER || 'MonteLogic';
+  const repo = process.env.NEXT_PUBLIC_GITHUB_REPO || 'MoL-blog-content';
+  const editOnGitHubUrl = `https://github.com/${owner}/${repo}/blob/main/posts/categorized/pain-points/${slug}/${slug}.yaml`;
 
   return (
     <div className="mx-auto max-w-4xl">
@@ -468,7 +470,7 @@ export default async function PainPointDetailPage({
           </h2>
           <SubPainPointsTabs
             subPainPoints={painPoint.subPainPoints}
-            parentSlug={params.slug}
+            parentSlug={slug}
           />
         </div>
 
@@ -482,7 +484,7 @@ export default async function PainPointDetailPage({
               All Updates
             </h2>
             <Link
-              href={`/blog/pain-points/${params.slug}/add-update`}
+              href={`/blog/pain-points/${slug}/add-update`}
               className="inline-flex items-center gap-2 rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700"
             >
               <svg

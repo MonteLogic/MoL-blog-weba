@@ -199,9 +199,9 @@ export async function generateStaticParams(): Promise<ProjectPostParams[]> {
 export default async function ProjectPostPage({
   params,
 }: {
-  params: ProjectPostParams;
+  params: Promise<ProjectPostParams>;
 }) {
-  const { project: projectSlug, post: postSlug } = params;
+  const { project: projectSlug, post: postSlug } = await params;
   const { userId } = await auth();
   let userRole: string | undefined;
 
