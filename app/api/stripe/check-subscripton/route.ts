@@ -4,12 +4,12 @@
  */
 
 import { NextResponse } from 'next/server';
-import { auth, clerkClient } from '@clerk/nextjs';
+import { auth, clerkClient } from '@clerk/nextjs/server';
 import Stripe from 'stripe';
 
 /** Initialize Stripe client */
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-12-18.acacia'
+  apiVersion: '2024-12-18.acacia',
 });
 
 /**
@@ -19,13 +19,14 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
  */
 export async function GET(): Promise<NextResponse> {
   try {
-    const { userId } = auth();
+    const { userId } = await auth();
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Get user's Stripe customer ID from Clerk metadata
-    const user = await clerkClient.users.getUser(userId);
+    const client = await clerkClient();
+    const user = await client.users.getUser(userId);
     const stripeCustomerId = user.privateMetadata.stripeCustomerId as string;
 
     if (!stripeCustomerId) {
@@ -36,7 +37,7 @@ export async function GET(): Promise<NextResponse> {
     const subscriptions = await stripe.subscriptions.list({
       customer: stripeCustomerId,
       status: 'active',
-      limit: 1
+      limit: 1,
     });
 
     if (!subscriptions.data.length) {
@@ -48,13 +49,13 @@ export async function GET(): Promise<NextResponse> {
     return NextResponse.json({
       isActive: true,
       planId: subscription.items.data[0].price.product,
-      expiresAt: new Date(subscription.current_period_end * 1000).toISOString()
+      expiresAt: new Date(subscription.current_period_end * 1000).toISOString(),
     });
   } catch (error) {
     console.error('Error checking subscription:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

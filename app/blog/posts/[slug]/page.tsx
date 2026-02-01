@@ -6,7 +6,7 @@ import matter from 'gray-matter';
 import { MDXRemote } from 'next-mdx-remote/rsc';
 import rehypePrettyCode from 'rehype-pretty-code';
 import remarkGfm from 'remark-gfm';
-import { auth, currentUser } from '@clerk/nextjs';
+import { auth, currentUser } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 
@@ -60,13 +60,17 @@ function canViewPost(
   }
 
   // If the post is private, only Admin and Contributor can view it
-  return userRole === 'admin' || userRole === 'Admin' || userRole === 'Contributor';
+  return (
+    userRole === 'admin' || userRole === 'Admin' || userRole === 'Contributor'
+  );
 }
 
 // Blog post page component
-export default async function BlogPost({ params }: Readonly<{ params: BlogPostParams }>) {
+export default async function BlogPost({
+  params,
+}: Readonly<{ params: BlogPostParams }>) {
   const { slug } = params;
-  const { userId } = auth();
+  const { userId } = await auth();
   let userRole: string | undefined;
 
   // Get user role directly from Clerk metadata
@@ -139,7 +143,9 @@ export default async function BlogPost({ params }: Readonly<{ params: BlogPostPa
               </h1>
 
               {/* Show status badge for Admin and Contributor */}
-              {(userRole === 'admin' || userRole === 'Admin' || userRole === 'Contributor') && (
+              {(userRole === 'admin' ||
+                userRole === 'Admin' ||
+                userRole === 'Contributor') && (
                 <span
                   className={`rounded-full px-3 py-1 text-sm ${
                     postStatus === 'public'
@@ -196,7 +202,7 @@ export default async function BlogPost({ params }: Readonly<{ params: BlogPostPa
                 source={content}
                 components={components}
                 options={{
-                  mdxOptions
+                  mdxOptions,
                 }}
               />
             ) : (
@@ -229,8 +235,8 @@ export default async function BlogPost({ params }: Readonly<{ params: BlogPostPa
             Post Not Found
           </h1>
           <p className="text-white">
-            This blog post could not be found in the uncategorized section or you
-            do not have permission to view it.
+            This blog post could not be found in the uncategorized section or
+            you do not have permission to view it.
           </p>
         </div>
       </div>

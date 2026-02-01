@@ -4,8 +4,6 @@ import Byline from '#/ui/byline';
 import { GlobalNav } from '#/ui/global-nav';
 import { Metadata } from 'next';
 import { ClerkProvider } from '@clerk/nextjs';
-import { auth } from '@clerk/nextjs/server';
-import { cache } from 'react';
 import { Analytics } from '@vercel/analytics/next';
 import titles from '#/titles.json';
 
@@ -28,26 +26,11 @@ export const metadata: Metadata = {
   },
 };
 
-const getUserData = cache(async () => {
-  const { userId: clerkUserId } = await auth();
-
-  if (!clerkUserId) {
-    return {
-      title: 'No user logged in',
-      description: 'This description comes from the server',
-      userID: '',
-      dbUserId: null,
-    };
-  }
-});
-
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const userData = await getUserData();
-
   return (
     <ClerkProvider>
       <html lang="en" suppressHydrationWarning>
@@ -55,7 +38,7 @@ export default async function RootLayout({
           className="overflow-y-scroll pb-36"
           style={{ backgroundColor: 'var(--bg-primary)' }}
         >
-          <GlobalNav userData={userData} />
+          <GlobalNav />
           <div className="lg:pl-72">
             <div className="mx-auto max-w-4xl space-y-8 px-2 pt-20 lg:px-8 lg:py-8">
               <div

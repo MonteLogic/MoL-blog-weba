@@ -50,7 +50,7 @@ const getPlanDetails = (planId: PlanId = 'base'): ProductPlan => {
  * @component
  * @returns {JSX.Element} The rendered subscription section
  */
-export default function StripeSubscriptionSection(): JSX.Element {
+export default function StripeSubscriptionSection() {
   const { user, isLoaded } = useUser();
   const [loading, setLoading] = useState<boolean>(false);
   const [subscriptionStatus, setSubscriptionStatus] =

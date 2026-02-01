@@ -6,7 +6,8 @@ import { UserType } from '#/types/UserTypes';
 
 export async function syncClerkAndLocalDb(clerkUserId: string, orgId: string) {
   const db = tursoClient();
-  const clerkUser = await clerkClient.users.getUser(clerkUserId);
+  const client = await clerkClient();
+  const clerkUser = await client.users.getUser(clerkUserId);
   const userEmail = clerkUser.emailAddresses[0]?.emailAddress;
 
   if (!userEmail) {

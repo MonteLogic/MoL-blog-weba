@@ -6,7 +6,7 @@ import matter from 'gray-matter';
 import { MDXRemote } from 'next-mdx-remote/rsc'; // For Server Components
 import rehypePrettyCode from 'rehype-pretty-code';
 import remarkGfm from 'remark-gfm';
-import { auth, currentUser } from '@clerk/nextjs';
+import { auth, currentUser } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import { AdminArea } from './AdminArea';
@@ -107,7 +107,9 @@ function canViewPost(
 ): boolean {
   const effectiveStatus = postStatus === 'public' ? 'public' : 'private';
   if (effectiveStatus === 'public') return true;
-  return userRole === 'admin' || userRole === 'Admin' || userRole === 'Contributor';
+  return (
+    userRole === 'admin' || userRole === 'Admin' || userRole === 'Contributor'
+  );
 }
 
 // --- MDX Configuration ---
@@ -264,7 +266,7 @@ export default async function BlogPostPage({
   params: BlogPostParams;
 }) {
   const { slug: urlSlug } = params;
-  const { userId } = auth();
+  const { userId } = await auth();
   let userRole: string | undefined;
 
   if (userId) {
@@ -303,48 +305,55 @@ export default async function BlogPostPage({
     }
 
     // Construct GitHub URL for admin view
-    const githubFileUrl = `https://github.com/MonteLogic/MoL-blog-content/blob/main/${relativeFilePath.replace('MoL-blog-content/', '')}`;
+    const githubFileUrl = `https://github.com/MonteLogic/MoL-blog-content/blob/main/${relativeFilePath.replace(
+      'MoL-blog-content/',
+      '',
+    )}`;
 
     return (
       <div className="mx-auto max-w-3xl">
         <div className="mb-8 flex flex-col gap-3">
           <div className="flex items-center justify-between">
-             <Link
-              href="/blog"
-              className="back-link text-accent-indigo"
-            >
+            <Link href="/blog" className="back-link text-accent-indigo">
               ← Back to all posts
             </Link>
 
             {userRole === 'admin' && (
-              <AdminArea 
-                githubFileUrl={githubFileUrl} 
-                localFilePath={relativeFilePath} 
+              <AdminArea
+                githubFileUrl={githubFileUrl}
+                localFilePath={relativeFilePath}
               />
             )}
           </div>
-          
-           {relativeFilePath.includes('/projects/') && (
-             <Link
-                href={`/blog/projects/${relativeFilePath.split('/projects/')[1].split('/')[0]}`}
-                className="back-link text-accent-teal self-start text-sm"
-              >
-                ← Back to {formatTitle(relativeFilePath.split('/projects/')[1].split('/')[0])} Project
-             </Link>
-           )}
-        </div>
 
+          {relativeFilePath.includes('/projects/') && (
+            <Link
+              href={`/blog/projects/${
+                relativeFilePath.split('/projects/')[1].split('/')[0]
+              }`}
+              className="back-link text-accent-teal self-start text-sm"
+            >
+              ← Back to{' '}
+              {formatTitle(
+                relativeFilePath.split('/projects/')[1].split('/')[0],
+              )}{' '}
+              Project
+            </Link>
+          )}
+        </div>
 
         <article className="prose-blog max-w-none">
           {' '}
           {/* Apply prose classes here */}
-          <header className="mb-12 border-b border-cream-300 pb-8">
+          <header className="border-cream-300 mb-12 border-b pb-8">
             {/* ... (article header and content rendering, same as your last provided version) ... */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-              <h1 className="text-3xl font-extrabold leading-tight tracking-tight text-charcoal md:text-4xl">
+              <h1 className="text-charcoal text-3xl font-extrabold leading-tight tracking-tight md:text-4xl">
                 {frontmatter.title}
               </h1>
-              {(userRole === 'admin' || userRole === 'Admin' || userRole === 'Contributor') &&
+              {(userRole === 'admin' ||
+                userRole === 'Admin' ||
+                userRole === 'Contributor') &&
                 frontmatter.status && (
                   <span
                     className={`mt-1 self-start whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium sm:mt-0 ${
@@ -358,11 +367,11 @@ export default async function BlogPostPage({
                 )}
             </div>
             {frontmatter.description && (
-              <p className="mt-4 text-xl text-charcoal-light leading-relaxed">
+              <p className="text-charcoal-light mt-4 text-xl leading-relaxed">
                 {frontmatter.description}
               </p>
             )}
-            <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-charcoal-muted">
+            <div className="text-charcoal-muted mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
               {frontmatter.date && (
                 <span>
                   {new Date(frontmatter.date).toLocaleDateString('en-US', {
@@ -375,34 +384,44 @@ export default async function BlogPostPage({
               {frontmatter.author && <span>By {frontmatter.author}</span>}
               {/* Display Categories */}
               {(frontmatter.categories || frontmatter.category) && (
-                 <div className="flex items-center gap-2">
-                    <span>in</span>
-                    {(Array.isArray(frontmatter.categories) ? frontmatter.categories : [frontmatter.category]).map((cat: string, idx: number) => {
-                        // Use explicit slug if available, otherwise fallback
-                         const catSlug = frontmatter['category-slug'] || (frontmatter['category-slugs'] && frontmatter['category-slugs'][idx])
-                            ? (frontmatter['category-slugs'] ? frontmatter['category-slugs'][idx] : frontmatter['category-slug'])
-                            : cat.toString().toLowerCase().trim().replace(/\s+/g, '-').replace(/[^\w-]+/g, ''); 
+                <div className="flex items-center gap-2">
+                  <span>in</span>
+                  {(Array.isArray(frontmatter.categories)
+                    ? frontmatter.categories
+                    : [frontmatter.category]
+                  ).map((cat: string, idx: number) => {
+                    // Use explicit slug if available, otherwise fallback
+                    const catSlug =
+                      frontmatter['category-slug'] ||
+                      (frontmatter['category-slugs'] &&
+                        frontmatter['category-slugs'][idx])
+                        ? frontmatter['category-slugs']
+                          ? frontmatter['category-slugs'][idx]
+                          : frontmatter['category-slug']
+                        : cat
+                            .toString()
+                            .toLowerCase()
+                            .trim()
+                            .replace(/\s+/g, '-')
+                            .replace(/[^\w-]+/g, '');
 
-                        return (
-                            <Link 
-                                key={idx} 
-                                href={`/blog/categories/${catSlug}`}
-                                className="text-accent-indigo hover:text-accent-purple hover:underline transition-colors"
-                            >
-                                {cat}
-                            </Link>
-                        );
-                    })}
-                 </div>
+                    return (
+                      <Link
+                        key={idx}
+                        href={`/blog/categories/${catSlug}`}
+                        className="text-accent-indigo hover:text-accent-purple transition-colors hover:underline"
+                      >
+                        {cat}
+                      </Link>
+                    );
+                  })}
+                </div>
               )}
             </div>
             {frontmatter.tags && frontmatter.tags.length > 0 && (
               <div className="mt-6 flex flex-wrap gap-2">
                 {frontmatter.tags.map((tag: string) => (
-                  <span
-                    key={tag}
-                    className="tag-blog"
-                  >
+                  <span key={tag} className="tag-blog">
                     {tag}
                   </span>
                 ))}
@@ -445,7 +464,7 @@ export default async function BlogPostPage({
             The post you were looking for ({urlSlug}) could not be loaded.
           </p>
           {process.env.NODE_ENV === 'development' && (
-            <p className="mt-4 text-xs text-charcoal-muted">
+            <p className="text-charcoal-muted mt-4 text-xs">
               Details: {error.message}
             </p>
           )}
