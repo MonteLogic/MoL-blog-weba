@@ -95,7 +95,6 @@ function formatTitle(namePart: string): string {
 // --- Main function to get blog posts ---
 
 async function getBlogPosts(): Promise<BlogPost[]> {
-  console.log('Starting getBlogPosts function for listing page...');
   try {
     const jsonFilePath = path.join(
       process.cwd(),

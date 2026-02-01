@@ -12,6 +12,7 @@ export const metadata: Metadata = {
     default: titles.title,
     template: '%s | MonteLogic',
   },
+  metadataBase: new URL('https://mo99.sh/'),
   description:
     titles.title +
     ' is an online system for managing contractors concerns. These concerns include scheduling, timecards, route management and time management. This easy to use app will make truck drivers and route managers working lives much easier.',
