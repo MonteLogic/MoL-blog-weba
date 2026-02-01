@@ -5,9 +5,9 @@ import { eq } from 'drizzle-orm';
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { routeId: string } },
+  { params }: { params: Promise<{ routeId: string }> },
 ) {
-  const { routeId } = params;
+  const { routeId } = await params;
 
   // Check if the conversion was successful
   if (!routeId) {

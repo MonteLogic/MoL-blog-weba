@@ -1,0 +1,314 @@
+
+> @ build /home/monte/Downloads/temp/M99/MoL-blog-weba
+> pnpm run generate-markdown-paths && pnpm run validate-pain-points && pnpm run check-categories && next build
+
+
+> @ generate-markdown-paths /home/monte/Downloads/temp/M99/MoL-blog-weba
+> ts-node -O '{"module": "CommonJS"}' scripts/generate.ts
+
+Found content directory at: /home/monte/Downloads/temp/M99/MoL-blog-weba/MoL-blog-content/posts
+Generated /home/monte/Downloads/temp/M99/MoL-blog-weba/blog-schema/file-paths/markdown-paths.json with paths to 233 markdown files.
+
+> @ validate-pain-points /home/monte/Downloads/temp/M99/MoL-blog-weba
+> ts-node -O '{"module": "CommonJS"}' scripts/validate-pain-points.ts
+
+Validating pain points in: /home/monte/Downloads/temp/M99/MoL-blog-weba/MoL-blog-content/posts/categorized/pain-points
+✅ Pain point validation passed.
+
+> @ check-categories /home/monte/Downloads/temp/M99/MoL-blog-weba
+> node scripts/check-categories.js
+
+Starting Category Validation...
+Loaded 3 valid categories from schema.
+Checking 233 posts...
+
+✅ Category Validation Passed!
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+   ▲ Next.js 16.0.0 (Turbopack)
+   - Environments: .env
+
+ ⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+   Creating an optimized production build ...
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+Browserslist: caniuse-lite is outdated. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+ ✓ Compiled successfully in 33.1s
+   Running TypeScript ...
+   Collecting page data ...
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+ ⚠ Using edge runtime on a page currently disables static generation for that page
+Generated 233 static params for blog posts using unique slugs.
+Generated 14 static params for project posts.
+   Generating static pages (0/307) ...
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+ ⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+ ⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+categoryTabs in layout: [
+  { text: 'Home', href: '/blog' },
+  { text: 'View Pain Points', href: '/blog/pain-points' },
+  { text: 'View Projects', href: '/blog/projects' },
+  { text: 'View Categories', href: '/blog/categories' }
+]
+categoryTabs in layout: [
+  { text: 'Home', href: '/blog' },
+  { text: 'View Pain Points', href: '/blog/pain-points' },
+  { text: 'View Projects', href: '/blog/projects' },
+  { text: 'View Categories', href: '/blog/categories' }
+]
+categoryTabs in layout: [
+  { text: 'Home', href: '/blog' },
+  { text: 'View Pain Points', href: '/blog/pain-points' },
+  { text: 'View Projects', href: '/blog/projects' },
+  { text: 'View Categories', href: '/blog/categories' }
+]
+categoryTabs in layout: [
+  { text: 'Home', href: '/blog' },
+  { text: 'View Pain Points', href: '/blog/pain-points' },
+  { text: 'View Projects', href: '/blog/projects' },
+  { text: 'View Categories', href: '/blog/categories' }
+]
+categoryTabs in layout: [
+  { text: 'Home', href: '/blog' },
+  { text: 'View Pain Points', href: '/blog/pain-points' },
+  { text: 'View Projects', href: '/blog/projects' },
+  { text: 'View Categories', href: '/blog/categories' }
+]
+categoryTabs in layout: [
+  { text: 'Home', href: '/blog' },
+  { text: 'View Pain Points', href: '/blog/pain-points' },
+  { text: 'View Projects', href: '/blog/projects' },
+  { text: 'View Categories', href: '/blog/categories' }
+]
+categoryTabs in layout: [
+  { text: 'Home', href: '/blog' },
+  { text: 'View Pain Points', href: '/blog/pain-points' },
+  { text: 'View Projects', href: '/blog/projects' },
+  { text: 'View Categories', href: '/blog/categories' }
+]
+categoryTabs in layout: [
+  { text: 'Home', href: '/blog' },
+  { text: 'View Pain Points', href: '/blog/pain-points' },
+  { text: 'View Projects', href: '/blog/projects' },
+  { text: 'View Categories', href: '/blog/categories' }
+]
+categoryTabs in layout: [
+  { text: 'Home', href: '/blog' },
+  { text: 'View Pain Points', href: '/blog/pain-points' },
+  { text: 'View Projects', href: '/blog/projects' },
+  { text: 'View Categories', href: '/blog/categories' }
+]
+categoryTabs in layout: [
+  { text: 'Home', href: '/blog' },
+  { text: 'View Pain Points', href: '/blog/pain-points' },
+  { text: 'View Projects', href: '/blog/projects' },
+  { text: 'View Categories', href: '/blog/categories' }
+]
+categoryTabs in layout: [
+  { text: 'Home', href: '/blog' },
+  { text: 'View Pain Points', href: '/blog/pain-points' },
+  { text: 'View Projects', href: '/blog/projects' },
+  { text: 'View Categories', href: '/blog/categories' }
+]
+categoryTabs in layout: [
+  { text: 'Home', href: '/blog' },
+  { text: 'View Pain Points', href: '/blog/pain-points' },
+  { text: 'View Projects', href: '/blog/projects' },
+  { text: 'View Categories', href: '/blog/categories' }
+]
+categoryTabs in layout: [
+  { text: 'Home', href: '/blog' },
+  { text: 'View Pain Points', href: '/blog/pain-points' },
+  { text: 'View Projects', href: '/blog/projects' },
+  { text: 'View Categories', href: '/blog/categories' }
+]
+categoryTabs in layout: [
+  { text: 'Home', href: '/blog' },
+  { text: 'View Pain Points', href: '/blog/pain-points' },
+  { text: 'View Projects', href: '/blog/projects' },
+  { text: 'View Categories', href: '/blog/categories' }
+]
+categoryTabs in layout: [
+  { text: 'Home', href: '/blog' },
+  { text: 'View Pain Points', href: '/blog/pain-points' },
+  { text: 'View Projects', href: '/blog/projects' },
+  { text: 'View Categories', href: '/blog/categories' }
+]
+categoryTabs in layout: [
+  { text: 'Home', href: '/blog' },
+  { text: 'View Pain Points', href: '/blog/pain-points' },
+  { text: 'View Projects', href: '/blog/projects' },
+  { text: 'View Categories', href: '/blog/categories' }
+]
+ ⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+categoryTabs in layout: [
+  { text: 'Home', href: '/blog' },
+  { text: 'View Pain Points', href: '/blog/pain-points' },
+  { text: 'View Projects', href: '/blog/projects' },
+  { text: 'View Categories', href: '/blog/categories' }
+]
+categoryTabs in layout: [
+  { text: 'Home', href: '/blog' },
+  { text: 'View Pain Points', href: '/blog/pain-points' },
+  { text: 'View Projects', href: '/blog/projects' },
+  { text: 'View Categories', href: '/blog/categories' }
+]
+categoryTabs in layout: [
+  { text: 'Home', href: '/blog' },
+  { text: 'View Pain Points', href: '/blog/pain-points' },
+  { text: 'View Projects', href: '/blog/projects' },
+  { text: 'View Categories', href: '/blog/categories' }
+]
+categoryTabs in layout: [
+  { text: 'Home', href: '/blog' },
+  { text: 'View Pain Points', href: '/blog/pain-points' },
+  { text: 'View Projects', href: '/blog/projects' },
+  { text: 'View Categories', href: '/blog/categories' }
+]
+categoryTabs in layout: [
+  { text: 'Home', href: '/blog' },
+  { text: 'View Pain Points', href: '/blog/pain-points' },
+  { text: 'View Projects', href: '/blog/projects' },
+  { text: 'View Categories', href: '/blog/categories' }
+]
+categoryTabs in layout: [
+  { text: 'Home', href: '/blog' },
+  { text: 'View Pain Points', href: '/blog/pain-points' },
+  { text: 'View Projects', href: '/blog/projects' },
+  { text: 'View Categories', href: '/blog/categories' }
+]
+categoryTabs in layout: [
+  { text: 'Home', href: '/blog' },
+  { text: 'View Pain Points', href: '/blog/pain-points' },
+  { text: 'View Projects', href: '/blog/projects' },
+  { text: 'View Categories', href: '/blog/categories' }
+]
+categoryTabs in layout: [
+  { text: 'Home', href: '/blog' },
+  { text: 'View Pain Points', href: '/blog/pain-points' },
+  { text: 'View Projects', href: '/blog/projects' },
+  { text: 'View Categories', href: '/blog/categories' }
+]
+ ⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+ ⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+categoryTabs in layout: [
+  { text: 'Home', href: '/blog' },
+  { text: 'View Pain Points', href: '/blog/pain-points' },
+  { text: 'View Projects', href: '/blog/projects' },
+  { text: 'View Categories', href: '/blog/categories' }
+]
+categoryTabs in layout: [
+  { text: 'Home', href: '/blog' },
+  { text: 'View Pain Points', href: '/blog/pain-points' },
+  { text: 'View Projects', href: '/blog/projects' },
+  { text: 'View Categories', href: '/blog/categories' }
+]
+categoryTabs in layout: [
+  { text: 'Home', href: '/blog' },
+  { text: 'View Pain Points', href: '/blog/pain-points' },
+  { text: 'View Projects', href: '/blog/projects' },
+  { text: 'View Categories', href: '/blog/categories' }
+]
+categoryTabs in layout: [
+  { text: 'Home', href: '/blog' },
+  { text: 'View Pain Points', href: '/blog/pain-points' },
+  { text: 'View Projects', href: '/blog/projects' },
+  { text: 'View Categories', href: '/blog/categories' }
+]
+categoryTabs in layout: [
+  { text: 'Home', href: '/blog' },
+  { text: 'View Pain Points', href: '/blog/pain-points' },
+  { text: 'View Projects', href: '/blog/projects' },
+  { text: 'View Categories', href: '/blog/categories' }
+]
+categoryTabs in layout: [
+  { text: 'Home', href: '/blog' },
+  { text: 'View Pain Points', href: '/blog/pain-points' },
+  { text: 'View Projects', href: '/blog/projects' },
+  { text: 'View Categories', href: '/blog/categories' }
+]
+categoryTabs in layout: [
+  { text: 'Home', href: '/blog' },
+  { text: 'View Pain Points', href: '/blog/pain-points' },
+  { text: 'View Projects', href: '/blog/projects' },
+  { text: 'View Categories', href: '/blog/categories' }
+]
+categoryTabs in layout: [
+  { text: 'Home', href: '/blog' },
+  { text: 'View Pain Points', href: '/blog/pain-points' },
+  { text: 'View Projects', href: '/blog/projects' },
+  { text: 'View Categories', href: '/blog/categories' }
+]
+Error occurred prerendering page "/error-handling". Read more: https://nextjs.org/docs/messages/prerender-error
+ ⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+Error: Event handlers cannot be passed to Client Component props.
+  {item: ..., path: ..., parallelRoutesKey: ..., isActive: ..., onClick: function onClick}
+                                                                         ^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>) {
+  digest: '525920568'
+}
+Export encountered an error on /error-handling/page: /error-handling, exiting the build.
+categoryTabs in layout: [
+  { text: 'Home', href: '/blog' },
+  { text: 'View Pain Points', href: '/blog/pain-points' },
+  { text: 'View Projects', href: '/blog/projects' },
+  { text: 'View Categories', href: '/blog/categories' }
+]
+categoryTabs in layout: [
+  { text: 'Home', href: '/blog' },
+  { text: 'View Pain Points', href: '/blog/pain-points' },
+  { text: 'View Projects', href: '/blog/projects' },
+  { text: 'View Categories', href: '/blog/categories' }
+]
+categoryTabs in layout: [
+  { text: 'Home', href: '/blog' },
+  { text: 'View Pain Points', href: '/blog/pain-points' },
+  { text: 'View Projects', href: '/blog/projects' },
+  { text: 'View Categories', href: '/blog/categories' }
+]
+categoryTabs in layout: [
+  { text: 'Home', href: '/blog' },
+  { text: 'View Pain Points', href: '/blog/pain-points' },
+  { text: 'View Projects', href: '/blog/projects' },
+  { text: 'View Categories', href: '/blog/categories' }
+]
+categoryTabs in layout: [
+  { text: 'Home', href: '/blog' },
+  { text: 'View Pain Points', href: '/blog/pain-points' },
+  { text: 'View Projects', href: '/blog/projects' },
+  { text: 'View Categories', href: '/blog/categories' }
+]
+categoryTabs in layout: [
+  { text: 'Home', href: '/blog' },
+  { text: 'View Pain Points', href: '/blog/pain-points' },
+  { text: 'View Projects', href: '/blog/projects' },
+  { text: 'View Categories', href: '/blog/categories' }
+]
+categoryTabs in layout: [
+  { text: 'Home', href: '/blog' },
+  { text: 'View Pain Points', href: '/blog/pain-points' },
+  { text: 'View Projects', href: '/blog/projects' },
+  { text: 'View Categories', href: '/blog/categories' }
+]
+categoryTabs in layout: [
+  { text: 'Home', href: '/blog' },
+  { text: 'View Pain Points', href: '/blog/pain-points' },
+  { text: 'View Projects', href: '/blog/projects' },
+  { text: 'View Categories', href: '/blog/categories' }
+]
+ ⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+ ⨯ Next.js build worker exited with code: 1 and signal: null
+ ELIFECYCLE  Command failed with exit code 1.

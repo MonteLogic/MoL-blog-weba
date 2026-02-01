@@ -8,6 +8,7 @@ const nextConfig = {
   webpack: (config, { dev, isServer }) => {
     (config.resolve = {
       ...config.resolve,
+      symlinks: false,
       alias: {
         ...config.resolve.alias,
         '#': path.resolve(__dirname),
