@@ -39,8 +39,6 @@ if (!painPointsDir) {
   process.exit(0);
 }
 
-console.log(`Validating pain points in: ${painPointsDir}`);
-
 const files = fs
   .readdirSync(painPointsDir)
   .filter((file) => file.endsWith('.yaml') || file.endsWith('.yml'));
@@ -87,6 +85,5 @@ if (hasErrors) {
   );
   process.exit(1);
 } else {
-  console.log('✅ Pain point validation passed.');
   process.exit(0);
 }

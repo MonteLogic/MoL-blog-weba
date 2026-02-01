@@ -11,7 +11,6 @@ export const isShiftAssigned = (
   localWorkTime: any,
   shiftId: string,
 ): boolean => {
-  console.log(8, localWorkTime);
   const shift = localWorkTime.find(
     (wt: any) => wt.shiftWorked === shiftId.toString(),
   );

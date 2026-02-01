@@ -52,7 +52,6 @@ async function getPainPoints(): Promise<PainPoint[]> {
 
     if (!res.ok) {
       if (res.status === 404) {
-        console.log('GitHub path not found:', path);
         return [];
       }
       console.error('Failed to fetch from GitHub:', res.statusText);

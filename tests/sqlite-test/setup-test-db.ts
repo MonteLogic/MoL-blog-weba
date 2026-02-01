@@ -7,7 +7,6 @@ import { users, routes, routeShiftInfo, workTimeShift } from '#/db/schema';
 import { uuid } from '#/utils/dbUtils';
 
 export async function setupTestDb() {
-  console.log('Starting database setup...');
   try {
     const timestamp = new Date()
       .toISOString()
@@ -20,12 +19,10 @@ export async function setupTestDb() {
 
     // Important: Check if migrations are in the correct location
     const migrationsPath = path.join(process.cwd(), 'db', 'migrations'); // Changed to match your structure
-    console.log('Looking for migrations in:', migrationsPath);
 
     // List all files in migrations directory
     try {
       const files = await fs.readdir(migrationsPath);
-      console.log('Found migration files:', files);
     } catch (err) {
       console.error('Error reading migrations directory:', err);
     }
@@ -37,10 +34,8 @@ export async function setupTestDb() {
     const db = drizzle(sqlite);
 
     // Run migrations with additional logging
-    console.log('Running migrations...');
     try {
       migrate(db, { migrationsFolder: migrationsPath });
-      console.log('Migrations completed successfully');
     } catch (err) {
       console.error('Migration failed:', err);
     }
@@ -54,9 +49,7 @@ export async function setupTestDb() {
     `,
       )
       .all();
-    console.log('Created tables:', tables);
 
-    console.log(`Test database created at: ${dbPath}`);
     return { db, dbPath };
   } catch (error) {
     console.error('Failed to setup test database:', error);
@@ -67,7 +60,6 @@ export async function setupTestDb() {
 // The rest of your code remains the same...
 
 export async function seedTestDb(dbPath: string) {
-  console.log('Starting database seeding...');
   const sqlite = new Database(dbPath);
   const db = drizzle(sqlite);
   const now = new Date().toISOString();
@@ -126,7 +118,6 @@ export async function seedTestDb(dbPath: string) {
       summary: '{}',
     });
 
-    console.log('Test data seeded successfully');
     return {
       userId,
       organizationID,
@@ -143,7 +134,6 @@ export async function seedTestDb(dbPath: string) {
 }
 
 export async function createTestDatabase() {
-  console.log('Creating test database with data...');
   const { dbPath } = await setupTestDb();
   const testData = await seedTestDb(dbPath);
 
@@ -153,7 +143,6 @@ export async function createTestDatabase() {
     cleanup: async () => {
       try {
         await fs.unlink(dbPath);
-        console.log('Test database cleaned up successfully');
       } catch (error) {
         console.error('Failed to cleanup test database:', error);
       }
@@ -163,10 +152,8 @@ export async function createTestDatabase() {
 
 // Run if file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  console.log('Starting test database creation process...');
   createTestDatabase()
     .then((result) => {
-      console.log('Test setup completed successfully:', result);
       // Uncomment the following line if you want to clean up the database after creation
       // return result.cleanup();
     })

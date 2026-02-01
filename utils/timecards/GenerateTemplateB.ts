@@ -9,15 +9,12 @@ export const GenerateTemplateB = async (
   selectedEmployeeName: string,
 ): Promise<string> => {
   try {
-    console.log(7, workTimeForEmployee);
     const pdfBase64 = await drawBorders(
       workTimeForEmployee,
       monthDateInt,
       selectedEmployeeID,
       selectedEmployeeName,
     );
-
-    console.log(7, workTimeForEmployee);
 
     // Convert the base64 string to a Blob
     const pdfBlob = new Blob([Buffer.from(pdfBase64, 'base64')], {
@@ -47,8 +44,6 @@ const distinguishEmployeeWorkShifts = (
   workTimeForEmployeeShifts: WorkTimeShiftType,
   selectedEmployeeID: string,
 ): string[] => {
-  console.log(43, workTimeForEmployeeShifts);
-
   if (!workTimeForEmployeeShifts.summary) {
     return [];
   }
@@ -56,8 +51,6 @@ const distinguishEmployeeWorkShifts = (
   const shiftsArray = JSON.parse(workTimeForEmployeeShifts.summary);
 
   const shiftsArrayKeys = Object.keys(shiftsArray);
-
-  console.log(53, shiftsArrayKeys);
 
   return shiftsArrayKeys;
 };
@@ -71,8 +64,6 @@ const drawBorders = async (
   const filteredEmployeeNodes: WorkTimeShiftType[] = workTimeForEmployee.filter(
     (node) => node.userId === selectedEmployeeID,
   );
-
-  console.log(26, filteredEmployeeNodes);
 
   const pdfDoc = await PDFDocument.create();
   const page = pdfDoc.addPage([600, 800]);
@@ -126,12 +117,10 @@ const drawBorders = async (
     const dateB = new Date(b.dayScheduled);
     return dateA.getTime() - dateB.getTime();
   });
-  console.log(119, sortedEmployeeNodes);
 
   for (const workTime of sortedEmployeeNodes) {
     const inputDate: Date = new Date(workTime.dayScheduled);
     const routeIDAffiliated = workTime.routeId;
-    console.log(197, workTime.routeId);
 
     const date: Date = new Date(inputDate);
     date.setDate(date.getDate() + 1);
@@ -165,7 +154,6 @@ const drawBorders = async (
       workTime,
       selectedEmployeeID,
     );
-    console.log(163, shiftsWorkedCurrentArray);
 
     const earlyMorningWorked = shiftsWorkedCurrentArray.includes('earlyMorning')
       ? 'Worked - ' + routeIDAffiliated

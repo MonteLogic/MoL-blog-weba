@@ -13,19 +13,23 @@ const process = require('process'); // Keep this if you explicitly need the 'pro
 exports.generateMarkdownPaths = (
   markdownDirectory: string,
   outputFilePath: string,
-  baseDir: string = ''
+  baseDir: string = '',
 ): void => {
   try {
     if (!fs.existsSync(markdownDirectory)) {
-      console.error(`Error: Markdown directory not found at ${markdownDirectory}`);
+      console.error(
+        `Error: Markdown directory not found at ${markdownDirectory}`,
+      );
       process.exit(1); // Use global process here
     }
 
     const files: string[] = glob.sync('**/*.md', { cwd: markdownDirectory });
 
     const pathsToOutput: string[] = baseDir
-      ? files.map(file => path.relative(baseDir, path.join(markdownDirectory, file)))
-      : files.map(file => path.join(markdownDirectory, file));
+      ? files.map((file) =>
+          path.relative(baseDir, path.join(markdownDirectory, file)),
+        )
+      : files.map((file) => path.join(markdownDirectory, file));
 
     const outputDir = path.dirname(outputFilePath);
     if (!fs.existsSync(outputDir)) {
@@ -35,8 +39,6 @@ exports.generateMarkdownPaths = (
     const jsonData = JSON.stringify(pathsToOutput, null, 2);
 
     fs.writeFileSync(outputFilePath, jsonData, 'utf-8');
-
-    console.log(`Generated ${outputFilePath} with paths to ${pathsToOutput.length} markdown files.`);
   } catch (error) {
     console.error('An error occurred while generating markdown paths:', error);
     process.exit(1); // Use global process here

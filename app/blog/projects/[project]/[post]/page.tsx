@@ -191,7 +191,6 @@ export async function generateStaticParams(): Promise<ProjectPostParams[]> {
     }
   }
 
-  console.log(`Generated ${params.length} static params for project posts.`);
   return params;
 }
 

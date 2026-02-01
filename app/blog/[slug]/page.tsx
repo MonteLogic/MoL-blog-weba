@@ -46,9 +46,6 @@ function generateBaseSlug(filePathFromJson: string): string {
       postsBaseDirString.length,
     );
   } else {
-    console.warn(
-      `Path "${normalizedFilePath}" (from JSON: "${filePathFromJson}") does not start with "${postsBaseDirString}". Slug generation might be affected.`,
-    );
     relativePathToPostsDir = normalizedFilePath;
   }
 
@@ -79,9 +76,6 @@ function generateBaseSlug(filePathFromJson: string): string {
     const pathHash = Buffer.from(filePathFromJson)
       .toString('hex')
       .substring(0, 8);
-    console.warn(
-      `Generated empty base slug for path: ${filePathFromJson}. Using fallback: post-${pathHash}`,
-    );
     return `post-${pathHash}`;
   }
   return slug;
@@ -187,7 +181,6 @@ async function getPostDataBySlug(urlSlug: string): Promise<{
   const foundPostMeta = allPostsMeta.find((p) => p.uniqueSlug === urlSlug);
 
   if (!foundPostMeta) {
-    console.warn(`No matching file found for unique slug: "${urlSlug}"`);
     return null;
   }
 
@@ -253,9 +246,6 @@ export async function generateStaticParams(): Promise<BlogPostParams[]> {
   const allPostsMeta = getAllPostsWithUniqueSlugs();
   const params = allPostsMeta.map((p) => ({ slug: p.uniqueSlug }));
 
-  console.log(
-    `Generated ${params.length} static params for blog posts using unique slugs.`,
-  );
   return params;
 }
 
@@ -294,13 +284,6 @@ export default async function BlogPostPage({
     const { isMdx, frontmatter, content, relativeFilePath } = postData;
 
     if (!canViewPost(userRole, frontmatter.status)) {
-      console.log(
-        `User (Role: ${
-          userRole || 'Guest'
-        }) denied access to post "${urlSlug}" (Status: ${
-          frontmatter.status
-        }). Redirecting.`,
-      );
       redirect('/blog');
     }
 

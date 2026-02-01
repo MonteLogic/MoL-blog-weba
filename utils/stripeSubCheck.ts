@@ -49,7 +49,6 @@ async function getSubscriptionStatus() {
     // Fetch product details separately
     const product = await stripe.products.retrieve(priceId);
 
-    console.log(48, product.name);
     return {
       isActive: true,
       planId: priceId,

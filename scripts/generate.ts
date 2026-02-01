@@ -22,7 +22,6 @@ let markdownSourceDir: string | null = null;
 for (const p of possiblePaths) {
   if (p && fs.existsSync(p)) {
     markdownSourceDir = p;
-    console.log(`Found content directory at: ${p}`);
     break;
   }
 }

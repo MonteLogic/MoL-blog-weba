@@ -96,8 +96,8 @@ export default tseslint.config(
       ],
 
       // ===== SECURITY & SAFETY =====
-      // Avoid console.log in production (allow warn/error for logging)
-      'no-console': ['warn', { allow: ['warn', 'error'] }],
+      // Block console.log in production (allow warn/error for logging)
+      'no-console': ['error', { allow: ['warn', 'error'] }],
       // Ban non-null assertion (!) - use proper null checks instead
       '@typescript-eslint/no-non-null-assertion': 'error',
       // Force @ts-expect-error with description instead of @ts-ignore

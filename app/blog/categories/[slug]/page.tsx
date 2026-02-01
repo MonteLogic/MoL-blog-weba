@@ -67,9 +67,6 @@ function generateBaseSlug(filePathFromJson: string): string {
       postsBaseDirString.length,
     );
   } else {
-    console.warn(
-      `Path "${normalizedFilePath}" (from JSON: "${filePathFromJson}") does not start with "${postsBaseDirString}". Slug generation might be affected.`,
-    );
     relativePathToPostsDir = normalizedFilePath;
   }
 
@@ -100,9 +97,6 @@ function generateBaseSlug(filePathFromJson: string): string {
     const pathHash = Buffer.from(filePathFromJson)
       .toString('hex')
       .substring(0, 8);
-    console.warn(
-      `Generated empty base slug for path: ${filePathFromJson}. Using fallback: post-${pathHash}`,
-    );
     return `post-${pathHash}`;
   }
   return slug;
@@ -119,7 +113,6 @@ function formatTitle(namePart: string): string {
 
 // Robust getBlogPosts using markdown-paths.json
 async function getBlogPosts(): Promise<BlogPost[]> {
-  console.log('Starting getBlogPosts for Category Page...');
   try {
     const jsonFilePath = path.join(
       process.cwd(),
@@ -201,9 +194,6 @@ async function getBlogPosts(): Promise<BlogPost[]> {
       }
 
       if (fs.lstatSync(fullMarkdownPath).isDirectory()) {
-        console.warn(
-          `Skipping directory in markdown-paths: ${fullMarkdownPath}`,
-        );
         continue;
       }
 
@@ -326,9 +316,6 @@ export default async function CategoryPage({
   }
 
   const allPosts = await getBlogPosts();
-  console.log(
-    `[CategoryPage] Filtering for slug: "${slug}". Total posts: ${allPosts.length}`,
-  );
 
   const categoryPosts = allPosts.filter((post) => {
     // Check if the current page slug matches any of the post's normalized category slugs
@@ -337,22 +324,6 @@ export default async function CategoryPage({
       post.frontmatter['categorySlugs']?.includes(slug) ||
       post.frontmatter.categories?.includes(categoryDetails.name) || // Try matching name
       post.frontmatter.categories?.includes(slug); // Try matching raw slug (legacy)
-
-    // Debugging logic for the specific problem post
-    if (post.frontmatter.title?.includes('Current Style of Generating PDFs')) {
-      console.log(`[DEBUG] Checking Post: "${post.frontmatter.title}"`);
-      console.log(`   - slugs:`, post.frontmatter['categorySlugs']);
-      console.log(`   - categories:`, post.frontmatter.categories);
-      console.log(`   - target slug: "${slug}"`);
-      console.log(`   - hasCategory: ${hasCategory}`);
-      console.log(`   - status: ${post.frontmatter.status}`);
-      console.log(
-        `   - canView: ${canViewPost(
-          userRole,
-          post.frontmatter.status || 'private',
-        )}`,
-      );
-    }
 
     return (
       hasCategory && canViewPost(userRole, post.frontmatter.status || 'private')

@@ -39,9 +39,6 @@ function generateBaseSlug(filePathFromJson: string): string {
       postsBaseDirString.length,
     );
   } else {
-    console.warn(
-      `Path "${normalizedFilePath}" (from JSON: "${filePathFromJson}") does not start with "${postsBaseDirString}". Slug generation might be affected.`,
-    );
     relativePathToPostsDir = normalizedFilePath;
   }
 
@@ -73,9 +70,6 @@ function generateBaseSlug(filePathFromJson: string): string {
     const pathHash = Buffer.from(filePathFromJson)
       .toString('hex')
       .substring(0, 8);
-    console.warn(
-      `Generated empty base slug for path: ${filePathFromJson}. Using fallback: post-${pathHash}`,
-    );
     return `post-${pathHash}`;
   }
   return slug;
@@ -110,16 +104,10 @@ async function getBlogPosts(): Promise<BlogPost[]> {
 
     const jsonFileContent = fs.readFileSync(jsonFilePath, 'utf8');
     const markdownFilePaths: string[] = JSON.parse(jsonFileContent);
-    console.log(`Found ${markdownFilePaths.length} paths in JSON file.`);
 
     // Step 1: Generate base slugs and gather necessary info for each path
     const processedPaths = markdownFilePaths.map((filePathFromJson, index) => {
       const currentFilePath = filePathFromJson.trim();
-      if (filePathFromJson !== currentFilePath) {
-        console.warn(
-          `[${index}] Path "${filePathFromJson}" had leading/trailing whitespace. Trimmed.`,
-        );
-      }
 
       const baseSlug = generateBaseSlug(currentFilePath);
 
@@ -174,9 +162,6 @@ async function getBlogPosts(): Promise<BlogPost[]> {
         slugOccurrences[baseSlug]++;
         finalUniqueSlug = `${baseSlug}-${slugOccurrences[baseSlug]}`;
       }
-      console.log(
-        `[${originalIndex}] File: "${filePath}", BaseSlug: "${baseSlug}", FinalUniqueSlug: "${finalUniqueSlug}"`,
-      );
 
       const fullMarkdownPath = path.join(process.cwd(), filePath);
       if (!fs.existsSync(fullMarkdownPath)) {
@@ -189,17 +174,11 @@ async function getBlogPosts(): Promise<BlogPost[]> {
       let fileContentRead;
       try {
         if (fs.statSync(fullMarkdownPath).isDirectory()) {
-          console.warn(
-            `[${originalIndex}] Skipping directory: "${fullMarkdownPath}"`,
-          );
           continue;
         }
         fileContentRead = fs.readFileSync(fullMarkdownPath, 'utf8');
       } catch (readError: any) {
         if (readError.code === 'EISDIR') {
-          console.warn(
-            `[${originalIndex}] Skipping directory (caught EISDIR): "${fullMarkdownPath}"`,
-          );
           continue;
         }
         console.error(
@@ -267,10 +246,6 @@ async function getBlogPosts(): Promise<BlogPost[]> {
       });
     }
 
-    console.log(
-      `Successfully processed ${posts.length} posts with unique slugs.`,
-    );
-
     return posts.sort((a, b) => {
       if (a.frontmatter.date && b.frontmatter.date) {
         return (
@@ -326,15 +301,9 @@ export default async function BlogPage({
   }
 
   const allPosts = await getBlogPosts();
-  console.log(
-    `[BlogPage] Rendering with Projects Link. Total posts: ${allPosts.length}`,
-  );
 
   const visiblePosts = allPosts.filter((post) =>
     canViewPost(userRole, post.frontmatter.status),
-  );
-  console.log(
-    `Total visible posts after role/status filtering: ${visiblePosts.length}`,
   );
 
   // Pagination Logic

@@ -12,8 +12,6 @@ export const getUserID = cache(async () => {
   // This function should be called within a request context
   const { userId } = await auth();
 
-  console.log(10, userId);
-
   // For now, let's return some data including the user ID
   return {
     title: userId ? `User ID from clerk = ${userId}` : 'No user logged in',

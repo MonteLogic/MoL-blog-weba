@@ -37,10 +37,6 @@ async function updateUserMetadata(userId: string, stripeCustomerId: string) {
         stripeCustomerId,
       },
     });
-
-    console.log(
-      `Updated metadata for user ${userId} with Stripe customer ${stripeCustomerId}`,
-    );
   } catch (error) {
     console.error('Error updating user metadata:', error);
     throw error;
@@ -87,7 +83,6 @@ export async function POST(req: Request) {
 
       // Handle other event types if needed
       default:
-        console.log(`Unhandled event type ${event.type}`);
     }
 
     return NextResponse.json({ received: true });
