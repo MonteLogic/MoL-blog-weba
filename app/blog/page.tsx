@@ -189,8 +189,20 @@ async function getBlogPosts(): Promise<BlogPost[]> {
 
       let fileContentRead;
       try {
+        if (fs.statSync(fullMarkdownPath).isDirectory()) {
+          console.warn(
+            `[${originalIndex}] Skipping directory: "${fullMarkdownPath}"`,
+          );
+          continue;
+        }
         fileContentRead = fs.readFileSync(fullMarkdownPath, 'utf8');
-      } catch (readError) {
+      } catch (readError: any) {
+        if (readError.code === 'EISDIR') {
+          console.warn(
+            `[${originalIndex}] Skipping directory (caught EISDIR): "${fullMarkdownPath}"`,
+          );
+          continue;
+        }
         console.error(
           `[${originalIndex}] ERROR: Could not read file content for "${fullMarkdownPath}":`,
           readError,

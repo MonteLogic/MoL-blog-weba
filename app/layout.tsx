@@ -37,6 +37,7 @@ export default function RootLayout({
         <body
           className="overflow-y-scroll pb-36"
           style={{ backgroundColor: 'var(--bg-primary)' }}
+          suppressHydrationWarning
         >
           <GlobalNav />
           <div className="lg:pl-72">

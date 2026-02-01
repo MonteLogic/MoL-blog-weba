@@ -1,9 +1,11 @@
 import React from 'react';
 import Link from 'next/link';
-import { auth, currentUser } from '@clerk/nextjs/server';
 import YAML from 'yaml';
-import RefreshButton from './refresh-button';
 import PainPointsList from './pain-points-list';
+import AdminControls from './admin-controls';
+
+// Force static generation for this page (unless revalidation triggers)
+// We rely on fetch-level revalidate tags, but removing dynamic auth calls ensures it CAN be static.
 
 interface PainPoint {
   slug: string;
@@ -52,152 +54,162 @@ async function getPainPoints(): Promise<PainPoint[]> {
     const files = await res.json();
 
     // Filter for valid directories
-    // We exclude specific examples if needed.
     const validFiles = Array.isArray(files)
       ? files.filter((file: any) => file.type === 'dir')
       : [];
 
-    const painPoints: PainPoint[] = [];
-
-    for (const fileItem of validFiles) {
-      try {
-        const slug = fileItem.name;
-
-        // Construct path to expected main YAML file: [slug]/[slug].yaml
-
-        // Construct path to expected main YAML file: [slug]/[slug].yaml
-        // We assume the file inside has the same name as the folder
-        // We try .yaml, then .yml, then .json
-        // To be efficient, we can fetch contents of the dir first? Or just try fetch directly.
-        // Fetching dir contents is safer to know the extension.
-
-        const dirUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}/${slug}`;
-        const dirRes = await fetch(dirUrl, {
-          headers,
-          next: { revalidate: 300 },
-        });
-
-        if (!dirRes.ok) continue;
-
-        const dirFiles = await dirRes.json();
-
-        if (!Array.isArray(dirFiles)) continue;
-
-        const mainFile = dirFiles.find(
-          (f: any) =>
-            f.name === `${slug}.yaml` ||
-            f.name === `${slug}.yml` ||
-            f.name === `${slug}.json` ||
-            f.name === `index.yaml`,
-        );
-
-        if (!mainFile) continue;
-
-        // Fetch raw content
-        const contentRes = await fetch(mainFile.download_url, {
-          headers,
-          next: { revalidate: 300 },
-        });
-        const content = await contentRes.text();
-
-        // Parse content
-        const isYaml =
-          mainFile.name.endsWith('.yaml') || mainFile.name.endsWith('.yml');
-        const data = isYaml ? YAML.parse(content) : JSON.parse(content);
-
-        // Fetch creation date (first commit date) via GitHub API
-        let createdAt = new Date().toISOString();
+    // Process all pain points in parallel
+    const painPointsResults = await Promise.all(
+      validFiles.map(async (fileItem: any) => {
         try {
-          const commitsUrl = `https://api.github.com/repos/${owner}/${repo}/commits?path=${path}/${slug}/${mainFile.name}&page=1&per_page=1&order=asc`;
-          const commitsRes = await fetch(commitsUrl, {
-            headers,
-            next: { revalidate: 3600 },
-          });
-          if (commitsRes.ok) {
-            const commits = await commitsRes.json();
-            if (commits && commits.length > 0) {
-              createdAt = commits[0].commit.author.date;
-            }
-          }
-        } catch (e) {
-          console.warn(`Failed to fetch commits for ${slug}`, e);
-        }
-
-        // Fetch last update date from updates folder
-        let lastUpdated: string | undefined;
-        try {
+          const slug = fileItem.name;
+          const dirUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}/${slug}`;
           const updatesUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}/${slug}/updates`;
-          const updatesRes = await fetch(updatesUrl, {
+
+          // Fetch directory listing and check for updates folder simultaneously
+          const [dirRes, updatesRes] = await Promise.all([
+            fetch(dirUrl, { headers, next: { revalidate: 300 } }),
+            fetch(updatesUrl, { headers, next: { revalidate: 300 } }),
+          ]);
+
+          if (!dirRes.ok) return null;
+
+          const dirFiles = await dirRes.json();
+          if (!Array.isArray(dirFiles)) return null;
+
+          const mainFile = dirFiles.find(
+            (f: any) =>
+              f.name === `${slug}.yaml` ||
+              f.name === `${slug}.yml` ||
+              f.name === `${slug}.json` ||
+              f.name === `index.yaml`,
+          );
+
+          if (!mainFile) return null;
+
+          // Start parallel independent fetches for content, commits, and update details
+
+          // 1. Main Content
+          const contentPromise = fetch(mainFile.download_url, {
             headers,
             next: { revalidate: 300 },
-          });
-          if (updatesRes.ok) {
-            const updateFiles = await updatesRes.json();
-            if (Array.isArray(updateFiles) && updateFiles.length > 0) {
-              // Get dates from update files by parsing them
-              const updateDates: string[] = [];
-              for (const uFile of updateFiles.filter(
-                (f: any) => f.name.endsWith('.yaml') || f.name.endsWith('.yml'),
-              )) {
-                try {
-                  const uRes = await fetch(uFile.download_url, {
-                    headers,
-                    next: { revalidate: 300 },
-                  });
-                  if (uRes.ok) {
-                    const uText = await uRes.text();
-                    const uData = YAML.parse(uText);
-                    if (uData.date) {
-                      updateDates.push(uData.date);
+          }).then((r) => r.text());
+
+          // 2. Commits (Creation Date)
+          const commitsUrl = `https://api.github.com/repos/${owner}/${repo}/commits?path=${path}/${slug}/${mainFile.name}&page=1&per_page=1&order=asc`;
+          const commitsPromise = fetch(commitsUrl, {
+            headers,
+            next: { revalidate: 3600 },
+          }).then((r) => (r.ok ? r.json() : []));
+
+          // 3. Last Updated Date
+          const lastUpdatedPromise = (async () => {
+            if (!updatesRes.ok) return undefined;
+            try {
+              const updateFiles = await updatesRes.json();
+              if (Array.isArray(updateFiles) && updateFiles.length > 0) {
+                // Parallel fetch all update files content to find dates
+                const datePromises = updateFiles
+                  .filter(
+                    (f: any) =>
+                      f.name.endsWith('.yaml') || f.name.endsWith('.yml'),
+                  )
+                  .map(async (uFile: any) => {
+                    try {
+                      const uRes = await fetch(uFile.download_url, {
+                        headers,
+                        next: { revalidate: 300 },
+                      });
+                      if (uRes.ok) {
+                        const uText = await uRes.text();
+                        const uData = YAML.parse(uText);
+                        return uData.date;
+                      }
+                    } catch {
+                      return null;
                     }
-                  }
-                } catch (e) {
-                  // Ignore individual update fetch errors
+                  });
+
+                const dates = (await Promise.all(datePromises)).filter(Boolean);
+                if (dates.length > 0) {
+                  dates.sort(
+                    (a: string, b: string) =>
+                      new Date(b).getTime() - new Date(a).getTime(),
+                  );
+                  return dates[0];
                 }
               }
-              // Find the most recent date
-              if (updateDates.length > 0) {
-                updateDates.sort(
-                  (a, b) => new Date(b).getTime() - new Date(a).getTime(),
-                );
-                lastUpdated = updateDates[0];
-              }
+            } catch {
+              return undefined;
             }
-          }
-        } catch (e) {
-          // No updates folder, ignore
-        }
+            return undefined;
+          })();
 
-        painPoints.push({
-          slug,
-          title: data.title || 'Untitled Pain Point',
-          inconvenience: data['how does it inconvience you'] || '',
-          workaround: data['what have you done as a workaround'] || '',
-          limitation:
-            data['how does this pain point limit what you want to do'] || '',
-          demandScore:
-            parseInt(
-              data[
-                'on a scale of 1 - 10 how badly would you want the solution to your paint point'
-              ],
-            ) || 0,
-          progressScore:
-            parseInt(
-              data[
-                "how much progress have the tech you or someone you're working has gone to fixing the pain point"
-              ],
-            ) || 0,
-          createdAt: createdAt,
-          lastUpdated: lastUpdated,
-          tags: data.tags || [],
-        });
-      } catch (parseError) {
-        console.error(`Error parsing pain point ${fileItem.name}:`, parseError);
-      }
-    }
+          // Wait for all data
+          const [content, commits, lastUpdated] = await Promise.all([
+            contentPromise,
+            commitsPromise,
+            lastUpdatedPromise,
+          ]);
+
+          // Parse content
+          let data;
+          try {
+            const isYaml =
+              mainFile.name.endsWith('.yaml') || mainFile.name.endsWith('.yml');
+            data = isYaml ? YAML.parse(content) : JSON.parse(content);
+          } catch (e) {
+            console.warn(
+              `[PainPoints] Skipped malformed file "${mainFile.name}" in "${slug}". Parse error:`,
+              e instanceof Error ? e.message : String(e),
+            );
+            return null;
+          }
+
+          let createdAt = new Date().toISOString();
+          if (commits && commits.length > 0) {
+            createdAt = commits[0].commit.author.date;
+          }
+
+          return {
+            slug,
+            title: data.title || 'Untitled Pain Point',
+            inconvenience: data['how does it inconvience you'] || '',
+            workaround: data['what have you done as a workaround'] || '',
+            limitation:
+              data['how does this pain point limit what you want to do'] || '',
+            demandScore:
+              parseInt(
+                data[
+                  'on a scale of 1 - 10 how badly would you want the solution to your paint point'
+                ],
+              ) || 0,
+            progressScore:
+              parseInt(
+                data[
+                  "how much progress have the tech you or someone you're working has gone to fixing the pain point"
+                ],
+              ) || 0,
+            createdAt: createdAt,
+            lastUpdated: lastUpdated,
+            tags: data.tags || [],
+          } as PainPoint;
+        } catch (parseError) {
+          console.error(
+            `Error processing pain point ${fileItem.name}:`,
+            parseError,
+          );
+          return null;
+        }
+      }),
+    );
+
+    const validPainPoints = painPointsResults.filter(
+      (p): p is PainPoint => p !== null,
+    );
 
     // Sort by date (newest first)
-    return painPoints.sort((a, b) => {
+    return validPainPoints.sort((a, b) => {
       if (a.createdAt && b.createdAt) {
         return (
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
@@ -212,49 +224,7 @@ async function getPainPoints(): Promise<PainPoint[]> {
 }
 
 export default async function PainPointsPage() {
-  const { userId } = await auth();
-  let userRole: string | undefined;
-
-  if (userId) {
-    try {
-      const user = await currentUser();
-      userRole = user?.privateMetadata?.role as string;
-    } catch (error) {
-      console.error('Error fetching user role:', error);
-    }
-  }
-
   const painPoints = await getPainPoints();
-  const isAdmin = userRole === 'admin' || userRole === 'Admin';
-
-  // GitHub URL for creating a new pain point with pre-filled YAML template
-  const template = `# Pain Point Title - be descriptive
-title: "I cannot [insert text here]"
-
-# Pain Point Description
-# What is the Pain Point in detail?
-how does it inconvience you: "I have to [insert text here]"
-
-what have you done as a workaround: "I have [insert text here]."
-
-how does this pain point limit what you want to do: "I am limited to/by [insert text here]."  
-
-
-# Pain Point personal affect. 
-on a scale of 1 - 10 how badly would you want the solution to your paint point: [insert number 1-10 here]
-
-# Progress on pain Point, 0 - 10
-how much progress have the tech you or someone you're working has gone to fixing the pain point: [insert number 0-10]
-
-# Tags for categorization (e.g., ux, performance, bug, feature-request)
-tags:
-  - [tag1]
-  - [tag2]
-  - [tag3]
-`;
-  const addPainPointUrl = `https://github.com/MonteLogic/MoL-blog-content/new/main/posts/categorized/pain-points?filename=pain-point-name-1.yaml&value=${encodeURIComponent(
-    template,
-  )}`;
 
   return (
     <div className="mx-auto max-w-4xl">
@@ -270,67 +240,8 @@ tags:
         </Link>
       </div>
 
-      {/* Admin Area */}
-      {isAdmin && (
-        <div
-          className="mb-8 flex flex-col gap-4 rounded-lg border border-slate-200 p-4 dark:border-slate-700 md:flex-row md:items-center"
-          style={{ backgroundColor: 'var(--bg-secondary)' }}
-        >
-          <span
-            className="mb-2 text-xs font-semibold uppercase tracking-wider md:mb-0"
-            style={{ color: 'var(--text-muted)' }}
-          >
-            Admin Area
-          </span>
-
-          <div className="flex w-full flex-col gap-4 sm:flex-row md:w-auto">
-            <Link
-              href="/blog/pain-points/new"
-              className="inline-flex items-center justify-center gap-2 rounded-md border border-indigo-600 bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
-            >
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4v16m8-8H4"
-                />
-              </svg>
-              Add Pain Point
-            </Link>
-
-            <a
-              href={addPainPointUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 rounded-md border border-gray-600 bg-transparent px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
-            >
-              <svg
-                className="h-4 w-4"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              Add Pain Point on GitHub
-            </a>
-          </div>
-
-          <div className="flex w-full justify-end md:ml-auto md:w-auto">
-            <RefreshButton />
-          </div>
-        </div>
-      )}
+      {/* Admin Area - Loaded Client-Side to keep page static */}
+      <AdminControls />
 
       {/* Pain Points List */}
       <PainPointsList initialPainPoints={painPoints} />
