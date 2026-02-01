@@ -22,8 +22,16 @@ interface PainPoint {
 
 async function getPainPoints(): Promise<PainPoint[]> {
   try {
-    const owner = process.env.NEXT_PUBLIC_GITHUB_OWNER || 'MonteLogic';
-    const repo = process.env.NEXT_PUBLIC_GITHUB_REPO || 'MoL-blog-content';
+    const owner = process.env['NEXT_PUBLIC_GITHUB_OWNER'];
+    const repo = process.env['NEXT_PUBLIC_GITHUB_REPO'];
+
+    if (!owner || !repo) {
+      console.error(
+        'GitHub configuration not complete (owner or repo missing)',
+      );
+      return [];
+    }
+
     const path = 'posts/categorized/pain-points';
     const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
 

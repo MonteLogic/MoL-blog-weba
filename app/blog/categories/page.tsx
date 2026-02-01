@@ -29,15 +29,32 @@ async function getCategories(): Promise<
     const schemaFile = fs.readFileSync(schemaPath, 'utf8');
     const schema: CategorySchema = JSON.parse(schemaFile);
 
-    const categories = Object.keys(schema.categories).map((key) => {
-      const categoryData = schema.categories[key][0]; // Assuming array structure from schema
-      return {
-        slug: key,
-        name: formatTitle(key),
-        description: categoryData.description || '',
-        url: categoryData.url,
-      };
-    });
+    const categories = Object.keys(schema.categories)
+      .filter(
+        (key) => schema.categories[key] && schema.categories[key].length > 0,
+      )
+      .map((key) => {
+        const categoryArray = schema.categories[key];
+        if (!categoryArray || categoryArray.length === 0) {
+          return null;
+        }
+        const categoryData = categoryArray[0]; // Assuming array structure from schema
+        if (!categoryData) {
+          return null;
+        }
+        return {
+          slug: key,
+          name: formatTitle(key),
+          description: categoryData.description || '',
+          url: categoryData.url,
+        };
+      })
+      .filter((category) => category !== null) as {
+      slug: string;
+      name: string;
+      description: string;
+      url: string;
+    }[];
 
     return categories;
   } catch (error) {
@@ -62,7 +79,7 @@ export default async function CategoriesPage() {
   if (userId) {
     try {
       const user = await currentUser();
-      userRole = user?.privateMetadata?.role as string;
+      userRole = user?.privateMetadata?.['role'] as string;
     } catch (error) {
       console.error('Error fetching user role:', error);
     }
@@ -71,6 +88,7 @@ export default async function CategoriesPage() {
   const categories = await getCategories();
   const isAdmin = userRole === 'admin' || userRole === 'Admin';
   const schemaRelativePath = 'blog-schema/categories-schema.json';
+  // This needs URL needs to have tests around it.
   const repoBaseUrl = 'https://github.com/MonteLogic/MoL-blog-weba/blob/main';
   const githubFileUrl = `${repoBaseUrl}/${schemaRelativePath}`;
 

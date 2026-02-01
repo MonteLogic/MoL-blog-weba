@@ -39,16 +39,24 @@ interface PainPoint {
 
 async function getPainPoint(slug: string): Promise<PainPoint | null> {
   try {
-    const owner = process.env.NEXT_PUBLIC_GITHUB_OWNER || 'MonteLogic';
-    const repo = process.env.NEXT_PUBLIC_GITHUB_REPO || 'MoL-blog-content';
+    const owner = process.env['NEXT_PUBLIC_GITHUB_OWNER'];
+    const repo = process.env['NEXT_PUBLIC_GITHUB_REPO'];
+
+    if (!owner || !repo) {
+      console.error(
+        'GitHub configuration not complete (owner or repo missing)',
+      );
+      return null;
+    }
+
     const basePath = 'posts/categorized/pain-points';
 
     const headers: HeadersInit = {
       Accept: 'application/vnd.github.v3+json',
     };
 
-    if (process.env.CONTENT_GH_TOKEN) {
-      headers['Authorization'] = `Bearer ${process.env.CONTENT_GH_TOKEN}`;
+    if (process.env['CONTENT_GH_TOKEN']) {
+      headers['Authorization'] = `Bearer ${process.env['CONTENT_GH_TOKEN']}`;
     }
 
     let contentUrl: string | null = null;
@@ -341,7 +349,7 @@ export default async function PainPointDetailPage({
   if (userId) {
     try {
       const user = await currentUser();
-      userRole = user?.privateMetadata?.role as string;
+      userRole = user?.privateMetadata?.['role'] as string;
     } catch (error) {
       console.error('Error fetching user role:', error);
     }
@@ -356,9 +364,12 @@ export default async function PainPointDetailPage({
   const isAdmin = userRole === 'admin' || userRole === 'Admin';
 
   // GitHub URL for editing this pain point
-  const owner = process.env.NEXT_PUBLIC_GITHUB_OWNER || 'MonteLogic';
-  const repo = process.env.NEXT_PUBLIC_GITHUB_REPO || 'MoL-blog-content';
-  const editOnGitHubUrl = `https://github.com/${owner}/${repo}/blob/main/posts/categorized/pain-points/${slug}/${slug}.yaml`;
+  const owner = process.env['NEXT_PUBLIC_GITHUB_OWNER'];
+  const repo = process.env['NEXT_PUBLIC_GITHUB_REPO'];
+  const editOnGitHubUrl =
+    owner && repo
+      ? `https://github.com/${owner}/${repo}/blob/main/posts/categorized/pain-points/${slug}/${slug}.yaml`
+      : null;
 
   return (
     <div className="mx-auto max-w-4xl">
@@ -558,7 +569,7 @@ export default async function PainPointDetailPage({
         </div>
 
         {/* Admin Area */}
-        {isAdmin && (
+        {isAdmin && editOnGitHubUrl && (
           <div className="mt-8 border-t border-slate-200 pt-6 dark:border-slate-700">
             <div className="flex items-center gap-4">
               <span

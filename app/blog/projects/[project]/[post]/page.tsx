@@ -208,7 +208,7 @@ export default async function ProjectPostPage({
   if (userId) {
     try {
       const user = await currentUser();
-      userRole = user?.privateMetadata?.role as string;
+      userRole = user?.privateMetadata?.['role'] as string;
     } catch (error) {
       console.error('Error fetching user role:', error);
     }
@@ -244,11 +244,6 @@ export default async function ProjectPostPage({
 
     // GitHub URL for admin
     const relativePath = path.relative(process.cwd(), filePath);
-    const githubFileUrl = `https://github.com/MonteLogic/MoL-blog-content/blob/main/${relativePath.replace(
-      'MoL-blog-content/',
-      '',
-    )}`;
-
     return (
       <div className="mx-auto max-w-3xl">
         <div className="mb-8 flex flex-col gap-3">

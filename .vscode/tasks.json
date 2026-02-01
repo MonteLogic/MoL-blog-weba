@@ -4,7 +4,6 @@
     {
       "type": "npm",
       "script": "build",
-      "path": "MoL-blog-weba",
       "group": "build",
       "problemMatcher": [],
       "label": "npm: build - MoL-blog-weba",
@@ -13,7 +12,6 @@
     {
       "type": "npm",
       "script": "type-check:watch",
-      "path": "MoL-blog-weba",
       "problemMatcher": "$tsc-watch",
       "isBackground": true,
       "label": "npm: type-check:watch - MoL-blog-weba",
@@ -26,7 +24,6 @@
     {
       "type": "npm",
       "script": "tsgo:check:watch",
-      "path": "MoL-blog-weba",
       "problemMatcher": "$tsc-watch",
       "isBackground": true,
       "label": "tsgo: Type Check (Watch)",
@@ -39,7 +36,6 @@
     {
       "type": "npm",
       "script": "lint:strict",
-      "path": "MoL-blog-weba",
       "problemMatcher": "$eslint-stylish",
       "label": "ESLint: Strict Check",
       "detail": "Strict ESLint with no-any rules and 125-line function limit",

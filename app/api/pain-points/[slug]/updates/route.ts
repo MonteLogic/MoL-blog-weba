@@ -33,14 +33,17 @@ export async function POST(
     const timestamp = now.toISOString().replace(/[:.]/g, '-').slice(0, 19);
     const filename = `update-${timestamp}.yaml`;
 
-    const owner = 'MonteLogic';
-    const repo = 'MoL-blog-content';
+    const owner = process.env['NEXT_PUBLIC_GITHUB_OWNER'];
+    const repo = process.env['NEXT_PUBLIC_GITHUB_REPO'];
     const path = `posts/categorized/pain-points/${slug}/updates/${filename}`;
-    const token = process.env.CONTENT_GH_TOKEN;
+    const token = process.env['CONTENT_GH_TOKEN'];
 
-    if (!token) {
+    if (!token || !owner || !repo) {
       return NextResponse.json(
-        { error: 'GitHub token not configured' },
+        {
+          error:
+            'GitHub configuration not complete (token, owner, or repo missing)',
+        },
         { status: 500 },
       );
     }

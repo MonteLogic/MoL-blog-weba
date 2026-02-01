@@ -3,6 +3,7 @@
   "packageManager": "pnpm@9.15.4",
   "config": {
     "contentRepo": "https://github.com/MonteLogic/MoL-blog-content.git",
+    "author": "MonteLogic",
     "niceNameOfProject": "Mo99 Blog",
     "skillsGistUrl": "https://gist.githubusercontent.com/YOUR_USERNAME/GIST_ID/raw/skills-employability.json"
   },

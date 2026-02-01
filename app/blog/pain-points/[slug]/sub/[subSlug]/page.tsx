@@ -26,8 +26,16 @@ async function getSubPainPoint(
   subSlug: string,
 ): Promise<SubPainPoint | null> {
   try {
-    const owner = 'MonteLogic';
-    const repo = 'MoL-blog-content';
+    const owner = process.env['NEXT_PUBLIC_GITHUB_OWNER'];
+    const repo = process.env['NEXT_PUBLIC_GITHUB_REPO'];
+
+    if (!owner || !repo) {
+      console.error(
+        'GitHub configuration not complete (owner or repo missing)',
+      );
+      return null;
+    }
+
     const basePath = `posts/categorized/pain-points/${parentSlug}/sub-pain-points`;
 
     const headers: HeadersInit = {
