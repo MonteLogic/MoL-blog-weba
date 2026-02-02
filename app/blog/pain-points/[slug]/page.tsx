@@ -1,6 +1,5 @@
-import React from 'react';
-import Link from 'next/link';
 import { auth, currentUser } from '@clerk/nextjs/server';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import YAML from 'yaml';
 import SubPainPointsTabs from './sub-pain-points-tabs';
@@ -37,6 +36,274 @@ interface PainPoint {
   subPainPoints: SubPainPoint[];
 }
 
+// Type for GitHub API file/directory entries
+interface GitHubFile {
+  name: string;
+  type: 'file' | 'dir';
+  downloadUrl: string | null;
+}
+
+// Helper to clamp values between 0 and 10
+function clamp(val: number): number {
+  return Math.min(10, Math.max(0, val));
+}
+
+// Fetch directory contents from GitHub
+async function fetchDirectoryContents(
+  owner: string,
+  repo: string,
+  path: string,
+  headers: HeadersInit,
+): Promise<GitHubFile[] | null> {
+  try {
+    const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+    const res = await fetch(url, { headers, next: { revalidate: 60 } });
+    if (!res.ok) {
+      return null;
+    }
+    const data = await res.json();
+    if (Array.isArray(data)) {
+      return data as GitHubFile[];
+    }
+    return null;
+  } catch (_e) {
+    return null;
+  }
+}
+
+// Fetch and parse main content file
+async function fetchMainContent(
+  contentUrl: string,
+  filePath: string,
+  headers: HeadersInit,
+  slug: string,
+): Promise<Record<string, unknown> | null> {
+  try {
+    const contentRes = await fetch(contentUrl, {
+      headers,
+      next: { revalidate: 300 },
+    });
+    if (!contentRes.ok) {
+      return null;
+    }
+    const content = await contentRes.text();
+    const isYaml = filePath.endsWith('.yaml') || filePath.endsWith('.yml');
+    return isYaml ? YAML.parse(content) : JSON.parse(content);
+  } catch (_e) {
+    console.warn(`[PainPointDetail] malformed content for ${slug}`);
+    return null;
+  }
+}
+
+// Fetch updates from a specific updates directory
+async function fetchUpdatesFromDirectory(
+  owner: string,
+  repo: string,
+  updatesPath: string,
+  headers: HeadersInit,
+  source: string,
+): Promise<PainPointUpdate[]> {
+  const updates: PainPointUpdate[] = [];
+  try {
+    const files = await fetchDirectoryContents(
+      owner,
+      repo,
+      updatesPath,
+      headers,
+    );
+    if (!files) {
+      return updates;
+    }
+
+    const yamlFiles = files.filter(
+      (f) => f.name.endsWith('.yaml') || f.name.endsWith('.yml'),
+    );
+
+    const updatePromises = yamlFiles.map(async (f) => {
+      if (!f.downloadUrl) {
+        return null;
+      }
+      const uRes = await fetch(f.downloadUrl, {
+        headers,
+        next: { revalidate: 300 },
+      });
+      if (!uRes.ok) {
+        return null;
+      }
+      const uText = await uRes.text();
+      const uData = YAML.parse(uText);
+
+      return {
+        file: f.name,
+        description: uData.description || uData.content || '',
+        date: uData.date || new Date().toISOString(),
+        demand:
+          uData.demand !== undefined
+            ? Number.parseFloat(uData.demand)
+            : undefined,
+        progress:
+          uData.progress !== undefined
+            ? Number.parseFloat(uData.progress)
+            : undefined,
+        source,
+      };
+    });
+
+    const fetchedUpdates = await Promise.all(updatePromises);
+    for (const u of fetchedUpdates) {
+      if (u) {
+        updates.push(u);
+      }
+    }
+  } catch (_e) {
+    // No updates folder or other error, ignore
+  }
+  return updates;
+}
+
+// Fetch sub pain points and their updates
+async function fetchSubPainPointDetails(
+  owner: string,
+  repo: string,
+  basePath: string,
+  slug: string,
+  headers: HeadersInit,
+): Promise<{ subPainPoints: SubPainPoint[]; updates: PainPointUpdate[] }> {
+  const subPainPoints: SubPainPoint[] = [];
+  const updates: PainPointUpdate[] = [];
+
+  try {
+    const subPath = `${basePath}/${slug}/sub-pain-points`;
+    const subFiles = await fetchDirectoryContents(
+      owner,
+      repo,
+      subPath,
+      headers,
+    );
+    if (!subFiles) {
+      return { subPainPoints, updates };
+    }
+
+    const subDirs = subFiles.filter((f) => f.type === 'dir');
+    const subYamlFiles = subFiles.filter(
+      (f) => f.name.endsWith('.yaml') || f.name.endsWith('.yml'),
+    );
+
+    // Process YAML files as sub pain points (flat structure)
+    const subPromises = subYamlFiles.map(async (f) => {
+      if (!f.downloadUrl) {
+        return null;
+      }
+      const sRes = await fetch(f.downloadUrl, {
+        headers,
+        next: { revalidate: 300 },
+      });
+      if (!sRes.ok) {
+        return null;
+      }
+      const sText = await sRes.text();
+      const sData = YAML.parse(sText);
+      const subSlug = f.name.replace(/\.(yaml|yml)$/, '');
+
+      return {
+        slug: subSlug,
+        title: sData.title || 'Untitled',
+        description: sData.description || '',
+        demandScore: Number.parseInt(sData.demandScore) || 0,
+        progressScore: Number.parseInt(sData.progressScore) || 0,
+        tags: sData.tags || [],
+      };
+    });
+
+    const fetchedSubs = await Promise.all(subPromises);
+    for (const s of fetchedSubs) {
+      if (s) {
+        subPainPoints.push(s);
+      }
+    }
+
+    // For each sub pain point directory, fetch its updates
+    for (const subDir of subDirs) {
+      const subUpdatesPath = `${subPath}/${subDir.name}/updates`;
+      const subUpdates = await fetchUpdatesFromDirectory(
+        owner,
+        repo,
+        subUpdatesPath,
+        headers,
+        subDir.name,
+      );
+      updates.push(...subUpdates);
+    }
+  } catch (_e) {
+    // No sub-pain-points folder or other error, ignore
+  }
+
+  return { subPainPoints, updates };
+}
+
+// Fetch creation date via commits
+async function fetchCreationDate(
+  owner: string,
+  repo: string,
+  filePath: string,
+  headers: HeadersInit,
+  slug: string,
+): Promise<string> {
+  try {
+    const commitsUrl = `https://api.github.com/repos/${owner}/${repo}/commits?path=${filePath}&page=1&per_page=1&order=asc`;
+    const commitsRes = await fetch(commitsUrl, {
+      headers,
+      next: { revalidate: 3600 },
+    });
+    if (commitsRes.ok) {
+      const commits = await commitsRes.json();
+      if (commits && commits.length > 0) {
+        return commits[0].commit.author.date;
+      }
+    }
+  } catch (_e) {
+    console.warn(`Failed to fetch commits for ${slug}`);
+  }
+  return new Date().toISOString();
+}
+
+// Calculate current scores from base data and updates
+function calculateCurrentScores(
+  data: Record<string, unknown>,
+  updates: PainPointUpdate[],
+): { demandScore: number; progressScore: number } {
+  let currentDemandScore =
+    Number.parseInt(
+      String(
+        data[
+          'on a scale of 1 - 10 how badly would you want the solution to your paint point'
+        ] ?? '0',
+      ),
+    ) || 0;
+  let currentProgressScore =
+    Number.parseInt(
+      String(
+        data[
+          "how much progress have the tech you or someone you're working has gone to fixing the pain point"
+        ] ?? '0',
+      ),
+    ) || 0;
+
+  for (const u of updates.filter((update) => update.source === 'main')) {
+    if (u.demand !== undefined) {
+      currentDemandScore += u.demand;
+    }
+    if (u.progress !== undefined) {
+      currentProgressScore += u.progress;
+    }
+  }
+
+  return {
+    demandScore: clamp(currentDemandScore),
+    progressScore: clamp(currentProgressScore),
+  };
+}
+
 async function getPainPoint(slug: string): Promise<PainPoint | null> {
   try {
     const owner = process.env['NEXT_PUBLIC_GITHUB_OWNER'];
@@ -50,7 +317,6 @@ async function getPainPoint(slug: string): Promise<PainPoint | null> {
     }
 
     const basePath = 'posts/categorized/pain-points';
-
     const headers: HeadersInit = {
       Accept: 'application/vnd.github.v3+json',
     };
@@ -59,216 +325,54 @@ async function getPainPoint(slug: string): Promise<PainPoint | null> {
       headers['Authorization'] = `Bearer ${process.env['CONTENT_GH_TOKEN']}`;
     }
 
-    let contentUrl: string | null = null;
-    let filePath: string | null = null;
-    let isDir = false;
-
     // Check directory existence and contents
-    try {
-      const dirUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${basePath}/${slug}`;
-      const dirRes = await fetch(dirUrl, { headers, next: { revalidate: 60 } });
-
-      if (dirRes.ok) {
-        const dirFiles = await dirRes.json();
-        if (Array.isArray(dirFiles)) {
-          const mainFile = dirFiles.find(
-            (f: any) =>
-              f.name === `${slug}.yaml` ||
-              f.name === `${slug}.yml` ||
-              f.name === `index.yaml` ||
-              f.name === `${slug}.json`,
-          );
-          if (mainFile) {
-            contentUrl = mainFile.download_url;
-            filePath = `${basePath}/${slug}/${mainFile.name}`;
-            isDir = true;
-          }
-        }
-      }
-    } catch (e) {
-      /* ignore */
-    }
-
-    if (!contentUrl || !filePath) return null;
-
-    // Fetch Main Content
-    const contentRes = await fetch(contentUrl, {
+    const dirFiles = await fetchDirectoryContents(
+      owner,
+      repo,
+      `${basePath}/${slug}`,
       headers,
-      next: { revalidate: 300 },
-    });
+    );
 
-    if (!contentRes.ok) return null;
-    const content = await contentRes.text();
-    const isYaml = filePath.endsWith('.yaml') || filePath.endsWith('.yml');
-    let data;
-    try {
-      data = isYaml ? YAML.parse(content) : JSON.parse(content);
-    } catch (e) {
-      console.warn(`[PainPointDetail] malformed content for ${slug}:`, e);
+    if (!dirFiles) {
       return null;
     }
 
-    // All updates (from main pain point and sub pain points)
-    const allUpdates: PainPointUpdate[] = [];
+    const mainFile = dirFiles.find(
+      (f) =>
+        f.name === `${slug}.yaml` ||
+        f.name === `${slug}.yml` ||
+        f.name === 'index.yaml' ||
+        f.name === `${slug}.json`,
+    );
+
+    if (!mainFile || !mainFile.downloadUrl) {
+      return null;
+    }
+
+    const contentUrl = mainFile.downloadUrl;
+    const filePath = `${basePath}/${slug}/${mainFile.name}`;
+
+    // Fetch Main Content
+    const data = await fetchMainContent(contentUrl, filePath, headers, slug);
+    if (!data) {
+      return null;
+    }
 
     // Fetch Main Pain Point Updates
-    if (isDir) {
-      try {
-        const updatesUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${basePath}/${slug}/updates`;
-        const updatesRes = await fetch(updatesUrl, {
-          headers,
-          next: { revalidate: 60 },
-        });
-        if (updatesRes.ok) {
-          const updateFiles = await updatesRes.json();
-          if (Array.isArray(updateFiles)) {
-            const updatePromises = updateFiles
-              .filter(
-                (f: any) => f.name.endsWith('.yaml') || f.name.endsWith('.yml'),
-              )
-              .map(async (f: any) => {
-                const uRes = await fetch(f.download_url, {
-                  headers,
-                  next: { revalidate: 300 },
-                });
-                if (!uRes.ok) return null;
-                const uText = await uRes.text();
-                const uData = YAML.parse(uText);
-
-                const demandVal =
-                  uData.demand !== undefined
-                    ? parseFloat(uData.demand)
-                    : undefined;
-                const progressVal =
-                  uData.progress !== undefined
-                    ? parseFloat(uData.progress)
-                    : undefined;
-
-                return {
-                  file: f.name,
-                  description: uData.description || uData.content || '',
-                  date: uData.date || new Date().toISOString(),
-                  demand: demandVal,
-                  progress: progressVal,
-                  source: 'main',
-                };
-              });
-
-            const fetchedUpdates = await Promise.all(updatePromises);
-            fetchedUpdates.forEach((u) => {
-              if (u) allUpdates.push(u);
-            });
-          }
-        }
-      } catch (e) {
-        // No updates folder or other error, ignore
-      }
-    }
+    const mainUpdates = await fetchUpdatesFromDirectory(
+      owner,
+      repo,
+      `${basePath}/${slug}/updates`,
+      headers,
+      'main',
+    );
 
     // Fetch Sub Pain Points and their updates
-    const subPainPoints: SubPainPoint[] = [];
-    if (isDir) {
-      try {
-        const subUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${basePath}/${slug}/sub-pain-points`;
-        const subRes = await fetch(subUrl, {
-          headers,
-          next: { revalidate: 60 },
-        });
-        if (subRes.ok) {
-          const subFiles = await subRes.json();
-          if (Array.isArray(subFiles)) {
-            // Filter for directories (sub pain point folders)
-            const subDirs = subFiles.filter((f: any) => f.type === 'dir');
-            const subYamlFiles = subFiles.filter(
-              (f: any) => f.name.endsWith('.yaml') || f.name.endsWith('.yml'),
-            );
+    const { subPainPoints, updates: subUpdates } =
+      await fetchSubPainPointDetails(owner, repo, basePath, slug, headers);
 
-            // Process YAML files as sub pain points (flat structure)
-            const subPromises = subYamlFiles.map(async (f: any) => {
-              const sRes = await fetch(f.download_url, {
-                headers,
-                next: { revalidate: 300 },
-              });
-              if (!sRes.ok) return null;
-              const sText = await sRes.text();
-              const sData = YAML.parse(sText);
-
-              const subSlug = f.name.replace(/\.(yaml|yml)$/, '');
-
-              return {
-                slug: subSlug,
-                title: sData.title || 'Untitled',
-                description: sData.description || '',
-                demandScore: parseInt(sData.demandScore) || 0,
-                progressScore: parseInt(sData.progressScore) || 0,
-                tags: sData.tags || [],
-              };
-            });
-
-            const fetchedSubs = await Promise.all(subPromises);
-            fetchedSubs.forEach((s) => {
-              if (s) subPainPoints.push(s);
-            });
-
-            // For each sub pain point directory, fetch its updates
-            for (const subDir of subDirs) {
-              try {
-                const subUpdatesUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${basePath}/${slug}/sub-pain-points/${subDir.name}/updates`;
-                const subUpdatesRes = await fetch(subUpdatesUrl, {
-                  headers,
-                  next: { revalidate: 60 },
-                });
-                if (subUpdatesRes.ok) {
-                  const subUpdateFiles = await subUpdatesRes.json();
-                  if (Array.isArray(subUpdateFiles)) {
-                    const subUpdatePromises = subUpdateFiles
-                      .filter(
-                        (f: any) =>
-                          f.name.endsWith('.yaml') || f.name.endsWith('.yml'),
-                      )
-                      .map(async (f: any) => {
-                        const uRes = await fetch(f.download_url, {
-                          headers,
-                          next: { revalidate: 300 },
-                        });
-                        if (!uRes.ok) return null;
-                        const uText = await uRes.text();
-                        const uData = YAML.parse(uText);
-
-                        return {
-                          file: f.name,
-                          description: uData.description || uData.content || '',
-                          date: uData.date || new Date().toISOString(),
-                          demand:
-                            uData.demand !== undefined
-                              ? parseFloat(uData.demand)
-                              : undefined,
-                          progress:
-                            uData.progress !== undefined
-                              ? parseFloat(uData.progress)
-                              : undefined,
-                          source: subDir.name,
-                        };
-                      });
-
-                    const fetchedSubUpdates = await Promise.all(
-                      subUpdatePromises,
-                    );
-                    fetchedSubUpdates.forEach((u) => {
-                      if (u) allUpdates.push(u);
-                    });
-                  }
-                }
-              } catch (e) {
-                // No updates for this sub pain point, ignore
-              }
-            }
-          }
-        }
-      } catch (e) {
-        // No sub-pain-points folder or other error, ignore
-      }
-    }
+    // Combine all updates
+    const allUpdates = [...mainUpdates, ...subUpdates];
 
     // Sort all updates by date descending
     allUpdates.sort(
@@ -276,60 +380,34 @@ async function getPainPoint(slug: string): Promise<PainPoint | null> {
     );
 
     // Fetch creation date via commits
-    let createdAt = new Date().toISOString();
-    try {
-      const commitsUrl = `https://api.github.com/repos/${owner}/${repo}/commits?path=${filePath}&page=1&per_page=1&order=asc`;
-      const commitsRes = await fetch(commitsUrl, {
-        headers,
-        next: { revalidate: 3600 },
-      });
-      if (commitsRes.ok) {
-        const commits = await commitsRes.json();
-        if (commits && commits.length > 0) {
-          createdAt = commits[0].commit.author.date;
-        }
-      }
-    } catch (e) {
-      console.warn(`Failed to fetch commits for ${slug}`);
-    }
+    const createdAt = await fetchCreationDate(
+      owner,
+      repo,
+      filePath,
+      headers,
+      slug,
+    );
 
-    // Calculate current scores (Base + Deltas from main updates only)
-    let currentDemandScore =
-      parseInt(
-        data[
-          'on a scale of 1 - 10 how badly would you want the solution to your paint point'
-        ],
-      ) || 0;
-    let currentProgressScore =
-      parseInt(
-        data[
-          "how much progress have the tech you or someone you're working has gone to fixing the pain point"
-        ],
-      ) || 0;
-
-    allUpdates
-      .filter((u) => u.source === 'main')
-      .forEach((u) => {
-        if (u.demand !== undefined) currentDemandScore += u.demand;
-        if (u.progress !== undefined) currentProgressScore += u.progress;
-      });
-
-    // Helper to clamp values between 0 and 10
-    const clamp = (val: number) => Math.min(10, Math.max(0, val));
+    // Calculate current scores
+    const { demandScore, progressScore } = calculateCurrentScores(
+      data,
+      allUpdates,
+    );
 
     return {
       slug,
-      title: data.title || 'Untitled Pain Point',
-      inconvenience: data['how does it inconvience you'] || '',
-      workaround: data['what have you done as a workaround'] || '',
-      limitation:
+      title: String(data.title || 'Untitled Pain Point'),
+      inconvenience: String(data['how does it inconvience you'] || ''),
+      workaround: String(data['what have you done as a workaround'] || ''),
+      limitation: String(
         data['how does this pain point limit what you want to do'] || '',
-      demandScore: clamp(currentDemandScore),
-      progressScore: clamp(currentProgressScore),
-      createdAt: createdAt,
-      tags: data.tags || [],
+      ),
+      demandScore,
+      progressScore,
+      createdAt,
+      tags: (data.tags as string[]) || [],
       updates: allUpdates,
-      subPainPoints: subPainPoints,
+      subPainPoints,
     };
   } catch (error) {
     console.error('Error fetching pain point:', error);
@@ -503,7 +581,9 @@ export default async function PainPointDetailPage({
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
+                aria-hidden="true"
               >
+                <title>Add</title>
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -517,9 +597,9 @@ export default async function PainPointDetailPage({
 
           {painPoint.updates && painPoint.updates.length > 0 ? (
             <div className="space-y-6">
-              {painPoint.updates.map((update, idx) => (
+              {painPoint.updates.map((update) => (
                 <div
-                  key={idx}
+                  key={`${update.source}-${update.date}-${update.file}`}
                   className="relative border-l-2 border-slate-200 pb-6 pl-8 last:border-0 last:pb-0 dark:border-slate-700"
                 >
                   <div className="absolute -left-[9px] top-0 h-4 w-4 rounded-full bg-slate-300 ring-4 ring-white dark:bg-slate-600 dark:ring-gray-900" />

@@ -3,12 +3,16 @@
  * @module CheckSubscriptionRoute
  */
 
-import { NextResponse } from 'next/server';
 import { auth, clerkClient } from '@clerk/nextjs/server';
+import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
 /** Initialize Stripe client */
-const stripe = new Stripe(process.env['STRIPE_SECRET_KEY']!, {
+const stripeSecretKey = process.env['STRIPE_SECRET_KEY'];
+if (!stripeSecretKey) {
+  throw new Error('STRIPE_SECRET_KEY environment variable is not set');
+}
+const stripe = new Stripe(stripeSecretKey, {
   apiVersion: '2024-12-18.acacia',
 });
 

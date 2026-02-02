@@ -48,20 +48,39 @@
             "strictCase": false,
             "conventions": [
               {
-                "selector": { "kind": "interface" },
+                "selector": {
+                  "kind": "interface"
+                },
                 "formats": ["PascalCase"]
               },
               {
-                "selector": { "kind": "typeAlias" },
+                "selector": {
+                  "kind": "typeAlias"
+                },
                 "formats": ["PascalCase"]
               },
               {
-                "selector": { "kind": "enum" },
+                "selector": {
+                  "kind": "enum"
+                },
                 "formats": ["PascalCase"]
               },
               {
-                "selector": { "kind": "enumMember" },
+                "selector": {
+                  "kind": "enumMember"
+                },
                 "formats": ["CONSTANT_CASE", "PascalCase"]
+              },
+              {
+                "selector": {
+                  "kind": "objectLiteralProperty"
+                },
+                "formats": [
+                  "camelCase",
+                  "PascalCase",
+                  "CONSTANT_CASE",
+                  "snake_case"
+                ]
               }
             ]
           }
