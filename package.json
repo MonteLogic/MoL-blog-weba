@@ -33,7 +33,8 @@
     "tsgo:check:watch": "tsgo --noEmit --watch",
     "lint:strict": "biome check --reporter=github .",
     "lint:watch": "chokidar \"**/*.{ts,tsx,js,jsx}\" -i \"node_modules\" -i \".next\" -i \"MoL-blog-content\" -c \"biome check --reporter=github .\" --initial",
-    "lint:fix": "biome check --write ."
+    "lint:fix": "biome check --write .",
+    "lint:problems": "node scripts/biome-report.js --max 2000"
   },
   "git": {
     "pre-commit": "lint-staged"

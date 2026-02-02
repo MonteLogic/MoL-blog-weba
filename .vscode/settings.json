@@ -10,6 +10,8 @@
     "SCNZF"
   ],
   "biome.enabled": true,
+  "biome.lspBin": "",
+  "biome.rename": true,
   "editor.codeActionsOnSave": {
     "quickfix.biome": "explicit",
     "source.organizeImports.biome": "explicit"

@@ -56,6 +56,54 @@
       }
     },
     {
+      "type": "shell",
+      "label": "Biome: Problems (All)",
+      "command": "node",
+      "args": ["scripts/biome-report.js", "--max", "2000"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": {
+        "owner": "biome",
+        "fileLocation": ["relative", "${workspaceFolder}"],
+        "pattern": {
+          "regexp": "^(.+):(\\d+):(\\d+): (error|warning): (.+)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": 4,
+          "message": 5
+        }
+      },
+      "detail": "Emit Biome diagnostics for Problems pane",
+      "presentation": {
+        "group": "build",
+        "reveal": "always"
+      }
+    },
+    {
+      "type": "npm",
+      "script": "lint:problems",
+      "problemMatcher": {
+        "owner": "biome",
+        "fileLocation": ["relative", "${workspaceFolder}"],
+        "pattern": {
+          "regexp": "^(.+):(\\d+):(\\d+): (error|warning): (.+)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": 4,
+          "message": 5
+        }
+      },
+      "label": "npm: lint:problems - MoL-blog-weba",
+      "detail": "Emit Biome diagnostics for Problems pane (npm)",
+      "presentation": {
+        "group": "build",
+        "reveal": "always"
+      }
+    },
+    {
       "type": "npm",
       "script": "lint:watch",
       "problemMatcher": {
