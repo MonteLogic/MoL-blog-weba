@@ -32,6 +32,7 @@
         },
         "noExcessiveNestedTestSuites": "warn",
         "noBannedTypes": "error",
+        "useLiteralKeys": "off",
         "noForEach": "off",
         "noUselessTypeConstraint": "error"
       },
