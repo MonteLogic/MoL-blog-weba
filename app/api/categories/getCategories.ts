@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 
-import { type Category } from './category';
+import type { Category } from './category';
 
 export async function getCategories({ parent }: { parent?: string } = {}) {
   const res = await fetch(

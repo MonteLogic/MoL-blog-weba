@@ -1,11 +1,11 @@
 import '#/styles/globals.css';
+import { ClerkProvider } from '@clerk/nextjs';
+import { Analytics } from '@vercel/analytics/next';
+import type { Metadata } from 'next';
+import titles from '#/titles.json';
 import { AddressBar } from '#/ui/address-bar';
 import Byline from '#/ui/byline';
 import { GlobalNav } from '#/ui/global-nav';
-import { Metadata } from 'next';
-import { ClerkProvider } from '@clerk/nextjs';
-import { Analytics } from '@vercel/analytics/next';
-import titles from '#/titles.json';
 
 export const metadata: Metadata = {
   title: {
@@ -13,14 +13,12 @@ export const metadata: Metadata = {
     template: '%s | MonteLogic',
   },
   metadataBase: new URL('https://mo99.sh/'),
-  description:
-    titles.title +
-    ' is an online system for managing contractors concerns. These concerns include scheduling, timecards, route management and time management. This easy to use app will make truck drivers and route managers working lives much easier.',
+  description: `${titles.title} is an online system for managing contractors concerns. These concerns include scheduling, timecards, route management and time management. This easy to use app will make truck drivers and route managers working lives much easier.`,
   openGraph: {
     title: titles.title,
     description:
       'Contractor Bud is an online system for managing contractors concerns. These concerns include scheduling, timecards, route management and time management. This easy to use app will make truck drivers and route managers working lives much easier.',
-    images: [`/api/og?title=Next.js App Router`],
+    images: ['/api/og?title=Next.js App Router'],
   },
   twitter: {
     card: 'summary_large_image',

@@ -1,7 +1,7 @@
 'use client';
 
 import { useUser } from '@clerk/nextjs';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 /**
  * Hook for managing timecard generation metadata
@@ -20,7 +20,9 @@ export const useTimecardsMetadata = () => {
   }, [user]);
 
   const incrementTimecardsGenerated = async () => {
-    if (!user) return;
+    if (!user) {
+      return;
+    }
 
     try {
       const currentCount =

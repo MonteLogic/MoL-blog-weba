@@ -56,8 +56,10 @@ export async function POST(
     const res = await fetch(url, {
       method: 'PUT',
       headers: {
+        // biome-ignore lint/style/useNamingConvention: <explanation>
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
+        // biome-ignore lint/style/useNamingConvention: <explanation>
         Accept: 'application/vnd.github.v3+json',
       },
       body: JSON.stringify({

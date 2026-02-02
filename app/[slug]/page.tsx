@@ -1,12 +1,12 @@
 import fs from 'fs';
-import path from 'path';
+import path from 'node:path';
 
 import { auth, currentUser } from '@clerk/nextjs/server';
 import matter from 'gray-matter';
+import { MDXRemote } from 'next-mdx-remote/rsc';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { MDXRemote } from 'next-mdx-remote/rsc';
-import React from 'react';
+import type React from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypePrettyCode from 'rehype-pretty-code';
 import remarkGfm from 'remark-gfm';
