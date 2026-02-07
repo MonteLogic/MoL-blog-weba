@@ -6,7 +6,7 @@
       "script": "build",
       "group": "build",
       "problemMatcher": [],
-      "label": "npm: build - MoL-blog-weba",
+      "label": "npm: build",
       "detail": "pnpm run generate-markdown-paths && pnpm run validate-pain-points && pnpm run check-categories && next build"
     },
     {
@@ -14,8 +14,8 @@
       "script": "type-check:watch",
       "problemMatcher": "$tsc-watch",
       "isBackground": true,
-      "label": "npm: type-check:watch - MoL-blog-weba",
-      "detail": "tsc --noEmit --watch --pretty",
+      "label": "tsc: Type Check (Watch)",
+      "detail": "Traditional TypeScript compiler watch mode",
       "presentation": {
         "group": "build",
         "reveal": "never"
@@ -23,113 +23,99 @@
     },
     {
       "type": "npm",
-      "script": "tsgo:check:watch",
-      "problemMatcher": "$tsc-watch",
-      "isBackground": true,
-      "label": "tsgo: Type Check (Watch)",
-      "detail": "Go-based TypeScript compiler - 10x faster",
-      "presentation": {
-        "group": "build",
-        "reveal": "never"
-      }
-    },
-    {
-      "type": "npm",
-      "script": "lint:strict",
+      "script": "tsgo:check",
       "problemMatcher": {
-        "owner": "biome",
+        "owner": "typescript",
         "fileLocation": ["relative", "${workspaceFolder}"],
         "pattern": {
-          "regexp": "^::(?:error|warning)\\s+file=([^,]+),line=(\\d+),col=(\\d+),endColumn=(\\d+)::(.+)$",
+          "regexp": "^(.+):(\\d+):(\\d+)\\s+-\\s+(error|warning)\\s+(TS\\d+):\\s+(.+)$",
           "file": 1,
           "line": 2,
           "column": 3,
-          "endColumn": 4,
-          "message": 5
+          "severity": 4,
+          "code": 5,
+          "message": 6
         }
       },
-      "label": "Biome: Strict Check",
-      "detail": "Rust-based linter - fast strict checking",
+      "label": "tsgo: Type Check (One-time)",
+      "detail": "Go-based TypeScript compiler - 10x faster",
       "presentation": {
         "group": "build",
         "reveal": "silent"
       }
     },
     {
-      "type": "shell",
-      "label": "Biome: Problems (All)",
-      "command": "node",
-      "args": ["scripts/biome-report.js", "--max", "2000"],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": {
-        "owner": "biome",
-        "fileLocation": ["relative", "${workspaceFolder}"],
-        "pattern": {
-          "regexp": "^(.+):(\\d+):(\\d+): (error|warning): (.+)$",
-          "file": 1,
-          "line": 2,
-          "column": 3,
-          "severity": 4,
-          "message": 5
-        }
-      },
-      "detail": "Emit Biome diagnostics for Problems pane",
+      "label": "tsc: Type Check (One-time)",
+      "type": "npm",
+      "script": "type-check",
+      "problemMatcher": "$tsc",
+      "detail": "tsc --noEmit --pretty",
       "presentation": {
         "group": "build",
-        "reveal": "always"
+        "reveal": "silent"
       }
     },
     {
       "type": "npm",
-      "script": "lint:problems",
+      "script": "tsgo:check:watch",
       "problemMatcher": {
-        "owner": "biome",
+        "owner": "tsgo",
         "fileLocation": ["relative", "${workspaceFolder}"],
         "pattern": {
-          "regexp": "^(.+):(\\d+):(\\d+): (error|warning): (.+)$",
+          "regexp": "^(.+):(\\d+):(\\d+)\\s+-\\s+(error|warning)\\s+(TS\\d+):\\s+(.*)$",
           "file": 1,
           "line": 2,
           "column": 3,
           "severity": 4,
-          "message": 5
-        }
-      },
-      "label": "npm: lint:problems - MoL-blog-weba",
-      "detail": "Emit Biome diagnostics for Problems pane (npm)",
-      "presentation": {
-        "group": "build",
-        "reveal": "always"
-      }
-    },
-    {
-      "type": "npm",
-      "script": "lint:watch",
-      "problemMatcher": {
-        "owner": "biome",
-        "fileLocation": ["relative", "${workspaceFolder}"],
-        "pattern": {
-          "regexp": "^::(?:error|warning)\\s+file=([^,]+),line=(\\d+),col=(\\d+),endColumn=(\\d+)::(.+)$",
-          "file": 1,
-          "line": 2,
-          "column": 3,
-          "endColumn": 4,
-          "message": 5
+          "code": 5,
+          "message": 6
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".+",
+          "endsPattern": "build finished in"
         }
       },
       "isBackground": true,
-      "label": "Biome: Watch Mode",
-      "detail": "Runs Biome on file changes",
+      "label": "tsgo: Type Check (Watch)",
+      "detail": "Go-based TypeScript compiler - 10x faster (watch mode)",
       "presentation": {
         "group": "build",
-        "reveal": "never"
+        "reveal": "always"
       }
     },
     {
-      "label": "All Checks: tsgo + Biome",
-      "dependsOrder": "parallel",
-      "dependsOn": ["tsgo: Type Check (Watch)", "Biome: Watch Mode"],
+      "type": "npm",
+      "script": "lint:strict",
+      "problemMatcher": "$eslint-stylish",
+      "label": "ESLint: Strict Check",
+      "detail": "Strict ESLint with no-any rules and 125-line function limit",
+      "presentation": {
+        "group": "build",
+        "reveal": "silent"
+      }
+    },
+    {
+      "label": "ESLint: Strict Check (stylish)",
+      "type": "shell",
+      "command": "pnpm exec eslint . --cache --format stylish",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": "$eslint-stylish",
+      "presentation": {
+        "group": "build",
+        "reveal": "silent"
+      }
+    },
+    {
+      "label": "All Checks: tsgo + tsc + ESLint (stylish)",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "tsgo: Type Check (One-time)",
+        "tsc: Type Check (One-time)",
+        "ESLint: Strict Check (stylish)"
+      ],
       "group": {
         "kind": "build",
         "isDefault": true
