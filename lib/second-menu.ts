@@ -1,5 +1,3 @@
-import { useUser } from '@clerk/nextjs';
-
 export type Item = {
   name: string;
   slug: string;
@@ -58,6 +56,11 @@ export const getSecondMenu = (
         description: 'View Pain Points',
       },
       {
+        name: 'View Projects',
+        slug: 'blog/projects',
+        description: 'View Projects',
+      },
+      {
         name: 'Blog',
         slug: 'blog',
         description: 'CBud Documentation',
@@ -65,7 +68,6 @@ export const getSecondMenu = (
     ],
   },
 ];
-
 
 // Updated to respect the passed-in database ID
 export const useResolveSlug = () => {

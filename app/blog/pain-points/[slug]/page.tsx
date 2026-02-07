@@ -396,7 +396,7 @@ async function getPainPoint(slug: string): Promise<PainPoint | null> {
 
     return {
       slug,
-      title: String(data.title || 'Untitled Pain Point'),
+      title: String(data['title'] || 'Untitled Pain Point'),
       inconvenience: String(data['how does it inconvience you'] || ''),
       workaround: String(data['what have you done as a workaround'] || ''),
       limitation: String(
@@ -405,7 +405,7 @@ async function getPainPoint(slug: string): Promise<PainPoint | null> {
       demandScore,
       progressScore,
       createdAt,
-      tags: (data.tags as string[]) || [],
+      tags: (data['tags'] as string[]) || [],
       updates: allUpdates,
       subPainPoints,
     };
