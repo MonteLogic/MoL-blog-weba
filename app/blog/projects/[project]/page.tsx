@@ -154,6 +154,34 @@ function formatProjectName(slug: string): string {
   return slug.replace(/([A-Z])/g, ' $1').trim();
 }
 
+function getProjectInfo(projectSlug: string): {
+  name?: string;
+  description?: string;
+} {
+  const infoPath = path.join(
+    process.cwd(),
+    'MoL-blog-content/posts/categorized/projects',
+    projectSlug,
+    'info.json',
+  );
+
+  if (!fs.existsSync(infoPath)) {
+    return {};
+  }
+
+  try {
+    const infoContent = fs.readFileSync(infoPath, 'utf-8');
+    const info = JSON.parse(infoContent);
+    return {
+      name: info.project,
+      description: info.description,
+    };
+  } catch (error) {
+    console.error(`Error reading info.json for ${projectSlug}:`, error);
+    return {};
+  }
+}
+
 interface Props {
   params: {
     project: string;
@@ -183,8 +211,22 @@ export default async function ProjectPage({
     }
   }
 
-  const projectName = formatProjectName(project);
+  const projectInfo = getProjectInfo(project);
+  const projectName = projectInfo.name ?? formatProjectName(project);
+  const projectDescription = projectInfo.description;
   const allPosts = await getProjectPosts(project);
+  const canManagePosts =
+    userRole === 'admin' || userRole === 'Admin' || userRole === 'Contributor';
+  const githubOwner = process.env['NEXT_PUBLIC_GITHUB_OWNER'] ?? 'MonteLogic';
+  const githubRepo =
+    process.env['NEXT_PUBLIC_GITHUB_REPO'] ?? 'MoL-blog-content';
+  const postTemplate = `---\ntitle: "New Project Post"\ndate: "${
+    new Date().toISOString().split('T')[0]
+  }"\ndescription: "Describe this post"\ntags: []\nstatus: "private"\n---\n\nStart writing here...\n`;
+  const addPostUrl = `https://github.com/${githubOwner}/${githubRepo}/new/main/posts/categorized/projects/${project}?filename=new-post.md&value=${encodeURIComponent(
+    postTemplate,
+  )}`;
+  const editProjectUrl = `https://github.com/${githubOwner}/${githubRepo}/edit/main/posts/categorized/projects/${project}/info.json`;
 
   // Filter posts based on user permissions
   const projectPosts = allPosts.filter((post) =>
@@ -210,12 +252,43 @@ export default async function ProjectPage({
         >
           {projectName}
         </h1>
+        {projectDescription && (
+          <p className="mb-6" style={{ color: 'var(--text-secondary)' }}>
+            {projectDescription}
+          </p>
+        )}
         <div className="card-blog">
           {projectPosts.length === 0 ? (
             <>
               <p style={{ color: 'var(--text-primary)' }}>
                 No posts found in this project.
               </p>
+              {canManagePosts && (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Link
+                    href={`/blog/projects/${project}/new`}
+                    className="inline-flex items-center justify-center gap-2 rounded-md border border-indigo-600 bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
+                  >
+                    Add Post
+                  </Link>
+                  <a
+                    href={addPostUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-2 rounded-md border border-gray-600 bg-transparent px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+                  >
+                    Add Post on GitHub
+                  </a>
+                  <a
+                    href={editProjectUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-2 rounded-md border border-gray-600 bg-transparent px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+                  >
+                    Edit Project
+                  </a>
+                </div>
+              )}
               <Link
                 href="/blog/projects"
                 className="back-link text-accent-indigo mt-4 inline-block"
@@ -242,9 +315,42 @@ export default async function ProjectPage({
         >
           {projectName}
         </h1>
-        <Link href="/blog/projects" className="back-link text-accent-indigo">
-          ← All Projects
-        </Link>
+        {projectDescription && (
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+            {projectDescription}
+          </p>
+        )}
+        <div className="flex flex-wrap items-center gap-3">
+          <Link href="/blog/projects" className="back-link text-accent-indigo">
+            ← All Projects
+          </Link>
+          {canManagePosts && (
+            <div className="flex flex-wrap items-center gap-2">
+              <Link
+                href={`/blog/projects/${project}/new`}
+                className="inline-flex items-center justify-center gap-2 rounded-md border border-indigo-600 bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
+              >
+                Add Post
+              </Link>
+              <a
+                href={addPostUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 rounded-md border border-gray-600 bg-transparent px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+              >
+                Add Post on GitHub
+              </a>
+              <a
+                href={editProjectUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 rounded-md border border-gray-600 bg-transparent px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+              >
+                Edit Project
+              </a>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="space-y-6">

@@ -240,9 +240,20 @@ export default async function ProjectPostPage({
 
     const isMdx = filePath.endsWith('.mdx');
     const projectName = formatTitle(projectSlug);
+    const canManagePosts =
+      userRole === 'admin' ||
+      userRole === 'Admin' ||
+      userRole === 'Contributor';
 
     // GitHub URL for admin
     const relativePath = path.relative(process.cwd(), filePath);
+    const githubOwner = process.env['NEXT_PUBLIC_GITHUB_OWNER'] ?? 'MonteLogic';
+    const githubRepo =
+      process.env['NEXT_PUBLIC_GITHUB_REPO'] ?? 'MoL-blog-content';
+    const githubFileUrl = `https://github.com/${githubOwner}/${githubRepo}/blob/main/${relativePath.replace(
+      'MoL-blog-content/',
+      '',
+    )}`;
     return (
       <div className="mx-auto max-w-3xl">
         <div className="mb-8 flex flex-col gap-3">
@@ -253,6 +264,24 @@ export default async function ProjectPostPage({
             >
               ← Back to {projectName}
             </Link>
+            {canManagePosts && (
+              <div className="flex flex-wrap items-center gap-2">
+                <Link
+                  href={`/blog/projects/${projectSlug}/${postSlug}/edit`}
+                  className="inline-flex items-center justify-center gap-2 rounded-md border border-indigo-600 bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
+                >
+                  Edit Post
+                </Link>
+                <a
+                  href={githubFileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2 rounded-md border border-gray-600 bg-transparent px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+                >
+                  Edit on GitHub
+                </a>
+              </div>
+            )}
           </div>
         </div>
 
