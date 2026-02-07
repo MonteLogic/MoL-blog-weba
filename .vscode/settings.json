@@ -10,7 +10,7 @@
     "SCNZF"
   ],
   "biome.enabled": true,
-  "biome.lspBin": "",
+  "biome.lspBin": "/home/monte/Downloads/temp/M99/MoL-blog-weba/node_modules/.bin/biome",
   "biome.rename": true,
   "editor.codeActionsOnSave": {
     "quickfix.biome": "explicit",
