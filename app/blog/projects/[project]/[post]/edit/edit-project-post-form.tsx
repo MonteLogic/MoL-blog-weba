@@ -36,6 +36,17 @@ export default function EditProjectPostForm({
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [currentTime, setCurrentTime] = useState(() => new Date());
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, []);
 
   useEffect(() => {
     const loadPost = async () => {
@@ -140,13 +151,16 @@ export default function EditProjectPostForm({
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
-      <div className="mb-8 flex items-center justify-between">
+      <div className="mb-8 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <h1
           className="text-3xl font-bold"
           style={{ color: 'var(--text-primary)' }}
         >
           Edit Post
         </h1>
+        <div className="text-sm" style={{ color: 'var(--text-muted)' }}>
+          {currentTime.toLocaleString()}
+        </div>
         <Link
           href={`/blog/projects/${projectSlug}/${postSlug}`}
           className="text-accent-indigo hover:underline"
