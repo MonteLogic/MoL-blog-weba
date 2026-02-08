@@ -26,7 +26,7 @@
     "generate-markdown-paths": "ts-node -O '{\"module\": \"CommonJS\"}' scripts/generate.ts",
     "validate-pain-points": "ts-node -O '{\"module\": \"CommonJS\"}' scripts/validate-pain-points.ts",
     "check-categories": "node scripts/check-categories.js",
-    "build": "pnpm run generate-markdown-paths && pnpm run validate-pain-points && pnpm run check-categories && pnpm run lint:strict && next build",
+    "build": "pnpm run generate-markdown-paths && pnpm run validate-pain-points && pnpm run check-categories && pnpm run tsgo:check && next build",
     "type-check": "tsc --noEmit --pretty",
     "type-check:watch": "tsc --noEmit --watch --pretty",
     "tsgo:check": "tsgo --noEmit",
