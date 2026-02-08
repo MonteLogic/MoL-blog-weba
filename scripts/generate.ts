@@ -12,7 +12,7 @@ const projectRoot = process.cwd();
 // 2. Sibling directory (../MoL-blog-content)
 // 3. Environment variable CONTENT_DIR
 const possiblePaths = [
-  process.env.CONTENT_DIR,
+  process.env['CONTENT_DIR'],
   path.join(projectRoot, 'MoL-blog-content', 'posts'),
   path.join(projectRoot, '..', 'MoL-blog-content', 'posts'),
 ].filter(Boolean);
@@ -22,7 +22,6 @@ let markdownSourceDir: string | null = null;
 for (const p of possiblePaths) {
   if (p && fs.existsSync(p)) {
     markdownSourceDir = p;
-    console.log(`Found content directory at: ${p}`);
     break;
   }
 }
@@ -30,15 +29,20 @@ for (const p of possiblePaths) {
 if (!markdownSourceDir) {
   console.error('Could not find MoL-blog-content/posts directory.');
   console.error('Searched locations:');
-  possiblePaths.forEach(p => console.error(`  - ${p}`));
+  possiblePaths.forEach((p) => console.error(`  - ${p}`));
   console.error('\nTo fix this, either:');
   console.error('  1. Run: pnpm run setup (creates symlink)');
-  console.error('  2. Set CONTENT_DIR environment variable to the posts directory');
+  console.error(
+    '  2. Set CONTENT_DIR environment variable to the posts directory',
+  );
   console.error('  3. Ensure MoL-blog-content is a sibling directory');
   process.exit(1);
 }
 
-const outputJsonFile = path.join(projectRoot, 'blog-schema/file-paths/markdown-paths.json');
+const outputJsonFile = path.join(
+  projectRoot,
+  'blog-schema/file-paths/markdown-paths.json',
+);
 
 // Use projectRoot as the base directory for paths in the output JSON
 const baseDirectoryForPaths = projectRoot;

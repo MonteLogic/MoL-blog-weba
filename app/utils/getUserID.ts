@@ -10,9 +10,7 @@ export type UserData = {
 export const getUserID = cache(async () => {
   // We need to pass the request to auth() to get the user
   // This function should be called within a request context
-  const { userId } = auth();
-
-  console.log(10, userId);
+  const { userId } = await auth();
 
   // For now, let's return some data including the user ID
   return {

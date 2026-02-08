@@ -1,15 +1,18 @@
-import { authMiddleware } from '@clerk/nextjs';
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 
-// This example protects all routes including api/trpc routes
-// Please edit this to allow other routes to be public as needed.
-// See https://clerk.com/docs/references/nextjs/auth-middleware for more information about configuring your Middleware
-export default authMiddleware({
-  publicRoutes: [
-    '/api/uploadthing', 
-        /^\/blog(\/.*)?$/, // This is the key change
-    /^\/skill-tree(\/.*)?$/, // Skill Tree page is public
-    
-    '/', '/api/webhooks(.*)'],
+const isPublicRoute = createRouteMatcher([
+  '/api/uploadthing',
+  '/blog(.*)',
+  '/skill-tree(.*)',
+  '/',
+  '/api/webhooks(.*)',
+]);
+
+export default clerkMiddleware(async (auth, req) => {
+  if (!isPublicRoute(req)) {
+    const { userId, redirectToSignIn } = await auth();
+    if (!userId) return redirectToSignIn();
+  }
 });
 
 export const config = {

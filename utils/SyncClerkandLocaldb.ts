@@ -6,7 +6,8 @@ import { UserType } from '#/types/UserTypes';
 
 export async function syncClerkAndLocalDb(clerkUserId: string, orgId: string) {
   const db = tursoClient();
-  const clerkUser = await clerkClient.users.getUser(clerkUserId);
+  const client = await clerkClient();
+  const clerkUser = await client.users.getUser(clerkUserId);
   const userEmail = clerkUser.emailAddresses[0]?.emailAddress;
 
   if (!userEmail) {
@@ -42,7 +43,7 @@ export async function syncClerkAndLocalDb(clerkUserId: string, orgId: string) {
   }
 
   // User exists, update the record with Clerk ID if necessary
-  if (existingUser[0].id !== clerkUserId) {
+  if (existingUser[0]?.id !== clerkUserId) {
     await db
       .update(users)
       .set({ id: clerkUserId })

@@ -3,10 +3,10 @@ import YAML from 'yaml';
 
 export async function POST(
   request: Request,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> },
 ) {
   try {
-    const { slug } = params;
+    const { slug } = await params;
     const body = await request.json();
     const { title, description, demandScore, progressScore, tags } = body;
 
@@ -34,13 +34,19 @@ export async function POST(
     const yamlString = YAML.stringify(yamlData);
     const filename = `${subSlug}.yaml`;
 
-    const owner = 'MonteLogic';
-    const repo = 'MoL-blog-content';
+    const owner = process.env['NEXT_PUBLIC_GITHUB_OWNER'];
+    const repo = process.env['NEXT_PUBLIC_GITHUB_REPO'];
     const path = `posts/categorized/pain-points/${slug}/sub-pain-points/${filename}`;
-    const token = process.env.CONTENT_GH_TOKEN;
+    const token = process.env['CONTENT_GH_TOKEN'];
 
-    if (!token) {
-      return NextResponse.json({ error: 'GitHub token not configured' }, { status: 500 });
+    if (!token || !owner || !repo) {
+      return NextResponse.json(
+        {
+          error:
+            'GitHub configuration not complete (token, owner, or repo missing)',
+        },
+        { status: 500 },
+      );
     }
 
     // Convert content to Base64
@@ -51,27 +57,35 @@ export async function POST(
     const res = await fetch(url, {
       method: 'PUT',
       headers: {
-        'Authorization': `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
-        'Accept': 'application/vnd.github.v3+json',
+        Accept: 'application/vnd.github.v3+json',
       },
       body: JSON.stringify({
         message: `Add sub pain point "${title}" to ${slug}`,
         content: contentEncoded,
-      })
+      }),
     });
 
     if (!res.ok) {
       const errorData = await res.json();
       console.error('GitHub API Error:', errorData);
-      return NextResponse.json({ error: 'Failed to create sub pain point on GitHub', details: errorData }, { status: res.status });
+      return NextResponse.json(
+        {
+          error: 'Failed to create sub pain point on GitHub',
+          details: errorData,
+        },
+        { status: res.status },
+      );
     }
 
     const data = await res.json();
     return NextResponse.json({ success: true, data });
-
   } catch (error) {
     console.error('Error creating sub pain point:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Internal Server Error' },
+      { status: 500 },
+    );
   }
 }

@@ -4,15 +4,15 @@
  */
 
 import { NextResponse } from 'next/server';
-import { clerkClient } from '@clerk/nextjs';
+import { clerkClient } from '@clerk/nextjs/server';
 import Stripe from 'stripe';
 import { headers } from 'next/headers';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+const stripe = new Stripe(process.env['STRIPE_SECRET_KEY']!, {
   apiVersion: '2024-12-18.acacia',
 });
 
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
+const webhookSecret = process.env['STRIPE_WEBHOOK_SECRET']!;
 
 /**
  * Parse raw body for Stripe webhook
@@ -27,19 +27,16 @@ async function getBody(req: Request) {
  */
 async function updateUserMetadata(userId: string, stripeCustomerId: string) {
   try {
-    const user = await clerkClient.users.getUser(userId);
+    const client = await clerkClient();
+    const user = await client.users.getUser(userId);
     const currentMetadata = user.privateMetadata;
 
-    await clerkClient.users.updateUser(userId, {
+    await client.users.updateUser(userId, {
       privateMetadata: {
         ...currentMetadata,
         stripeCustomerId,
       },
     });
-
-    console.log(
-      `Updated metadata for user ${userId} with Stripe customer ${stripeCustomerId}`,
-    );
   } catch (error) {
     console.error('Error updating user metadata:', error);
     throw error;
@@ -66,7 +63,7 @@ export async function POST(req: Request) {
         const session = event.data.object as Stripe.Checkout.Session;
 
         // Get the Clerk user ID from metadata
-        const userId = session.metadata?.userId;
+        const userId = session.metadata?.['userId'];
         if (!userId) {
           console.error('No userId in session metadata');
           return NextResponse.json(
@@ -86,7 +83,6 @@ export async function POST(req: Request) {
 
       // Handle other event types if needed
       default:
-        console.log(`Unhandled event type ${event.type}`);
     }
 
     return NextResponse.json({ received: true });

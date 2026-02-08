@@ -1,6 +1,6 @@
+import type { ReactNode } from 'react';
 import { Boundary } from '#/ui/boundary';
-import React from 'react';
 
-export default function Template({ children }: { children: React.ReactNode }) {
+export default function Template({ children }: { children: ReactNode }) {
   return <Boundary>{children}</Boundary>;
 }

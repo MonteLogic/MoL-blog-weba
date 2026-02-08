@@ -19,7 +19,7 @@ export function PricingCard({
   title,
   price,
   features,
-  description
+  description,
 }: Readonly<PricingCardProps>) {
   const [loading, setLoading] = useState(false);
   const { userId, isSignedIn } = useAuth();
@@ -43,7 +43,6 @@ export function PricingCard({
         return;
       }
 
-      console.log(46, stripeProductIds[tier]);
       const response = await fetch('/api/stripe/create-subscription', {
         method: 'POST',
         headers: {
@@ -51,7 +50,7 @@ export function PricingCard({
         },
         body: JSON.stringify({
           productId: stripeProductIds[tier],
-          userId: userId
+          userId: userId,
         }),
       });
 
@@ -60,11 +59,10 @@ export function PricingCard({
       }
 
       const { url } = await response.json();
-      
+
       if (url) {
         window.location.href = url;
       }
-
     } catch (error) {
       console.error('Error during checkout:', error);
       // Handle error - show toast notification or error message
@@ -74,34 +72,36 @@ export function PricingCard({
   };
 
   return (
-    <div className="bg-gray-800 rounded-lg p-6 relative hover:shadow-lg transition-shadow">
+    <div className="relative rounded-lg bg-gray-800 p-6 transition-shadow hover:shadow-lg">
       <div className="mb-4">
         <h2 className="text-xl font-semibold text-blue-600">{title}</h2>
-        <div className="text-2xl font-bold mt-2 mb-4 text-white">{price}</div>
-        <p className="text-gray-200 mb-4">{description}</p>
+        <div className="mb-4 mt-2 text-2xl font-bold text-white">{price}</div>
+        <p className="mb-4 text-gray-200">{description}</p>
       </div>
-      
-      <ul className="space-y-2 mb-8">
+
+      <ul className="mb-8 space-y-2">
         {features.map((feature, index) => (
           <li key={index} className="flex items-center gap-2">
-            <Check className="text-blue-500 h-4 w-4" />
+            <Check className="h-4 w-4 text-blue-500" />
             <span className="text-gray-200">{feature}</span>
           </li>
         ))}
       </ul>
-      
-      <button 
+
+      <button
         onClick={handleUpgrade}
         disabled={loading}
-        className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="flex w-full items-center justify-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {loading ? (
           <Loader2 className="h-4 w-4 animate-spin" />
         ) : (
           <>
-            {tier === 'basic' ? 'Get Started' : 
-             tier === 'enterprise' ? 'Contact Sales' : 
-             `Upgrade to ${title.split(' ')[0]}`}
+            {tier === 'basic'
+              ? 'Get Started'
+              : tier === 'enterprise'
+              ? 'Contact Sales'
+              : `Upgrade to ${title.split(' ')[0]}`}
             <ArrowRight className="h-4 w-4" />
           </>
         )}

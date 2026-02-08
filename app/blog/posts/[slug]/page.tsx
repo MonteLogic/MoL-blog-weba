@@ -6,7 +6,7 @@ import matter from 'gray-matter';
 import { MDXRemote } from 'next-mdx-remote/rsc';
 import rehypePrettyCode from 'rehype-pretty-code';
 import remarkGfm from 'remark-gfm';
-import { auth, currentUser } from '@clerk/nextjs';
+import { auth, currentUser } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 
@@ -60,13 +60,17 @@ function canViewPost(
   }
 
   // If the post is private, only Admin and Contributor can view it
-  return userRole === 'admin' || userRole === 'Admin' || userRole === 'Contributor';
+  return (
+    userRole === 'admin' || userRole === 'Admin' || userRole === 'Contributor'
+  );
 }
 
 // Blog post page component
-export default async function BlogPost({ params }: Readonly<{ params: BlogPostParams }>) {
-  const { slug } = params;
-  const { userId } = auth();
+export default async function BlogPost({
+  params,
+}: Readonly<{ params: Promise<BlogPostParams> }>) {
+  const { slug } = await params;
+  const { userId } = await auth();
   let userRole: string | undefined;
 
   // Get user role directly from Clerk metadata
@@ -74,7 +78,7 @@ export default async function BlogPost({ params }: Readonly<{ params: BlogPostPa
     try {
       const user = await currentUser();
       // Access privateMetadata for the role
-      userRole = user?.privateMetadata?.role as string;
+      userRole = user?.privateMetadata?.['role'] as string;
     } catch (error) {
       console.error('Error fetching user role:', error);
     }
@@ -110,12 +114,13 @@ export default async function BlogPost({ params }: Readonly<{ params: BlogPostPa
     const { data: frontmatter, content } = matter(source);
 
     // Ensure title exists
-    if (!frontmatter.title) {
-      frontmatter.title = formatTitle(slug);
+    if (!frontmatter['title']) {
+      frontmatter['title'] = formatTitle(slug);
     }
 
     // Set default status to private if not specified
-    const postStatus = frontmatter.status === 'public' ? 'public' : 'private';
+    const postStatus =
+      frontmatter['status'] === 'public' ? 'public' : 'private';
 
     // Check if the current user can access this post
     if (!canViewPost(userRole, postStatus)) {
@@ -135,11 +140,13 @@ export default async function BlogPost({ params }: Readonly<{ params: BlogPostPa
           <header className="mb-8">
             <div className="flex items-start justify-between">
               <h1 className="text-3xl font-bold text-white">
-                {frontmatter.title}
+                {frontmatter['title']}
               </h1>
 
               {/* Show status badge for Admin and Contributor */}
-              {(userRole === 'admin' || userRole === 'Admin' || userRole === 'Contributor') && (
+              {(userRole === 'admin' ||
+                userRole === 'Admin' ||
+                userRole === 'Contributor') && (
                 <span
                   className={`rounded-full px-3 py-1 text-sm ${
                     postStatus === 'public'
@@ -152,16 +159,16 @@ export default async function BlogPost({ params }: Readonly<{ params: BlogPostPa
               )}
             </div>
 
-            {frontmatter.description && (
+            {frontmatter['description'] && (
               <p className="mt-3 text-xl text-gray-300">
-                {frontmatter.description}
+                {frontmatter['description']}
               </p>
             )}
 
             <div className="mt-4 flex flex-wrap items-center gap-4">
-              {frontmatter.date && (
+              {frontmatter['date'] && (
                 <div className="text-gray-400">
-                  {new Date(frontmatter.date).toLocaleDateString('en-US', {
+                  {new Date(frontmatter['date']).toLocaleDateString('en-US', {
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric',
@@ -169,14 +176,14 @@ export default async function BlogPost({ params }: Readonly<{ params: BlogPostPa
                 </div>
               )}
 
-              {frontmatter.author && (
-                <div className="text-gray-400">By {frontmatter.author}</div>
+              {frontmatter['author'] && (
+                <div className="text-gray-400">By {frontmatter['author']}</div>
               )}
             </div>
 
-            {frontmatter.tags && frontmatter.tags.length > 0 && (
+            {frontmatter['tags'] && frontmatter['tags'].length > 0 && (
               <div className="mt-4 flex flex-wrap gap-2">
-                {frontmatter.tags.map((tag: string) => (
+                {frontmatter['tags'].map((tag: string) => (
                   <span
                     key={tag}
                     className="rounded-full bg-gray-800 px-3 py-1 text-sm text-gray-300"
@@ -196,7 +203,7 @@ export default async function BlogPost({ params }: Readonly<{ params: BlogPostPa
                 source={content}
                 components={components}
                 options={{
-                  mdxOptions
+                  mdxOptions,
                 }}
               />
             ) : (
@@ -229,8 +236,8 @@ export default async function BlogPost({ params }: Readonly<{ params: BlogPostPa
             Post Not Found
           </h1>
           <p className="text-white">
-            This blog post could not be found in the uncategorized section or you
-            do not have permission to view it.
+            This blog post could not be found in the uncategorized section or
+            you do not have permission to view it.
           </p>
         </div>
       </div>

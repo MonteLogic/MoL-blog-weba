@@ -25,7 +25,10 @@ export default function Client({
     // included in the current searchParams
     options.forEach((option) => {
       if (!searchParams.has(option.value)) {
-        params.set(option.value, option.items[0]);
+        const firstItem = option.items[0];
+        if (firstItem !== undefined) {
+          params.set(option.value, firstItem);
+        }
       }
     });
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useUser } from '@clerk/nextjs';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 /**
  * Hook for managing timecard generation metadata
@@ -14,17 +14,19 @@ export const useTimecardsMetadata = () => {
   useEffect(() => {
     if (user) {
       const currentCount =
-        (user.unsafeMetadata?.timecardsGenerated as number) || 0;
+        (user.unsafeMetadata?.['timecardsGenerated'] as number) || 0;
       setCount(currentCount);
     }
   }, [user]);
 
   const incrementTimecardsGenerated = async () => {
-    if (!user) return;
+    if (!user) {
+      return;
+    }
 
     try {
       const currentCount =
-        (user.unsafeMetadata?.timecardsGenerated as number) || 0;
+        (user.unsafeMetadata?.['timecardsGenerated'] as number) || 0;
       const newCount = currentCount + 1;
 
       await user.update({

@@ -1,13 +1,17 @@
 // app/settings/components/ActiveSubscription.tsx
-"use client";
+'use client';
 
 import type { Stripe } from 'stripe';
 import { ActiveSubscriptionsProps } from '../settings-types';
 
-export function ActiveSubscriptions({ subscriptions }: ActiveSubscriptionsProps) {
+export function ActiveSubscriptions({
+  subscriptions,
+}: ActiveSubscriptionsProps) {
   if (subscriptions.length === 0) return null;
 
-  const getProductName = (product: string | Stripe.Product | Stripe.DeletedProduct) => {
+  const getProductName = (
+    product: string | Stripe.Product | Stripe.DeletedProduct,
+  ) => {
     if (typeof product === 'string') return product;
     if ('name' in product) return product.name;
     return 'Deleted Product';
@@ -18,7 +22,10 @@ export function ActiveSubscriptions({ subscriptions }: ActiveSubscriptionsProps)
       <h3 className="text-lg font-semibold">Active Subscriptions</h3>
       {subscriptions.map((sub) => (
         <div key={sub.id} className="mt-2 space-y-1">
-          <p>Plan: {getProductName(sub.items.data[0].price.product)}</p>
+          <p>
+            Plan:{' '}
+            {getProductName(sub.items.data[0]?.price?.product ?? 'Unknown')}
+          </p>
           <p>
             Status:{' '}
             <span className="inline-block rounded-full bg-green-100 px-2 py-1 text-sm text-green-800">
@@ -34,4 +41,3 @@ export function ActiveSubscriptions({ subscriptions }: ActiveSubscriptionsProps)
     </div>
   );
 }
-

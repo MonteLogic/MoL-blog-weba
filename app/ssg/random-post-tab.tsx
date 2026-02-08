@@ -1,6 +1,5 @@
 'use client';
 
-import { Tab } from '#/ui/tab';
 import clsx from 'clsx';
 import React, { useEffect } from 'react';
 
@@ -23,6 +22,7 @@ export function RandomPostTab({ path }: { path: string }) {
         'opacity-0': !post,
         'opacity-100': post,
       })}
+      data-path={path}
     >
       {post ? (
         <>

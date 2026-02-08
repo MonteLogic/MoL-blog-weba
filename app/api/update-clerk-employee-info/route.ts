@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { clerkClient } from '@clerk/nextjs/server';
-import { auth } from '@clerk/nextjs';
+import { clerkClient, auth } from '@clerk/nextjs/server';
 
 export async function POST(request: NextRequest) {
   return handleRequest(request);
@@ -12,7 +11,7 @@ export async function PATCH(request: NextRequest) {
 
 async function handleRequest(request: NextRequest) {
   try {
-    const { userId } = auth();
+    const { userId } = await auth();
 
     if (!userId) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
@@ -27,7 +26,8 @@ async function handleRequest(request: NextRequest) {
       );
     }
 
-    const updatedUser = await clerkClient.users.updateUser(userId, {
+    const client = await clerkClient();
+    const updatedUser = await client.users.updateUser(userId, {
       firstName: firstName || undefined,
       lastName: lastName || undefined,
     });

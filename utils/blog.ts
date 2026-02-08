@@ -41,11 +41,16 @@ export async function getBlogCategoryTabs(): Promise<
 
     for (const categorySlug in schema.categories) {
       if (schema.categories.hasOwnProperty(categorySlug)) {
-        const categoryData = schema.categories[categorySlug][0];
-        tabs.push({
-          text: categoryData.niceName || formatTitle(categorySlug),
-          href: `/${categoryData.url}`,
-        });
+        const categoryArray = schema.categories[categorySlug];
+        if (categoryArray && categoryArray.length > 0) {
+          const categoryData = categoryArray[0];
+          if (categoryData) {
+            tabs.push({
+              text: categoryData.niceName || formatTitle(categorySlug),
+              href: `/${categoryData.url}`,
+            });
+          }
+        }
       }
     }
 

@@ -1,9 +1,13 @@
 import React from 'react';
 
-export async function generateMetadata({ params }: { params: { skillId: string } }) {
-  const skillId = params.skillId;
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ skillId: string }>;
+}) {
+  const { skillId } = await params;
   const title = `${skillId.charAt(0).toUpperCase() + skillId.slice(1)} Skill`;
-  
+
   return {
     title,
     openGraph: {

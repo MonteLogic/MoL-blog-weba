@@ -8,5 +8,24 @@
     "oiyimraa",
     "pnil",
     "SCNZF"
-  ]
+  ],
+  "biome.enabled": true,
+  "biome.lspBin": "/home/monte/Downloads/temp/M99/MoL-blog-weba/node_modules/.bin/biome",
+  "biome.rename": true,
+  "editor.codeActionsOnSave": {
+    "quickfix.biome": "explicit",
+    "source.organizeImports.biome": "explicit"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  }
 }

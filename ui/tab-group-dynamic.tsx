@@ -27,7 +27,7 @@ export const TabGroupDynamic = ({
     { text: 'Routes', slug: 'routes' },
   ];
 
-  const [activeTab, setActiveTab] = useState(items[0]);
+  const [activeTab, setActiveTab] = useState<Item>(items[0]!);
 
   const handleTabClick = (item: Item) => {
     setActiveTab(item);

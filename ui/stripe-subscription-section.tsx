@@ -39,7 +39,7 @@ interface SubscriptionStatus {
  */
 const getPlanDetails = (planId: PlanId = 'base'): ProductPlan => {
   const env =
-    process.env.NEXT_PUBLIC_APP_ENV === 'production'
+    process.env['NEXT_PUBLIC_APP_ENV'] === 'production'
       ? 'production'
       : 'development';
   return typedProducts[env][planId];
@@ -50,7 +50,7 @@ const getPlanDetails = (planId: PlanId = 'base'): ProductPlan => {
  * @component
  * @returns {JSX.Element} The rendered subscription section
  */
-export default function StripeSubscriptionSection(): JSX.Element {
+export default function StripeSubscriptionSection() {
   const { user, isLoaded } = useUser();
   const [loading, setLoading] = useState<boolean>(false);
   const [subscriptionStatus, setSubscriptionStatus] =

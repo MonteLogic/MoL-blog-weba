@@ -1,3 +1,5 @@
+'use client';
+
 import { Tab } from '#/ui/tab';
 
 export type Item = {

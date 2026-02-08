@@ -6,7 +6,7 @@ import matter from 'gray-matter';
 import { MDXRemote } from 'next-mdx-remote/rsc';
 import rehypePrettyCode from 'rehype-pretty-code';
 import remarkGfm from 'remark-gfm';
-import { auth, currentUser } from '@clerk/nextjs';
+import { auth, currentUser } from '@clerk/nextjs/server';
 import { redirect, notFound } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 
@@ -35,10 +35,15 @@ function formatTitle(namePart: string): string {
 }
 
 // Check if user can view post
-function canViewPost(userRole: string | undefined, postStatus: string | undefined): boolean {
+function canViewPost(
+  userRole: string | undefined,
+  postStatus: string | undefined,
+): boolean {
   const effectiveStatus = postStatus === 'public' ? 'public' : 'private';
   if (effectiveStatus === 'public') return true;
-  return userRole === 'admin' || userRole === 'Admin' || userRole === 'Contributor';
+  return (
+    userRole === 'admin' || userRole === 'Admin' || userRole === 'Contributor'
+  );
 }
 
 // MDX configuration
@@ -49,11 +54,14 @@ const mdxProcessingOptions = {
 };
 
 // Find the markdown file for a project post
-function findProjectPostFile(projectSlug: string, postSlug: string): string | null {
+function findProjectPostFile(
+  projectSlug: string,
+  postSlug: string,
+): string | null {
   const projectDir = path.join(
     process.cwd(),
     'MoL-blog-content/posts/categorized/projects',
-    projectSlug
+    projectSlug,
   );
 
   if (!fs.existsSync(projectDir)) {
@@ -64,7 +72,7 @@ function findProjectPostFile(projectSlug: string, postSlug: string): string | nu
   function findMarkdownFiles(dir: string): string[] {
     const files: string[] = [];
     const items = fs.readdirSync(dir, { withFileTypes: true });
-    
+
     for (const item of items) {
       const fullPath = path.join(dir, item.name);
       if (item.isDirectory()) {
@@ -77,12 +85,12 @@ function findProjectPostFile(projectSlug: string, postSlug: string): string | nu
   }
 
   const markdownFiles = findMarkdownFiles(projectDir);
-  
+
   // Generate slug for each file and find match
   for (const filePath of markdownFiles) {
     const relativePath = path.relative(projectDir, filePath);
     const fileSlug = generatePostSlug(relativePath);
-    
+
     if (fileSlug === postSlug) {
       return filePath;
     }
@@ -96,15 +104,15 @@ function generatePostSlug(relativePath: string): string {
   const normalized = relativePath.replace(/\\/g, '/');
   const ext = path.posix.extname(normalized);
   const withoutExt = normalized.slice(0, -ext.length);
-  
+
   // Replace directory separators with dashes
   let slug = withoutExt.replace(/\//g, '-');
-  
+
   // Handle index files
   if (slug.endsWith('-index') || slug === 'index') {
     slug = slug.replace(/-?index$/, '') || 'index';
   }
-  
+
   // Clean up the slug
   slug = slug
     .toLowerCase()
@@ -116,11 +124,13 @@ function generatePostSlug(relativePath: string): string {
 }
 
 // Get all posts for a project (for generateStaticParams)
-function getProjectPosts(projectSlug: string): Array<{ slug: string; filePath: string }> {
+function getProjectPosts(
+  projectSlug: string,
+): Array<{ slug: string; filePath: string }> {
   const projectDir = path.join(
     process.cwd(),
     'MoL-blog-content/posts/categorized/projects',
-    projectSlug
+    projectSlug,
   );
 
   if (!fs.existsSync(projectDir)) {
@@ -130,7 +140,7 @@ function getProjectPosts(projectSlug: string): Array<{ slug: string; filePath: s
   function findMarkdownFiles(dir: string): string[] {
     const files: string[] = [];
     const items = fs.readdirSync(dir, { withFileTypes: true });
-    
+
     for (const item of items) {
       const fullPath = path.join(dir, item.name);
       if (item.isDirectory()) {
@@ -143,12 +153,12 @@ function getProjectPosts(projectSlug: string): Array<{ slug: string; filePath: s
   }
 
   const markdownFiles = findMarkdownFiles(projectDir);
-  
-  return markdownFiles.map(filePath => {
+
+  return markdownFiles.map((filePath) => {
     const relativePath = path.relative(projectDir, filePath);
     return {
       slug: generatePostSlug(relativePath),
-      filePath
+      filePath,
     };
   });
 }
@@ -157,7 +167,7 @@ function getProjectPosts(projectSlug: string): Array<{ slug: string; filePath: s
 export async function generateStaticParams(): Promise<ProjectPostParams[]> {
   const projectsDir = path.join(
     process.cwd(),
-    'MoL-blog-content/posts/categorized/projects'
+    'MoL-blog-content/posts/categorized/projects',
   );
 
   if (!fs.existsSync(projectsDir)) {
@@ -169,19 +179,18 @@ export async function generateStaticParams(): Promise<ProjectPostParams[]> {
 
   for (const item of items) {
     if (!item.isDirectory()) continue;
-    
+
     const projectSlug = item.name;
     const posts = getProjectPosts(projectSlug);
-    
+
     for (const post of posts) {
       params.push({
         project: projectSlug,
-        post: post.slug
+        post: post.slug,
       });
     }
   }
 
-  console.log(`Generated ${params.length} static params for project posts.`);
   return params;
 }
 
@@ -189,16 +198,16 @@ export async function generateStaticParams(): Promise<ProjectPostParams[]> {
 export default async function ProjectPostPage({
   params,
 }: {
-  params: ProjectPostParams;
+  params: Promise<ProjectPostParams>;
 }) {
-  const { project: projectSlug, post: postSlug } = params;
-  const { userId } = auth();
+  const { project: projectSlug, post: postSlug } = await params;
+  const { userId } = await auth();
   let userRole: string | undefined;
 
   if (userId) {
     try {
       const user = await currentUser();
-      userRole = user?.privateMetadata?.role as string;
+      userRole = user?.privateMetadata?.['role'] as string;
     } catch (error) {
       console.error('Error fetching user role:', error);
     }
@@ -219,7 +228,9 @@ export default async function ProjectPostPage({
     // Default title if not present
     if (!frontmatter.title) {
       const basename = path.basename(filePath, path.extname(filePath));
-      frontmatter.title = formatTitle(basename === 'index' ? path.basename(path.dirname(filePath)) : basename);
+      frontmatter.title = formatTitle(
+        basename === 'index' ? path.basename(path.dirname(filePath)) : basename,
+      );
     }
 
     // Check access permissions
@@ -229,11 +240,20 @@ export default async function ProjectPostPage({
 
     const isMdx = filePath.endsWith('.mdx');
     const projectName = formatTitle(projectSlug);
+    const canManagePosts =
+      userRole === 'admin' ||
+      userRole === 'Admin' ||
+      userRole === 'Contributor';
 
     // GitHub URL for admin
     const relativePath = path.relative(process.cwd(), filePath);
-    const githubFileUrl = `https://github.com/MonteLogic/MoL-blog-content/blob/main/${relativePath.replace('MoL-blog-content/', '')}`;
-
+    const githubOwner = process.env['NEXT_PUBLIC_GITHUB_OWNER'] ?? 'MonteLogic';
+    const githubRepo =
+      process.env['NEXT_PUBLIC_GITHUB_REPO'] ?? 'MoL-blog-content';
+    const githubFileUrl = `https://github.com/${githubOwner}/${githubRepo}/blob/main/${relativePath.replace(
+      'MoL-blog-content/',
+      '',
+    )}`;
     return (
       <div className="mx-auto max-w-3xl">
         <div className="mb-8 flex flex-col gap-3">
@@ -244,16 +264,36 @@ export default async function ProjectPostPage({
             >
               ← Back to {projectName}
             </Link>
+            {canManagePosts && (
+              <div className="flex flex-wrap items-center gap-2">
+                <Link
+                  href={`/blog/projects/${projectSlug}/${postSlug}/edit`}
+                  className="inline-flex items-center justify-center gap-2 rounded-md border border-indigo-600 bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
+                >
+                  Edit Post
+                </Link>
+                <a
+                  href={githubFileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2 rounded-md border border-gray-600 bg-transparent px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+                >
+                  Edit on GitHub
+                </a>
+              </div>
+            )}
           </div>
         </div>
 
         <article className="prose-blog max-w-none">
-          <header className="mb-12 border-b border-cream-300 pb-8">
+          <header className="border-cream-300 mb-12 border-b pb-8">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-              <h1 className="text-3xl font-extrabold leading-tight tracking-tight text-charcoal md:text-4xl">
+              <h1 className="text-charcoal text-3xl font-extrabold leading-tight tracking-tight md:text-4xl">
                 {frontmatter.title}
               </h1>
-              {(userRole === 'admin' || userRole === 'Admin' || userRole === 'Contributor') &&
+              {(userRole === 'admin' ||
+                userRole === 'Admin' ||
+                userRole === 'Contributor') &&
                 frontmatter.status && (
                   <span
                     className={`mt-1 self-start whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium sm:mt-0 ${
@@ -267,11 +307,11 @@ export default async function ProjectPostPage({
                 )}
             </div>
             {frontmatter.description && (
-              <p className="mt-4 text-xl text-charcoal-light leading-relaxed">
+              <p className="text-charcoal-light mt-4 text-xl leading-relaxed">
                 {frontmatter.description}
               </p>
             )}
-            <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-charcoal-muted">
+            <div className="text-charcoal-muted mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
               {frontmatter.date && (
                 <span>
                   {new Date(frontmatter.date).toLocaleDateString('en-US', {
@@ -282,9 +322,9 @@ export default async function ProjectPostPage({
                 </span>
               )}
               {frontmatter.author && <span>By {frontmatter.author}</span>}
-              <Link 
+              <Link
                 href={`/blog/projects/${projectSlug}`}
-                className="text-accent-indigo hover:text-accent-purple hover:underline transition-colors"
+                className="text-accent-indigo hover:text-accent-purple transition-colors hover:underline"
               >
                 {projectName} Project
               </Link>
@@ -318,11 +358,17 @@ export default async function ProjectPostPage({
       </div>
     );
   } catch (error: any) {
-    console.error(`Error rendering project post "${projectSlug}/${postSlug}":`, error.message);
+    console.error(
+      `Error rendering project post "${projectSlug}/${postSlug}":`,
+      error.message,
+    );
     return (
       <div className="mx-auto max-w-3xl text-center">
         <div className="mb-6">
-          <Link href={`/blog/projects/${projectSlug}`} className="back-link text-accent-indigo">
+          <Link
+            href={`/blog/projects/${projectSlug}`}
+            className="back-link text-accent-indigo"
+          >
             ← Back to project
           </Link>
         </div>
@@ -332,7 +378,7 @@ export default async function ProjectPostPage({
             The post you were looking for could not be loaded.
           </p>
           {process.env.NODE_ENV === 'development' && (
-            <p className="mt-4 text-xs text-charcoal-muted">
+            <p className="text-charcoal-muted mt-4 text-xs">
               Details: {error.message}
             </p>
           )}

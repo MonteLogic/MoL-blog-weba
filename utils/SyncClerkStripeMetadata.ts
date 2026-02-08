@@ -1,4 +1,4 @@
-import { clerkClient } from '@clerk/nextjs';
+import { clerkClient } from '@clerk/nextjs/server';
 import { SubscriptionMetadata } from '#/types/StripeClerkTypes';
 
 export async function updateUserSubscriptionMetadata(
@@ -6,10 +6,11 @@ export async function updateUserSubscriptionMetadata(
   subscriptionData: Partial<SubscriptionMetadata>,
 ): Promise<void> {
   try {
-    const user = await clerkClient.users.getUser(userId);
+    const client = await clerkClient();
+    const user = await client.users.getUser(userId);
 
     // Get existing metadata to merge with new data
-    const existingMetadata = user.privateMetadata?.subscription || {};
+    const existingMetadata = user.privateMetadata?.['subscription'] || {};
 
     // Merge existing metadata with new subscription data
     const updatedMetadata = {
@@ -19,7 +20,7 @@ export async function updateUserSubscriptionMetadata(
     };
 
     // Update user's private metadata
-    await clerkClient.users.updateUser(userId, {
+    await client.users.updateUser(userId, {
       privateMetadata: {
         ...user.privateMetadata,
         subscription: updatedMetadata,

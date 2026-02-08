@@ -1,0 +1,126 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "npm",
+      "script": "build",
+      "group": "build",
+      "problemMatcher": [],
+      "label": "npm: build",
+      "detail": "pnpm run generate-markdown-paths && pnpm run validate-pain-points && pnpm run check-categories && next build"
+    },
+    {
+      "type": "npm",
+      "script": "type-check:watch",
+      "problemMatcher": "$tsc-watch",
+      "isBackground": true,
+      "label": "tsc: Type Check (Watch)",
+      "detail": "Traditional TypeScript compiler watch mode",
+      "presentation": {
+        "group": "build",
+        "reveal": "never"
+      }
+    },
+    {
+      "type": "npm",
+      "script": "tsgo:check",
+      "problemMatcher": {
+        "owner": "typescript",
+        "fileLocation": ["relative", "${workspaceFolder}"],
+        "pattern": {
+          "regexp": "^(.+):(\\d+):(\\d+)\\s+-\\s+(error|warning)\\s+(TS\\d+):\\s+(.+)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": 4,
+          "code": 5,
+          "message": 6
+        }
+      },
+      "label": "tsgo: Type Check (One-time)",
+      "detail": "Go-based TypeScript compiler - 10x faster",
+      "presentation": {
+        "group": "build",
+        "reveal": "silent"
+      }
+    },
+    {
+      "label": "tsc: Type Check (One-time)",
+      "type": "npm",
+      "script": "type-check",
+      "problemMatcher": "$tsc",
+      "detail": "tsc --noEmit --pretty",
+      "presentation": {
+        "group": "build",
+        "reveal": "silent"
+      }
+    },
+    {
+      "type": "npm",
+      "script": "tsgo:check:watch",
+      "problemMatcher": {
+        "owner": "tsgo",
+        "fileLocation": ["relative", "${workspaceFolder}"],
+        "pattern": {
+          "regexp": "^(.+):(\\d+):(\\d+)\\s+-\\s+(error|warning)\\s+(TS\\d+):\\s+(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": 4,
+          "code": 5,
+          "message": 6
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".+",
+          "endsPattern": "build finished in"
+        }
+      },
+      "isBackground": true,
+      "label": "tsgo: Type Check (Watch)",
+      "detail": "Go-based TypeScript compiler - 10x faster (watch mode)",
+      "presentation": {
+        "group": "build",
+        "reveal": "always"
+      }
+    },
+    {
+      "type": "npm",
+      "script": "lint:strict",
+      "problemMatcher": "$eslint-stylish",
+      "label": "ESLint: Strict Check",
+      "detail": "Strict ESLint with no-any rules and 125-line function limit",
+      "presentation": {
+        "group": "build",
+        "reveal": "silent"
+      }
+    },
+    {
+      "label": "ESLint: Strict Check (stylish)",
+      "type": "shell",
+      "command": "pnpm exec eslint . --cache --format stylish",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": "$eslint-stylish",
+      "presentation": {
+        "group": "build",
+        "reveal": "silent"
+      }
+    },
+    {
+      "label": "All Checks: tsgo + tsc + ESLint (stylish)",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "tsgo: Type Check (One-time)",
+        "tsc: Type Check (One-time)",
+        "ESLint: Strict Check (stylish)"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    }
+  ]
+}

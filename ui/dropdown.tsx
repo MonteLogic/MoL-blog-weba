@@ -145,9 +145,7 @@ export default function Dropdown() {
   );
 }
 
-function EditInactiveIcon(
-  props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>,
-) {
+function EditInactiveIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg
       {...props}
@@ -165,9 +163,7 @@ function EditInactiveIcon(
   );
 }
 
-function EditActiveIcon(
-  props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>,
-) {
+function EditActiveIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg
       {...props}
@@ -185,9 +181,7 @@ function EditActiveIcon(
   );
 }
 
-function DuplicateInactiveIcon(
-  props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>,
-) {
+function DuplicateInactiveIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg
       {...props}
@@ -211,9 +205,7 @@ function DuplicateInactiveIcon(
   );
 }
 
-function DuplicateActiveIcon(
-  props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>,
-) {
+function DuplicateActiveIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg
       {...props}
@@ -237,9 +229,7 @@ function DuplicateActiveIcon(
   );
 }
 
-function ArchiveInactiveIcon(
-  props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>,
-) {
+function ArchiveInactiveIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg
       {...props}
@@ -270,9 +260,7 @@ function ArchiveInactiveIcon(
   );
 }
 
-function ArchiveActiveIcon(
-  props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>,
-) {
+function ArchiveActiveIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg
       {...props}
@@ -303,9 +291,7 @@ function ArchiveActiveIcon(
   );
 }
 
-function MoveInactiveIcon(
-  props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>,
-) {
+function MoveInactiveIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg
       {...props}
@@ -320,9 +306,7 @@ function MoveInactiveIcon(
   );
 }
 
-function MoveActiveIcon(
-  props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>,
-) {
+function MoveActiveIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg
       {...props}
@@ -337,9 +321,7 @@ function MoveActiveIcon(
   );
 }
 
-function DeleteInactiveIcon(
-  props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>,
-) {
+function DeleteInactiveIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg
       {...props}
@@ -362,9 +344,7 @@ function DeleteInactiveIcon(
   );
 }
 
-function DeleteActiveIcon(
-  props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>,
-) {
+function DeleteActiveIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg
       {...props}
