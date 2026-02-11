@@ -1,4 +1,3 @@
-import React from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import YAML from 'yaml';
@@ -26,8 +25,8 @@ async function getSubPainPoint(
   subSlug: string,
 ): Promise<SubPainPoint | null> {
   try {
-    const owner = process.env['NEXT_PUBLIC_GITHUB_OWNER'];
-    const repo = process.env['NEXT_PUBLIC_GITHUB_REPO'];
+    const owner = process.env['NEXT_PUBLIC_GITHUB_OWNER'] ?? 'MonteLogic';
+    const repo = process.env['NEXT_PUBLIC_GITHUB_REPO'] ?? 'MoL-blog-content';
 
     if (!owner || !repo) {
       console.error(
@@ -68,8 +67,8 @@ async function getSubPainPoint(
         slug: subSlug,
         title: data.title || 'Untitled',
         description: data.description || '',
-        demandScore: parseInt(data.demandScore) || 0,
-        progressScore: parseInt(data.progressScore) || 0,
+        demandScore: Number.parseInt(data.demandScore) || 0,
+        progressScore: Number.parseInt(data.progressScore) || 0,
         tags: data.tags || [],
         updates: [],
       };
@@ -113,11 +112,11 @@ async function getSubPainPoint(
                 date: uData.date || new Date().toISOString(),
                 demand:
                   uData.demand !== undefined
-                    ? parseFloat(uData.demand)
+                    ? Number.parseFloat(uData.demand)
                     : undefined,
                 progress:
                   uData.progress !== undefined
-                    ? parseFloat(uData.progress)
+                    ? Number.parseFloat(uData.progress)
                     : undefined,
               };
             });
@@ -140,8 +139,8 @@ async function getSubPainPoint(
       slug: subSlug,
       title: data.title || 'Untitled',
       description: data.description || '',
-      demandScore: parseInt(data.demandScore) || 0,
-      progressScore: parseInt(data.progressScore) || 0,
+      demandScore: Number.parseInt(data.demandScore) || 0,
+      progressScore: Number.parseInt(data.progressScore) || 0,
       tags: data.tags || [],
       updates,
     };

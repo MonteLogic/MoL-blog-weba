@@ -1,5 +1,3 @@
-import fs from 'fs';
-import path from 'path';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -59,10 +57,7 @@ async function fetchDirectoryContents(
 ): Promise<GitHubFile[] | null> {
   try {
     const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
-    const res = await fetch(url, {
-      headers,
-      next: { revalidate: 60, tags: ['pain-points'] },
-    });
+    const res = await fetch(url, { headers, next: { revalidate: 60 } });
     if (!res.ok) {
       return null;
     }
@@ -86,7 +81,7 @@ async function fetchMainContent(
   try {
     const contentRes = await fetch(contentUrl, {
       headers,
-      next: { revalidate: 300, tags: ['pain-points'] },
+      next: { revalidate: 300 },
     });
     if (!contentRes.ok) {
       return null;
@@ -130,7 +125,7 @@ async function fetchUpdatesFromDirectory(
       }
       const uRes = await fetch(f.downloadUrl, {
         headers,
-        next: { revalidate: 300, tags: ['pain-points'] },
+        next: { revalidate: 300 },
       });
       if (!uRes.ok) {
         return null;
@@ -258,7 +253,7 @@ async function fetchCreationDate(
     const commitsUrl = `https://api.github.com/repos/${owner}/${repo}/commits?path=${filePath}&page=1&per_page=1&order=asc`;
     const commitsRes = await fetch(commitsUrl, {
       headers,
-      next: { revalidate: 3600, tags: ['pain-points'] },
+      next: { revalidate: 3600 },
     });
     if (commitsRes.ok) {
       const commits = await commitsRes.json();
@@ -311,93 +306,6 @@ function calculateCurrentScores(
 
 async function getPainPoint(slug: string): Promise<PainPoint | null> {
   try {
-    const projectRoot = process.cwd();
-    const contentDir = process.env['CONTENT_DIR'];
-    const localPainPointsDirCandidates = [
-      contentDir
-        ? path.join(contentDir, 'categorized', 'pain-points')
-        : undefined,
-      path.join(
-        projectRoot,
-        'MoL-blog-content',
-        'posts',
-        'categorized',
-        'pain-points',
-      ),
-      path.join(
-        projectRoot,
-        '..',
-        'MoL-blog-content',
-        'posts',
-        'categorized',
-        'pain-points',
-      ),
-    ].filter(Boolean) as string[];
-
-    const localPainPointsDir = localPainPointsDirCandidates.find((p) =>
-      fs.existsSync(p),
-    );
-
-    if (localPainPointsDir) {
-      const slugDir = path.join(localPainPointsDir, slug);
-      if (fs.existsSync(slugDir)) {
-        const files = fs.readdirSync(slugDir);
-        const mainFile = files.find(
-          (file) =>
-            file === `${slug}.yaml` ||
-            file === `${slug}.yml` ||
-            file === `${slug}.json` ||
-            file === 'index.yaml' ||
-            file === 'index.yml' ||
-            file === 'index.json',
-        );
-
-        if (mainFile) {
-          const filePath = path.join(slugDir, mainFile);
-          const content = fs.readFileSync(filePath, 'utf8');
-          const stats = fs.statSync(filePath);
-          const isYaml =
-            mainFile.endsWith('.yaml') || mainFile.endsWith('.yml');
-          const data = isYaml ? YAML.parse(content) : JSON.parse(content);
-          const createdAt =
-            (data?.createdAt || data?.date) ??
-            new Date(stats.mtimeMs).toISOString();
-
-          return {
-            slug,
-            title: String(data['title'] || 'Untitled Pain Point'),
-            inconvenience: String(data['how does it inconvience you'] || ''),
-            workaround: String(
-              data['what have you done as a workaround'] || '',
-            ),
-            limitation: String(
-              data['how does this pain point limit what you want to do'] || '',
-            ),
-            demandScore:
-              Number.parseInt(
-                String(
-                  data[
-                    'on a scale of 1 - 10 how badly would you want the solution to your paint point'
-                  ] ?? '0',
-                ),
-              ) || 0,
-            progressScore:
-              Number.parseInt(
-                String(
-                  data[
-                    "how much progress have the tech you or someone you're working has gone to fixing the pain point"
-                  ] ?? '0',
-                ),
-              ) || 0,
-            createdAt,
-            tags: (data['tags'] as string[]) || [],
-            updates: [],
-            subPainPoints: [],
-          };
-        }
-      }
-    }
-
     const owner = process.env['NEXT_PUBLIC_GITHUB_OWNER'] ?? 'MonteLogic';
     const repo = process.env['NEXT_PUBLIC_GITHUB_REPO'] ?? 'MoL-blog-content';
 
@@ -534,8 +442,8 @@ export default async function PainPointDetailPage({
   const isAdmin = userRole === 'admin' || userRole === 'Admin';
 
   // GitHub URL for editing this pain point
-  const owner = process.env['NEXT_PUBLIC_GITHUB_OWNER'] ?? 'MonteLogic';
-  const repo = process.env['NEXT_PUBLIC_GITHUB_REPO'] ?? 'MoL-blog-content';
+  const owner = process.env['NEXT_PUBLIC_GITHUB_OWNER'];
+  const repo = process.env['NEXT_PUBLIC_GITHUB_REPO'];
   const editOnGitHubUrl =
     owner && repo
       ? `https://github.com/${owner}/${repo}/blob/main/posts/categorized/pain-points/${slug}/${slug}.yaml`

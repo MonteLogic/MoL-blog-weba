@@ -44,3 +44,5 @@ test-results/playwright/.auth
 
 # Content symlink (managed independently)
 MoL-blog-content
+# clerk configuration (can include secrets)
+/.clerk/
