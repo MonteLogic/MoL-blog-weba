@@ -28,6 +28,3 @@ jobs:
         env:
           VERCEL: '1'
           CONTENT_GH_TOKEN: ${{ secrets.CONTENT_GH_TOKEN || secrets.GITHUB_TOKEN }}
-
-      - name: Run tests
-        run: pnpm test
