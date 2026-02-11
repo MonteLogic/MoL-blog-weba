@@ -1,8 +1,7 @@
-import React from 'react';
 import Link from 'next/link';
 import YAML from 'yaml';
-import PainPointsList from './pain-points-list';
 import AdminControls from './admin-controls';
+import PainPointsList from './pain-points-list';
 
 // Force static generation for this page (unless revalidation triggers)
 // We rely on fetch-level revalidate tags, but removing dynamic auth calls ensures it CAN be static.
@@ -22,8 +21,9 @@ interface PainPoint {
 
 async function getPainPoints(): Promise<PainPoint[]> {
   try {
-    const owner = process.env['NEXT_PUBLIC_GITHUB_OWNER'];
-    const repo = process.env['NEXT_PUBLIC_GITHUB_REPO'];
+    const owner = process.env['NEXT_PUBLIC_GITHUB_OWNER'] ?? 'MonteLogic';
+    const repo = process.env['NEXT_PUBLIC_GITHUB_REPO'] ?? 'MoL-blog-content';
+    const cacheTags = ['pain-points'];
 
     if (!owner || !repo) {
       console.error(
@@ -47,7 +47,7 @@ async function getPainPoints(): Promise<PainPoint[]> {
     // Fetch list of files from GitHub
     const res = await fetch(apiUrl, {
       headers,
-      next: { revalidate: 60 },
+      next: { revalidate: 60, tags: cacheTags },
     });
 
     if (!res.ok) {
@@ -75,8 +75,14 @@ async function getPainPoints(): Promise<PainPoint[]> {
 
           // Fetch directory listing and check for updates folder simultaneously
           const [dirRes, updatesRes] = await Promise.all([
-            fetch(dirUrl, { headers, next: { revalidate: 300 } }),
-            fetch(updatesUrl, { headers, next: { revalidate: 300 } }),
+            fetch(dirUrl, {
+              headers,
+              next: { revalidate: 300, tags: cacheTags },
+            }),
+            fetch(updatesUrl, {
+              headers,
+              next: { revalidate: 300, tags: cacheTags },
+            }),
           ]);
 
           if (!dirRes.ok) return null;
@@ -99,14 +105,14 @@ async function getPainPoints(): Promise<PainPoint[]> {
           // 1. Main Content
           const contentPromise = fetch(mainFile.download_url, {
             headers,
-            next: { revalidate: 300 },
+            next: { revalidate: 300, tags: cacheTags },
           }).then((r) => r.text());
 
           // 2. Commits (Creation Date)
           const commitsUrl = `https://api.github.com/repos/${owner}/${repo}/commits?path=${path}/${slug}/${mainFile.name}&page=1&per_page=1&order=asc`;
           const commitsPromise = fetch(commitsUrl, {
             headers,
-            next: { revalidate: 3600 },
+            next: { revalidate: 3600, tags: cacheTags },
           }).then((r) => (r.ok ? r.json() : []));
 
           // 3. Last Updated Date
@@ -125,7 +131,7 @@ async function getPainPoints(): Promise<PainPoint[]> {
                     try {
                       const uRes = await fetch(uFile.download_url, {
                         headers,
-                        next: { revalidate: 300 },
+                        next: { revalidate: 300, tags: cacheTags },
                       });
                       if (uRes.ok) {
                         const uText = await uRes.text();
@@ -186,13 +192,13 @@ async function getPainPoints(): Promise<PainPoint[]> {
             limitation:
               data['how does this pain point limit what you want to do'] || '',
             demandScore:
-              parseInt(
+              Number.parseInt(
                 data[
                   'on a scale of 1 - 10 how badly would you want the solution to your paint point'
                 ],
               ) || 0,
             progressScore:
-              parseInt(
+              Number.parseInt(
                 data[
                   "how much progress have the tech you or someone you're working has gone to fixing the pain point"
                 ],

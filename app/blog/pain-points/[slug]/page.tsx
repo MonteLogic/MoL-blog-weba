@@ -59,7 +59,10 @@ async function fetchDirectoryContents(
 ): Promise<GitHubFile[] | null> {
   try {
     const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
-    const res = await fetch(url, { headers, next: { revalidate: 60 } });
+    const res = await fetch(url, {
+      headers,
+      next: { revalidate: 60, tags: ['pain-points'] },
+    });
     if (!res.ok) {
       return null;
     }
@@ -83,7 +86,7 @@ async function fetchMainContent(
   try {
     const contentRes = await fetch(contentUrl, {
       headers,
-      next: { revalidate: 300 },
+      next: { revalidate: 300, tags: ['pain-points'] },
     });
     if (!contentRes.ok) {
       return null;
@@ -127,7 +130,7 @@ async function fetchUpdatesFromDirectory(
       }
       const uRes = await fetch(f.downloadUrl, {
         headers,
-        next: { revalidate: 300 },
+        next: { revalidate: 300, tags: ['pain-points'] },
       });
       if (!uRes.ok) {
         return null;
@@ -255,7 +258,7 @@ async function fetchCreationDate(
     const commitsUrl = `https://api.github.com/repos/${owner}/${repo}/commits?path=${filePath}&page=1&per_page=1&order=asc`;
     const commitsRes = await fetch(commitsUrl, {
       headers,
-      next: { revalidate: 3600 },
+      next: { revalidate: 3600, tags: ['pain-points'] },
     });
     if (commitsRes.ok) {
       const commits = await commitsRes.json();
