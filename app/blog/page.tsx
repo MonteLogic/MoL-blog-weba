@@ -1,9 +1,8 @@
-import React from 'react';
-import Link from 'next/link';
 import fs from 'fs';
 import path from 'path'; // Ensure path is imported
-import matter from 'gray-matter';
 import { auth, currentUser } from '@clerk/nextjs/server';
+import matter from 'gray-matter';
+import Link from 'next/link';
 import packageJson from '#/package.json';
 
 interface BlogPost {
@@ -31,7 +30,7 @@ interface BlogPost {
  */
 function generateBaseSlug(filePathFromJson: string): string {
   const postsBaseDirString = 'MoL-blog-content/posts/';
-  let normalizedFilePath = filePathFromJson.replace(/\\/g, '/').trim();
+  const normalizedFilePath = filePathFromJson.replace(/\\/g, '/').trim();
 
   let relativePathToPostsDir: string;
   if (normalizedFilePath.startsWith(postsBaseDirString)) {
@@ -113,8 +112,8 @@ async function getBlogPosts(): Promise<BlogPost[]> {
 
       // Determine titleSource from original path structure
       const postsBaseDirString = 'MoL-blog-content/posts/';
-      let originalNormalizedPath = currentFilePath.replace(/\\/g, '/');
-      let originalRelativePath = originalNormalizedPath.startsWith(
+      const originalNormalizedPath = currentFilePath.replace(/\\/g, '/');
+      const originalRelativePath = originalNormalizedPath.startsWith(
         postsBaseDirString,
       )
         ? originalNormalizedPath.substring(postsBaseDirString.length)
@@ -286,8 +285,9 @@ function canViewPost(
 export default async function BlogPage({
   searchParams,
 }: {
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
+  const resolvedSearchParams = await searchParams;
   const { userId } = await auth();
   let userRole: string | undefined;
 
@@ -308,14 +308,14 @@ export default async function BlogPage({
 
   // Pagination Logic
   const page =
-    typeof searchParams['page'] === 'string'
-      ? parseInt(searchParams['page'], 10)
+    typeof resolvedSearchParams['page'] === 'string'
+      ? Number.parseInt(resolvedSearchParams['page'], 10)
       : 1;
-  const POSTS_PER_PAGE = 5; // Adjust as needed
-  const totalPages = Math.ceil(visiblePosts.length / POSTS_PER_PAGE);
+  const postsPerPage = 5; // Adjust as needed
+  const totalPages = Math.ceil(visiblePosts.length / postsPerPage);
 
-  const startIndex = (page - 1) * POSTS_PER_PAGE;
-  const endIndex = startIndex + POSTS_PER_PAGE;
+  const startIndex = (page - 1) * postsPerPage;
+  const endIndex = startIndex + postsPerPage;
   const currentPosts = visiblePosts.slice(startIndex, endIndex);
 
   return (
