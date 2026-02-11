@@ -306,8 +306,8 @@ function calculateCurrentScores(
 
 async function getPainPoint(slug: string): Promise<PainPoint | null> {
   try {
-    const owner = process.env['NEXT_PUBLIC_GITHUB_OWNER'];
-    const repo = process.env['NEXT_PUBLIC_GITHUB_REPO'];
+    const owner = process.env['NEXT_PUBLIC_GITHUB_OWNER'] ?? 'MonteLogic';
+    const repo = process.env['NEXT_PUBLIC_GITHUB_REPO'] ?? 'MoL-blog-content';
 
     if (!owner || !repo) {
       console.error(

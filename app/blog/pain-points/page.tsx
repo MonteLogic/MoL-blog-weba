@@ -1,8 +1,9 @@
-import React from 'react';
+import fs from 'fs';
+import path from 'path';
 import Link from 'next/link';
 import YAML from 'yaml';
-import PainPointsList from './pain-points-list';
 import AdminControls from './admin-controls';
+import PainPointsList from './pain-points-list';
 
 // Force static generation for this page (unless revalidation triggers)
 // We rely on fetch-level revalidate tags, but removing dynamic auth calls ensures it CAN be static.
@@ -20,10 +21,145 @@ interface PainPoint {
   tags: string[];
 }
 
+const resolveLocalPainPointsDir = (): string | null => {
+  const projectRoot = process.cwd();
+  const contentDir = process.env['CONTENT_DIR'];
+  const possiblePaths = [
+    contentDir
+      ? path.join(contentDir, 'categorized', 'pain-points')
+      : undefined,
+    path.join(
+      projectRoot,
+      'MoL-blog-content',
+      'posts',
+      'categorized',
+      'pain-points',
+    ),
+    path.join(
+      projectRoot,
+      '..',
+      'MoL-blog-content',
+      'posts',
+      'categorized',
+      'pain-points',
+    ),
+  ].filter(Boolean) as string[];
+
+  for (const p of possiblePaths) {
+    if (fs.existsSync(p)) {
+      return p;
+    }
+  }
+
+  return null;
+};
+
+const getLocalPainPoints = async (
+  painPointsDir: string,
+): Promise<PainPoint[]> => {
+  const entries = fs.readdirSync(painPointsDir, { withFileTypes: true });
+  const dirNames = entries
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name);
+
+  const painPointsResults = await Promise.all(
+    dirNames.map(async (slug) => {
+      try {
+        const slugDir = path.join(painPointsDir, slug);
+        const files = fs.readdirSync(slugDir);
+        const mainFile = files.find(
+          (file) =>
+            file === `${slug}.yaml` ||
+            file === `${slug}.yml` ||
+            file === `${slug}.json` ||
+            file === 'index.yaml' ||
+            file === 'index.yml' ||
+            file === 'index.json',
+        );
+
+        if (!mainFile) {
+          return null;
+        }
+
+        const filePath = path.join(slugDir, mainFile);
+        const content = fs.readFileSync(filePath, 'utf8');
+        const stats = fs.statSync(filePath);
+
+        let data: any;
+        try {
+          const isYaml =
+            mainFile.endsWith('.yaml') || mainFile.endsWith('.yml');
+          data = isYaml ? YAML.parse(content) : JSON.parse(content);
+        } catch (e) {
+          console.warn(
+            `[PainPoints] Skipped malformed local file "${mainFile}" in "${slug}". Parse error:`,
+            e instanceof Error ? e.message : String(e),
+          );
+          return null;
+        }
+
+        const createdAt =
+          (data?.createdAt || data?.date) ??
+          new Date(stats.mtimeMs).toISOString();
+
+        return {
+          slug,
+          title: data.title || 'Untitled Pain Point',
+          inconvenience: data['how does it inconvience you'] || '',
+          workaround: data['what have you done as a workaround'] || '',
+          limitation:
+            data['how does this pain point limit what you want to do'] || '',
+          demandScore:
+            Number.parseInt(
+              String(
+                data[
+                  'on a scale of 1 - 10 how badly would you want the solution to your paint point'
+                ],
+              ),
+            ) || 0,
+          progressScore:
+            Number.parseInt(
+              String(
+                data[
+                  "how much progress have the tech you or someone you're working has gone to fixing the pain point"
+                ],
+              ),
+            ) || 0,
+          createdAt,
+          lastUpdated: data?.lastUpdated,
+          tags: data?.tags || [],
+        } as PainPoint;
+      } catch (error) {
+        console.error(`Error processing local pain point ${slug}:`, error);
+        return null;
+      }
+    }),
+  );
+
+  const validPainPoints = painPointsResults.filter(
+    (p): p is PainPoint => p !== null,
+  );
+
+  return validPainPoints.sort((a, b) => {
+    if (a.createdAt && b.createdAt) {
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    }
+    return 0;
+  });
+};
+
 async function getPainPoints(): Promise<PainPoint[]> {
   try {
-    const owner = process.env['NEXT_PUBLIC_GITHUB_OWNER'];
-    const repo = process.env['NEXT_PUBLIC_GITHUB_REPO'];
+    const localDir = resolveLocalPainPointsDir();
+    if (localDir) {
+      const localPainPoints = await getLocalPainPoints(localDir);
+      if (localPainPoints.length > 0) {
+        return localPainPoints;
+      }
+    }
+
+    const owner = process.env['NEXT_PUBLIC_GITHUB_OWNER'] ?? 'MonteLogic';
+    const repo = process.env['NEXT_PUBLIC_GITHUB_REPO'] ?? 'MoL-blog-content';
 
     if (!owner || !repo) {
       console.error(
@@ -32,8 +168,8 @@ async function getPainPoints(): Promise<PainPoint[]> {
       return [];
     }
 
-    const path = 'posts/categorized/pain-points';
-    const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+    const contentPath = 'posts/categorized/pain-points';
+    const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${contentPath}`;
 
     // Prepare headers for higher rate limits
     const headers: HeadersInit = {
@@ -70,8 +206,8 @@ async function getPainPoints(): Promise<PainPoint[]> {
       validFiles.map(async (fileItem: any) => {
         try {
           const slug = fileItem.name;
-          const dirUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}/${slug}`;
-          const updatesUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}/${slug}/updates`;
+          const dirUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${contentPath}/${slug}`;
+          const updatesUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${contentPath}/${slug}/updates`;
 
           // Fetch directory listing and check for updates folder simultaneously
           const [dirRes, updatesRes] = await Promise.all([
@@ -103,7 +239,7 @@ async function getPainPoints(): Promise<PainPoint[]> {
           }).then((r) => r.text());
 
           // 2. Commits (Creation Date)
-          const commitsUrl = `https://api.github.com/repos/${owner}/${repo}/commits?path=${path}/${slug}/${mainFile.name}&page=1&per_page=1&order=asc`;
+          const commitsUrl = `https://api.github.com/repos/${owner}/${repo}/commits?path=${contentPath}/${slug}/${mainFile.name}&page=1&per_page=1&order=asc`;
           const commitsPromise = fetch(commitsUrl, {
             headers,
             next: { revalidate: 3600 },
@@ -186,13 +322,13 @@ async function getPainPoints(): Promise<PainPoint[]> {
             limitation:
               data['how does this pain point limit what you want to do'] || '',
             demandScore:
-              parseInt(
+              Number.parseInt(
                 data[
                   'on a scale of 1 - 10 how badly would you want the solution to your paint point'
                 ],
               ) || 0,
             progressScore:
-              parseInt(
+              Number.parseInt(
                 data[
                   "how much progress have the tech you or someone you're working has gone to fixing the pain point"
                 ],
