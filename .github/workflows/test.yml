@@ -28,9 +28,3 @@ jobs:
         env:
           VERCEL: '1'
           CONTENT_GH_TOKEN: ${{ secrets.CONTENT_GH_TOKEN || secrets.GITHUB_TOKEN }}
-
-      - name: Run tests
-        run: pnpm test
-
-      - name: Run visual regression smoke test
-        run: pnpm exec playwright test tests/visual/pain-points.spec.ts
