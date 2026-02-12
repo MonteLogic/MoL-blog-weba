@@ -1,5 +1,5 @@
 import fs from 'fs';
-import path from 'path';
+import path from 'node:path';
 import matter from 'gray-matter';
 import { revalidatePath } from 'next/cache';
 import { NextResponse } from 'next/server';
@@ -111,7 +111,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Title is required' }, { status: 400 });
     }
 
-    let filePath = relativePath
+    const filePath = relativePath
       ? path.join(process.cwd(), relativePath)
       : findProjectPostFile(project, post);
 
@@ -140,7 +140,13 @@ export async function PUT(
       updatedFrontmatter,
     );
 
-    fs.writeFileSync(filePath, updatedMarkdown, 'utf-8');
+    let localWriteError: unknown = null;
+
+    try {
+      fs.writeFileSync(filePath, updatedMarkdown, 'utf-8');
+    } catch (error) {
+      localWriteError = error;
+    }
 
     const owner = process.env['NEXT_PUBLIC_GITHUB_OWNER'];
     const repo = process.env['NEXT_PUBLIC_GITHUB_REPO'];
@@ -189,6 +195,27 @@ export async function PUT(
         return NextResponse.json(
           { error: 'Failed to update post on GitHub', details: errorData },
           { status: updateRes.status },
+        );
+      }
+    }
+
+    if (localWriteError) {
+      const error = localWriteError as NodeJS.ErrnoException;
+      if (error.code === 'EROFS') {
+        if (!(token && owner && repo)) {
+          return NextResponse.json(
+            {
+              error:
+                'Filesystem is read-only in production. Configure GitHub content sync to update posts.',
+            },
+            { status: 500 },
+          );
+        }
+      } else {
+        console.error('Error writing updated post:', error);
+        return NextResponse.json(
+          { error: 'Failed to write updated post' },
+          { status: 500 },
         );
       }
     }
