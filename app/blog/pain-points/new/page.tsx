@@ -1,9 +1,9 @@
-
 'use client';
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import type React from 'react';
+import { useState } from 'react';
 
 export default function NewPainPointPage() {
   const router = useRouter();
@@ -19,11 +19,13 @@ export default function NewPainPointPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
@@ -34,7 +36,10 @@ export default function NewPainPointPage() {
 
     try {
       // Process tags
-      const tagsArray = formData.tags.split(',').map(t => t.trim()).filter(Boolean);
+      const tagsArray = formData.tags
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean);
 
       const payload = {
         ...formData,
@@ -68,23 +73,34 @@ export default function NewPainPointPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto py-10 px-4">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>Add Pain Point</h1>
-        <Link href="/blog/pain-points" className="text-accent-indigo hover:underline">
+    <div className="mx-auto max-w-2xl px-4 py-10">
+      <div className="mb-8 flex items-center justify-between">
+        <h1
+          className="text-3xl font-bold"
+          style={{ color: 'var(--text-primary)' }}
+        >
+          Add Pain Point
+        </h1>
+        <Link
+          href="/blog/pain-points"
+          className="text-accent-indigo hover:underline"
+        >
           Cancel
         </Link>
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400">
+        <div className="mb-6 rounded border border-red-200 bg-red-50 px-4 py-3 text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
           {error}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-primary)' }}>
+          <label
+            className="mb-1 block text-sm font-medium"
+            style={{ color: 'var(--text-primary)' }}
+          >
             Title <span className="text-red-500">*</span>
           </label>
           <input
@@ -94,12 +110,15 @@ export default function NewPainPointPage() {
             value={formData.title}
             onChange={handleChange}
             placeholder="I cannot..."
-            className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:border-accent-indigo focus:outline-none focus:ring-1 focus:ring-accent-indigo dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+            className="focus:border-accent-indigo focus:ring-accent-indigo w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-1 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-primary)' }}>
+          <label
+            className="mb-1 block text-sm font-medium"
+            style={{ color: 'var(--text-primary)' }}
+          >
             How does it inconvenience you?
           </label>
           <textarea
@@ -108,41 +127,54 @@ export default function NewPainPointPage() {
             value={formData.inconvenience}
             onChange={handleChange}
             placeholder="I have to..."
-            className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:border-accent-indigo focus:outline-none focus:ring-1 focus:ring-accent-indigo dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+            className="focus:border-accent-indigo focus:ring-accent-indigo w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-1 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-primary)' }}>
+          <label
+            htmlFor="workaround"
+            className="mb-1 block text-sm font-medium"
+            style={{ color: 'var(--text-primary)' }}
+          >
             Workaround
           </label>
           <textarea
+            id="workaround"
             name="workaround"
             rows={3}
             value={formData.workaround}
             onChange={handleChange}
             placeholder="I have done..."
-            className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:border-accent-indigo focus:outline-none focus:ring-1 focus:ring-accent-indigo dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+            className="focus:border-accent-indigo focus:ring-accent-indigo w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-1 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
           />
         </div>
 
         <div>
-           <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-primary)' }}>
+          <label
+            htmlFor="limitation"
+            className="mb-1 block text-sm font-medium"
+            style={{ color: 'var(--text-primary)' }}
+          >
             Limitation
           </label>
           <textarea
+            id="limitation"
             name="limitation"
             rows={3}
             value={formData.limitation}
             onChange={handleChange}
-            placeholder="I am limited by..."
-            className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:border-accent-indigo focus:outline-none focus:ring-1 focus:ring-accent-indigo dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+            placeholder="I haven't fixed this because..."
+            className="focus:border-accent-indigo focus:ring-accent-indigo w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-1 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <div>
-            <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-primary)' }}>
+            <label
+              className="mb-1 block text-sm font-medium"
+              style={{ color: 'var(--text-primary)' }}
+            >
               How much do YOU want to a solution this Pain Point? (1-10)
             </label>
             <input
@@ -152,11 +184,14 @@ export default function NewPainPointPage() {
               max="10"
               value={formData.demandScore}
               onChange={handleChange}
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:border-accent-indigo focus:outline-none focus:ring-1 focus:ring-accent-indigo dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+              className="focus:border-accent-indigo focus:ring-accent-indigo w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-1 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-primary)' }}>
+            <label
+              className="mb-1 block text-sm font-medium"
+              style={{ color: 'var(--text-primary)' }}
+            >
               Progress Score (0-10)
             </label>
             <input
@@ -166,13 +201,16 @@ export default function NewPainPointPage() {
               max="10"
               value={formData.progressScore}
               onChange={handleChange}
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:border-accent-indigo focus:outline-none focus:ring-1 focus:ring-accent-indigo dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+              className="focus:border-accent-indigo focus:ring-accent-indigo w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-1 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-primary)' }}>
+          <label
+            className="mb-1 block text-sm font-medium"
+            style={{ color: 'var(--text-primary)' }}
+          >
             Tags (comma separated)
           </label>
           <input
@@ -181,7 +219,7 @@ export default function NewPainPointPage() {
             value={formData.tags}
             onChange={handleChange}
             placeholder="ux, performance, bug"
-            className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:border-accent-indigo focus:outline-none focus:ring-1 focus:ring-accent-indigo dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+            className="focus:border-accent-indigo focus:ring-accent-indigo w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-1 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
           />
         </div>
 
@@ -189,7 +227,7 @@ export default function NewPainPointPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="rounded-md bg-accent-indigo px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="bg-accent-indigo rounded-md px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isSubmitting ? 'Saving...' : 'Save Pain Point'}
           </button>
