@@ -21,34 +21,9 @@ export const getSecondMenu = (
         description: 'My Profile page.',
       },
       {
-        name: 'Team Schedule',
-        slug: 'main/schedule',
-        description: 'Schedule page.',
-      },
-      {
         name: 'Skill Tree',
         slug: 'skill-tree',
         description: 'View and track skill progression.',
-      },
-      {
-        name: 'Time Card',
-        slug: 'main/timecard',
-        description: 'Generate time card.',
-      },
-      // {
-      //   name: 'Daily Summaries',
-      //   slug: 'main/summary',
-      //   description: 'Daily summaries for the routes.',
-      // },
-      {
-        name: 'Settings',
-        slug: 'settings',
-        description: 'Settings',
-      },
-      {
-        name: 'Routes',
-        slug: 'main/routes',
-        description: 'Truck Routes',
       },
       {
         name: 'View Pain Points',
