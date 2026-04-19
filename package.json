@@ -29,6 +29,7 @@
     "generate-tags": "ts-node -O '{\"module\": \"CommonJS\"}' scripts/generate-tags.ts",
     "check-categories": "node scripts/check-categories.js",
     "build": "pnpm run generate-markdown-paths && pnpm run generate-tags && pnpm run validate-pain-points && pnpm run check-vercel-pain-points && pnpm run check-categories && pnpm run tsgo:check && next build",
+    "pre-build": "pnpm run generate-markdown-paths && pnpm run generate-tags && pnpm run validate-pain-points && pnpm run check-vercel-pain-points && pnpm run check-categories && pnpm run tsgo:check",
     "type-check": "tsc --noEmit --pretty",
     "type-check:watch": "tsc --noEmit --watch --pretty",
     "tsgo:check": "tsgo --noEmit",

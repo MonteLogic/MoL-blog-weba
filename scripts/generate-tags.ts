@@ -1,7 +1,6 @@
 import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
-import YAML from 'yaml';
 
 const projectRoot = process.cwd();
 
@@ -17,9 +16,10 @@ if (fs.existsSync(markdownPathsFile)) {
   markdownPaths = JSON.parse(content);
 }
 
-const allTags = new Set<string>();
+// tag -> whether at least one PUBLIC post uses it
+const tagPublicPostCount = new Map<string, boolean>();
 
-// Process Markdown files
+// Process Markdown files — only count tags from public (or status-unset) posts
 for (const filePath of markdownPaths) {
   const fullPath = path.join(projectRoot, filePath);
   if (fs.existsSync(fullPath)) {
@@ -30,9 +30,22 @@ for (const filePath of markdownPaths) {
       const fileContent = fs.readFileSync(fullPath, 'utf8');
       const { data } = matter(fileContent);
 
+      // Skip posts that are explicitly marked private
+      const status = data['status'];
+      const isPublic = status !== 'private';
+
       if (data['tags'] && Array.isArray(data['tags'])) {
         for (const tag of data['tags']) {
-          if (tag) allTags.add(String(tag).trim());
+          const normalizedTag = String(tag).trim();
+          if (!normalizedTag) continue;
+
+          // Mark the tag as having a public post if this post is public
+          if (isPublic) {
+            tagPublicPostCount.set(normalizedTag, true);
+          } else if (!tagPublicPostCount.has(normalizedTag)) {
+            // Tag exists but only in private posts so far — record but don't mark public
+            tagPublicPostCount.set(normalizedTag, false);
+          }
         }
       }
     } catch (e) {
@@ -41,63 +54,17 @@ for (const filePath of markdownPaths) {
   }
 }
 
-// 2. Process Pain Points (YAML)
-const possiblePainPointsPaths = [
-  process.env['CONTENT_DIR'],
-  path.join(
-    projectRoot,
-    'MoL-blog-content',
-    'posts',
-    'categorized',
-    'pain-points',
-  ),
-  path.join(
-    projectRoot,
-    '..',
-    'MoL-blog-content',
-    'posts',
-    'categorized',
-    'pain-points',
-  ),
-].filter(Boolean) as string[];
+// YAML pain points: they are served at /blog/pain-points, not /blog.
+// They are skipped here intentionally — their tags don't apply to the markdown blog filter.
 
-let painPointsDir: string | null = null;
-for (const p of possiblePainPointsPaths) {
-  if (fs.existsSync(p)) {
-    painPointsDir = p;
-    break;
-  }
-}
-
-if (painPointsDir) {
-  function scanDirForYaml(dir: string) {
-    const files = fs.readdirSync(dir);
-    for (const file of files) {
-      const fullPath = path.join(dir, file);
-      const stat = fs.statSync(fullPath);
-      if (stat.isDirectory()) {
-        scanDirForYaml(fullPath);
-      } else if (file.endsWith('.yaml') || file.endsWith('.yml')) {
-        try {
-          const content = fs.readFileSync(fullPath, 'utf8');
-          const data = YAML.parse(content);
-          if (data && data['tags'] && Array.isArray(data['tags'])) {
-            for (const tag of data['tags']) {
-              if (tag) allTags.add(String(tag).trim());
-            }
-          }
-        } catch (e) {
-          console.error(`Error parsing YAML for ${fullPath}:`, e);
-        }
-      }
-    }
-  }
-  scanDirForYaml(painPointsDir);
-}
-
-// 3. Write tags.json
+// 3. Write tags.json — only emit tags backed by at least one public post
 const outputTagsFile = path.join(projectRoot, 'generated', 'tags.json');
-const sortedTags = Array.from(allTags).sort();
+const sortedTags = Array.from(tagPublicPostCount.entries())
+  .filter(([, hasPublicPost]) => hasPublicPost)
+  .map(([tag]) => tag)
+  .sort();
 
 fs.writeFileSync(outputTagsFile, JSON.stringify(sortedTags, null, 2), 'utf8');
-console.log(`Generated tags.json with ${sortedTags.length} unique tags.`);
+console.log(
+  `Generated tags.json with ${sortedTags.length} unique tags (public posts only).`,
+);
