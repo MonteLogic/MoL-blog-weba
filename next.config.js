@@ -9,17 +9,20 @@ const nextConfig = {
   // auth() makes blog pages dynamic (rendered at request time), but file tracing
   // can't detect the dynamically-computed fs.readFileSync() paths to markdown files.
   outputFileTracingIncludes: {
-    '/blog/[slug]': ['./MoL-blog-content/**/*', './generated/**/*'],
-    '/blog': ['./MoL-blog-content/**/*', './generated/**/*'],
-    '/blog/projects/[project]': ['./MoL-blog-content/**/*'],
-    '/blog/projects/[project]/[post]': ['./MoL-blog-content/**/*'],
-    '/blog/pain-points': ['./MoL-blog-content/**/*'],
-    '/blog/pain-points/[slug]': ['./MoL-blog-content/**/*'],
-    '/blog/categories/[slug]': ['./MoL-blog-content/**/*', './generated/**/*'],
-    '/blog/posts': ['./MoL-blog-content/**/*'],
-    '/blog/posts/[slug]': ['./MoL-blog-content/**/*'],
-    '/api/projects/[project]/posts/[post]': ['./MoL-blog-content/**/*'],
-    '/[slug]': ['./MoL-blog-content/**/*'],
+    '/blog/[slug]': ['./MoL-blog-content/posts/**/*', './generated/**/*'],
+    '/blog': ['./MoL-blog-content/posts/**/*', './generated/**/*'],
+    '/blog/projects/[project]': ['./MoL-blog-content/posts/**/*'],
+    '/blog/projects/[project]/[post]': ['./MoL-blog-content/posts/**/*'],
+    '/blog/pain-points': ['./MoL-blog-content/posts/**/*'],
+    '/blog/pain-points/[slug]': ['./MoL-blog-content/posts/**/*'],
+    '/blog/categories/[slug]': [
+      './MoL-blog-content/posts/**/*',
+      './generated/**/*',
+    ],
+    '/blog/posts': ['./MoL-blog-content/posts/**/*'],
+    '/blog/posts/[slug]': ['./MoL-blog-content/posts/**/*'],
+    '/api/projects/[project]/posts/[post]': ['./MoL-blog-content/posts/**/*'],
+    '/[slug]': ['./MoL-blog-content/posts/**/*'],
   },
   webpack: (config, { dev, isServer }) => {
     (config.resolve = {
