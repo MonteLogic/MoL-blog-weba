@@ -1,6 +1,12 @@
 const path = require('path');
 const webpack = require('webpack');
 
+const contentFiles = ['./MoL-blog-content/posts/**/*'];
+const contentAndGenerated = [
+  './MoL-blog-content/posts/**/*',
+  './generated/**/*',
+];
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -8,21 +14,20 @@ const nextConfig = {
   // Include content files in the serverless function bundle.
   // auth() makes blog pages dynamic (rendered at request time), but file tracing
   // can't detect the dynamically-computed fs.readFileSync() paths to markdown files.
+  // Note: uses posts/** only (not MoL-blog-content/**) to avoid including
+  // MoL-blog-content/node_modules which contains pnpm symlinks.
   outputFileTracingIncludes: {
-    '/blog/[slug]': ['./MoL-blog-content/posts/**/*', './generated/**/*'],
-    '/blog': ['./MoL-blog-content/posts/**/*', './generated/**/*'],
-    '/blog/projects/[project]': ['./MoL-blog-content/posts/**/*'],
-    '/blog/projects/[project]/[post]': ['./MoL-blog-content/posts/**/*'],
-    '/blog/pain-points': ['./MoL-blog-content/posts/**/*'],
-    '/blog/pain-points/[slug]': ['./MoL-blog-content/posts/**/*'],
-    '/blog/categories/[slug]': [
-      './MoL-blog-content/posts/**/*',
-      './generated/**/*',
-    ],
-    '/blog/posts': ['./MoL-blog-content/posts/**/*'],
-    '/blog/posts/[slug]': ['./MoL-blog-content/posts/**/*'],
-    '/api/projects/[project]/posts/[post]': ['./MoL-blog-content/posts/**/*'],
-    '/[slug]': ['./MoL-blog-content/posts/**/*'],
+    '/blog': contentAndGenerated,
+    '/blog/[slug]': contentAndGenerated,
+    '/blog/posts': contentFiles,
+    '/blog/posts/[slug]': contentFiles,
+    '/blog/projects/[project]': contentFiles,
+    '/blog/projects/[project]/[post]': contentFiles,
+    '/blog/pain-points': contentFiles,
+    '/blog/pain-points/[slug]': contentFiles,
+    '/blog/categories/[slug]': contentAndGenerated,
+    '/api/projects/[project]/posts/[post]': contentFiles,
+    '/[slug]': contentFiles,
   },
   webpack: (config, { dev, isServer }) => {
     (config.resolve = {
