@@ -1,10 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const jsonPath = path.join(
-  process.cwd(),
-  'blog-schema/file-paths/markdown-paths.json',
-);
+const jsonPath = path.join(process.cwd(), 'generated/markdown-paths.json');
 
 try {
   const content = fs.readFileSync(jsonPath, 'utf8');

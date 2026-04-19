@@ -39,10 +39,7 @@ if (!markdownSourceDir) {
   process.exit(1);
 }
 
-const outputJsonFile = path.join(
-  projectRoot,
-  'blog-schema/file-paths/markdown-paths.json',
-);
+const outputJsonFile = path.join(projectRoot, 'generated/markdown-paths.json');
 
 // Use projectRoot as the base directory for paths in the output JSON
 const baseDirectoryForPaths = projectRoot;

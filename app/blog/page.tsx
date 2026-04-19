@@ -92,7 +92,7 @@ async function getBlogPosts(): Promise<BlogPost[]> {
   try {
     const jsonFilePath = path.join(
       process.cwd(),
-      'blog-schema/file-paths/markdown-paths.json',
+      'generated/markdown-paths.json',
     );
     if (!fs.existsSync(jsonFilePath)) {
       console.error(
@@ -305,14 +305,16 @@ export default async function BlogPage(props: {
     canViewPost(userRole, post.frontmatter.status),
   );
 
-  // Extract all unique tags from visible posts
-  const allTagsSet = new Set<string>();
-  visiblePosts.forEach((post) => {
-    if (post.frontmatter.tags) {
-      post.frontmatter.tags.forEach((tag) => allTagsSet.add(tag));
+  // Extract all unique tags from compiled file
+  let allTags: string[] = [];
+  try {
+    const tagsFilePath = path.join(process.cwd(), 'generated/tags.json');
+    if (fs.existsSync(tagsFilePath)) {
+      allTags = JSON.parse(fs.readFileSync(tagsFilePath, 'utf8'));
     }
-  });
-  const allTags = Array.from(allTagsSet).sort();
+  } catch (error) {
+    console.error('Error reading tags.json:', error);
+  }
 
   // Filter and Sort Logic
   const currentTag =
