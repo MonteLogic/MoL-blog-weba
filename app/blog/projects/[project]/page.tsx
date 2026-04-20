@@ -1,9 +1,8 @@
-import React from 'react';
-import Link from 'next/link';
 import fs from 'fs';
 import path from 'path';
-import matter from 'gray-matter';
 import { auth, currentUser } from '@clerk/nextjs/server';
+import matter from 'gray-matter';
+import Link from 'next/link';
 
 interface BlogPost {
   slug: string; // Project-relative slug
@@ -196,9 +195,10 @@ export default async function ProjectPage({
   searchParams,
 }: {
   params: Promise<{ project: string }>;
-  searchParams: { page?: string };
+  searchParams: Promise<{ page?: string }>;
 }) {
   const { project } = await params;
+  const resolvedSearchParams = await searchParams;
   const { userId } = await auth();
   let userRole: string | undefined;
 
@@ -235,12 +235,14 @@ export default async function ProjectPage({
 
   // Pagination
   const page =
-    typeof searchParams.page === 'string' ? parseInt(searchParams.page, 10) : 1;
-  const POSTS_PER_PAGE = 5;
-  const totalPages = Math.ceil(projectPosts.length / POSTS_PER_PAGE);
+    typeof resolvedSearchParams.page === 'string'
+      ? Number.parseInt(resolvedSearchParams.page, 10)
+      : 1;
+  const postsPerPage = 5;
+  const totalPages = Math.ceil(projectPosts.length / postsPerPage);
 
-  const startIndex = (page - 1) * POSTS_PER_PAGE;
-  const endIndex = startIndex + POSTS_PER_PAGE;
+  const startIndex = (page - 1) * postsPerPage;
+  const endIndex = startIndex + postsPerPage;
   const currentPosts = projectPosts.slice(startIndex, endIndex);
 
   if (currentPosts.length === 0) {

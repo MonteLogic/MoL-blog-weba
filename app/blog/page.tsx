@@ -92,7 +92,7 @@ async function getBlogPosts(): Promise<BlogPost[]> {
   try {
     const jsonFilePath = path.join(
       process.cwd(),
-      'blog-schema/file-paths/markdown-paths.json',
+      'generated/markdown-paths.json',
     );
     if (!fs.existsSync(jsonFilePath)) {
       console.error(
@@ -283,11 +283,10 @@ function canViewPost(
 
 // --- BlogPage Component (Main Page Structure) ---
 // (This is largely the same as your provided code, with updated Link href)
-export default async function BlogPage({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | string[] | undefined };
+export default async function BlogPage(props: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
+  const searchParams = await props.searchParams;
   const { userId } = await auth();
   let userRole: string | undefined;
 
@@ -302,9 +301,36 @@ export default async function BlogPage({
 
   const allPosts = await getBlogPosts();
 
-  const visiblePosts = allPosts.filter((post) =>
+  let visiblePosts = allPosts.filter((post) =>
     canViewPost(userRole, post.frontmatter.status),
   );
+
+  // Extract all unique tags from compiled file
+  let allTags: string[] = [];
+  try {
+    const tagsFilePath = path.join(process.cwd(), 'generated/tags.json');
+    if (fs.existsSync(tagsFilePath)) {
+      allTags = JSON.parse(fs.readFileSync(tagsFilePath, 'utf8'));
+    }
+  } catch (error) {
+    console.error('Error reading tags.json:', error);
+  }
+
+  // Filter and Sort Logic
+  const currentTag =
+    typeof searchParams['tag'] === 'string' ? searchParams['tag'] : null;
+  const currentSort =
+    typeof searchParams['sort'] === 'string' ? searchParams['sort'] : 'latest';
+
+  if (currentTag) {
+    visiblePosts = visiblePosts.filter((post) =>
+      post.frontmatter.tags?.includes(currentTag),
+    );
+  }
+
+  if (currentSort === 'oldest') {
+    visiblePosts = visiblePosts.reverse();
+  }
 
   // Pagination Logic
   const page =
@@ -355,6 +381,73 @@ export default async function BlogPage({
               →
             </span>
           </Link>
+        </div>
+      </div>
+
+      {/* Filter and View Tags Slot */}
+      <div className="border-cream-300 bg-cream-50 mb-8 rounded-xl border p-6">
+        <div className="flex flex-col gap-6 sm:flex-row sm:justify-between">
+          <div>
+            <h3 className="text-charcoal-muted mb-3 text-sm font-semibold uppercase tracking-wider">
+              Filter by Tag
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href={`/blog?sort=${currentSort}`}
+                className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
+                  !currentTag
+                    ? 'bg-accent-purple text-white'
+                    : 'text-charcoal-light hover:bg-cream-200 border-cream-300 border bg-white'
+                }`}
+              >
+                All Tags
+              </Link>
+              {allTags.map((tag) => (
+                <Link
+                  key={tag}
+                  href={`/blog?tag=${tag}&sort=${currentSort}`}
+                  className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
+                    currentTag === tag
+                      ? 'bg-accent-purple text-white'
+                      : 'text-charcoal-light hover:bg-cream-200 border-cream-300 border bg-white'
+                  }`}
+                >
+                  {tag}
+                </Link>
+              ))}
+            </div>
+          </div>
+          <div className="sm:text-right">
+            <h3 className="text-charcoal-muted mb-3 text-sm font-semibold uppercase tracking-wider">
+              Sort Posts
+            </h3>
+            <div className="border-cream-300 inline-flex rounded-lg border bg-white p-1">
+              <Link
+                href={`/blog?sort=latest${
+                  currentTag ? `&tag=${currentTag}` : ''
+                }`}
+                className={`rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${
+                  currentSort === 'latest'
+                    ? 'bg-cream-200 text-charcoal-dark shadow-sm'
+                    : 'text-charcoal-muted hover:text-charcoal-dark'
+                }`}
+              >
+                Latest
+              </Link>
+              <Link
+                href={`/blog?sort=oldest${
+                  currentTag ? `&tag=${currentTag}` : ''
+                }`}
+                className={`rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${
+                  currentSort === 'oldest'
+                    ? 'bg-cream-200 text-charcoal-dark shadow-sm'
+                    : 'text-charcoal-muted hover:text-charcoal-dark'
+                }`}
+              >
+                Oldest
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -461,7 +554,9 @@ export default async function BlogPage({
             <div className="mt-10 flex items-center justify-center space-x-4">
               {page > 1 ? (
                 <Link
-                  href={`/blog?page=${page - 1}`}
+                  href={`/blog?page=${page - 1}&sort=${currentSort}${
+                    currentTag ? `&tag=${currentTag}` : ''
+                  }`}
                   className="bg-accent-purple rounded-lg px-5 py-2.5 text-white shadow-sm transition-all hover:bg-purple-700 hover:shadow-md"
                 >
                   Previous
@@ -478,7 +573,9 @@ export default async function BlogPage({
 
               {page < totalPages ? (
                 <Link
-                  href={`/blog?page=${page + 1}`}
+                  href={`/blog?page=${page + 1}&sort=${currentSort}${
+                    currentTag ? `&tag=${currentTag}` : ''
+                  }`}
                   className="bg-accent-purple rounded-lg px-5 py-2.5 text-white shadow-sm transition-all hover:bg-purple-700 hover:shadow-md"
                 >
                   Next

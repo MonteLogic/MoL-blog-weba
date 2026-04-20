@@ -128,7 +128,7 @@ function getAllPostsWithUniqueSlugs(): Array<{
 }> {
   const jsonFilePath = path.join(
     process.cwd(),
-    'blog-schema/file-paths/markdown-paths.json',
+    'generated/markdown-paths.json',
   );
   if (!fs.existsSync(jsonFilePath)) {
     console.error(

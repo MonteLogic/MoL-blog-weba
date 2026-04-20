@@ -9,7 +9,7 @@ const SCHEMA_PATH = path.join(
 );
 const POSTS_PATHS_JSON = path.join(
   process.cwd(),
-  'blog-schema/file-paths/markdown-paths.json',
+  'generated/markdown-paths.json',
 );
 
 // Helper: Slugify (Must match app logic, but improved)
