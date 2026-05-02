@@ -9,7 +9,7 @@ import { MenuAlt2Icon, XIcon } from '@heroicons/react/solid';
 import clsx from 'clsx';
 import { useState } from 'react';
 import Byline from './byline';
-import { CBudLogo } from './cbud-logo';
+import { MoLLogo } from './MoL-logo';
 import { DarkModeToggle } from './dark-mode-toggle';
 import packageJson from '#/package.json';
 
@@ -39,7 +39,7 @@ export function GlobalNav() {
           onClick={close}
         >
           <div className="group-hover:border-accent-purple h-7 w-7 rounded-full border border-slate-300 transition-colors">
-            <CBudLogo />
+            <MoLLogo />
           </div>
           <h3
             className="group-hover:text-accent-purple font-semibold tracking-wide transition-colors"
