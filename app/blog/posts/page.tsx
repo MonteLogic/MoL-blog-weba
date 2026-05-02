@@ -1,9 +1,9 @@
-import React from 'react';
-import Link from 'next/link';
+
 import fs from 'fs';
-import path from 'path';
-import matter from 'gray-matter';
+import path from 'node:path';
 import { auth, currentUser } from '@clerk/nextjs/server';
+import matter from 'gray-matter';
+import Link from 'next/link';
 
 interface BlogPost {
   slug: string;
@@ -15,7 +15,7 @@ interface BlogPost {
     author?: string;
     status?: string[];
     componentSets?: string[];
-    [key: string]: any; // For additional frontmatter fields
+    [key: string]: string | boolean | string[] | undefined; // For additional frontmatter fields
   };
 }
 
@@ -25,17 +25,18 @@ const getAllMarkdownFiles = (
   arrayOfFiles: string[] = [],
 ): string[] => {
   const files = fs.readdirSync(dirPath);
+  let result = arrayOfFiles;
 
   files.forEach((file) => {
     const filePath = path.join(dirPath, file);
     if (fs.statSync(filePath).isDirectory()) {
-      arrayOfFiles = getAllMarkdownFiles(filePath, arrayOfFiles);
+      result = getAllMarkdownFiles(filePath, result);
     } else if (file === 'index.md' || file === 'index.mdx') {
-      arrayOfFiles.push(filePath);
+      result.push(filePath);
     }
   });
 
-  return arrayOfFiles;
+  return result;
 };
 
 // Function to safely get blog posts, with fallback for production environments
@@ -162,7 +163,7 @@ export default async function BlogPage() {
   if (visiblePosts.length === 0) {
     return (
       <div className="mx-auto max-w-4xl p-6">
-        <h1 className="mb-8 text-3xl font-bold text-white">CBud Blog</h1>
+        <h1 className="mb-8 text-3xl font-bold text-white">MonteLogic Blog</h1>
         <div className="rounded-lg border border-gray-700 bg-gray-800 p-6">
           <p className="text-white">
             {userId
@@ -176,7 +177,7 @@ export default async function BlogPage() {
 
   return (
     <div className="mx-auto max-w-4xl p-6">
-      <h1 className="mb-8 text-3xl font-bold text-white">CBud Blog</h1>
+      <h1 className="mb-8 text-3xl font-bold text-white">MonteLogic Blog</h1>
 
       <div className="space-y-6">
         {visiblePosts.map((post: BlogPost) => (

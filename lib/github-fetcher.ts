@@ -119,9 +119,9 @@ async function fetchLocalPosts(): Promise<BlogPost[]> {
 
 // --- Remote Fetching (Production) ---
 async function fetchRemotePosts(): Promise<BlogPost[]> {
-  const GITHUB_PAT = process.env['GITHUB_PAT'];
-  if (!GITHUB_PAT) {
-    console.error('CRITICAL: GITHUB_PAT environment variable is missing.');
+  const CONTENT_GH_TOKEN = process.env['CONTENT_GH_TOKEN'];
+  if (!CONTENT_GH_TOKEN) {
+    console.error('CRITICAL: CONTENT_GH_TOKEN environment variable is missing.');
     return [];
   }
 
@@ -132,7 +132,7 @@ async function fetchRemotePosts(): Promise<BlogPost[]> {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${GITHUB_PAT}`,
+      Authorization: `Bearer ${CONTENT_GH_TOKEN}`,
     },
     body: JSON.stringify({ query }),
     next: {
