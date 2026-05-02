@@ -1,5 +1,5 @@
+import crypto from 'node:crypto';
 import { revalidateTag } from 'next/cache';
-import crypto from 'crypto';
 
 export async function POST(request: Request) {
   try {
@@ -10,7 +10,7 @@ export async function POST(request: Request) {
     const secret = process.env['GITHUB_WEBHOOK_SECRET'];
     if (secret && signature) {
       const hmac = crypto.createHmac('sha256', secret);
-      const digest = 'sha256=' + hmac.update(rawBody).digest('hex');
+      const digest = `sha256=${hmac.update(rawBody).digest('hex')}`;
       if (
         signature.length !== digest.length ||
         !crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(digest))
@@ -20,8 +20,7 @@ export async function POST(request: Request) {
     }
 
     // Clear the Next.js cache for the blog posts
-    // @ts-ignore
-    revalidateTag('blog-posts');
+    revalidateTag('blog-posts', 'default');
 
     return new Response('Cache cleared', { status: 200 });
   } catch (error) {
