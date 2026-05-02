@@ -1,0 +1,79 @@
+
+> @ type-check /home/monte/Downloads/temp2/MoL/MoL-blog-weba
+> tsc --noEmit --pretty
+
+[96mMoL-blog-content/pipeline.ts[0m:[93m5[0m:[93m41[0m - [91merror[0m[90m TS2307: [0mCannot find module 'remark-lint-frontmatter-schema' or its corresponding type declarations.
+
+[7m5[0m import remarkLintFrontmatterSchema from 'remark-lint-frontmatter-schema';
+[7m [0m [91m                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96mMoL-blog-content/pipeline.ts[0m:[93m7[0m:[93m26[0m - [91merror[0m[90m TS2307: [0mCannot find module 'vfile-reporter' or its corresponding type declarations.
+
+[7m7[0m import { reporter } from 'vfile-reporter';
+[7m [0m [91m                         ~~~~~~~~~~~~~~~~[0m
+
+[96mapp/api/webhook/github/route.ts[0m:[93m10[0m:[93m32[0m - [91merror[0m[90m TS4111: [0mProperty 'GITHUB_WEBHOOK_SECRET' comes from an index signature, so it must be accessed with ['GITHUB_WEBHOOK_SECRET'].
+
+[7m10[0m     const secret = process.env.GITHUB_WEBHOOK_SECRET;
+[7m  [0m [91m                               ~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96mapp/api/webhook/github/route.ts[0m:[93m23[0m:[93m5[0m - [91merror[0m[90m TS2554: [0mExpected 2 arguments, but got 1.
+
+[7m23[0m     revalidateTag('blog-posts');
+[7m  [0m [91m    ~~~~~~~~~~~~~[0m
+
+  [96mnode_modules/.pnpm/next@16.1.6_@babel+core@7.26.0_@playwright+test@1.44.1_react-dom@19.0.0_react@19.0.0__react@19.0.0/node_modules/next/dist/server/web/spec-extension/revalidate.d.ts[0m:[93m9[0m:[93m52[0m
+    [7m9[0m export declare function revalidateTag(tag: string, profile: string | CacheLifeConfig): undefined;
+    [7m [0m [96m                                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+    An argument for 'profile' was not provided.
+
+[96mapp/blog/[slug]/page.tsx[0m:[93m20[0m:[93m49[0m - [91merror[0m[90m TS2307: [0mCannot find module '@/lib/github-fetcher' or its corresponding type declarations.
+
+[7m20[0m import { getBlogPosts, getPostDataBySlug } from '@/lib/github-fetcher';
+[7m  [0m [91m                                                ~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96mapp/blog/[slug]/page.tsx[0m:[93m45[0m:[93m24[0m - [91merror[0m[90m TS7006: [0mParameter 'p' implicitly has an 'any' type.
+
+[7m45[0m   return allPosts.map((p) => ({ slug: p.slug }));
+[7m  [0m [91m                       ~[0m
+
+[96mapp/blog/[slug]/page.tsx[0m:[93m119[0m:[93m30[0m - [91merror[0m[90m TS2304: [0mCannot find name 'formatTitle'.
+
+[7m119[0m                   ← Back to {formatTitle(projectName)} Project
+[7m   [0m [91m                             ~~~~~~~~~~~[0m
+
+[96mapp/blog/page.tsx[0m:[93m9[0m:[93m40[0m - [91merror[0m[90m TS2307: [0mCannot find module '@/lib/github-fetcher' or its corresponding type declarations.
+
+[7m9[0m import { BlogPost, getBlogPosts } from '@/lib/github-fetcher';
+[7m [0m [91m                                       ~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96mapp/blog/page.tsx[0m:[93m46[0m:[93m39[0m - [91merror[0m[90m TS7006: [0mParameter 'post' implicitly has an 'any' type.
+
+[7m46[0m   let visiblePosts = allPosts.filter((post) =>
+[7m  [0m [91m                                      ~~~~[0m
+
+[96mapp/blog/page.tsx[0m:[93m68[0m:[93m41[0m - [91merror[0m[90m TS7006: [0mParameter 'post' implicitly has an 'any' type.
+
+[7m68[0m     visiblePosts = visiblePosts.filter((post) =>
+[7m  [0m [91m                                        ~~~~[0m
+
+[96mapp/blog/page.tsx[0m:[93m277[0m:[93m53[0m - [91merror[0m[90m TS7006: [0mParameter 'tag' implicitly has an 'any' type.
+
+[7m277[0m                         {post.frontmatter.tags.map((tag) => (
+[7m   [0m [91m                                                    ~~~[0m
+
+[96mlib/github-fetcher.ts[0m:[93m122[0m:[93m34[0m - [91merror[0m[90m TS4111: [0mProperty 'GITHUB_PAT' comes from an index signature, so it must be accessed with ['GITHUB_PAT'].
+
+[7m122[0m   const GITHUB_PAT = process.env.GITHUB_PAT;
+[7m   [0m [91m                                 ~~~~~~~~~~[0m
+
+
+Found 12 errors in 5 files.
+
+Errors  Files
+     2  MoL-blog-content/pipeline.ts[90m:5[0m
+     2  app/api/webhook/github/route.ts[90m:10[0m
+     3  app/blog/[slug]/page.tsx[90m:20[0m
+     4  app/blog/page.tsx[90m:9[0m
+     1  lib/github-fetcher.ts[90m:122[0m
+ ELIFECYCLE  Command failed with exit code 1.

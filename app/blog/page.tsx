@@ -6,265 +6,7 @@ import matter from 'gray-matter';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import packageJson from '#/package.json';
 
-interface BlogPost {
-  slug: string; // This will be the final, unique slug
-  frontmatter: {
-    title: string;
-    date?: string;
-    description?: string;
-    tags?: string[];
-    author?: string;
-    status?: string;
-    componentSets?: string[];
-    categories?: string[];
-    categorySlugs?: string[];
-    [key: string]: any;
-  };
-}
-
-// --- Helper Functions (Ideally, move to a shared 'utils/blog.ts' file) ---
-
-/**
- * Generates a "base" URL-friendly slug from a given file path.
- * For index.md files, uses the immediate parent directory name.
- * For other .md files, uses the filename without extension.
- */
-function generateBaseSlug(filePathFromJson: string): string {
-  const postsBaseDirString = 'MoL-blog-content/posts/';
-  let normalizedFilePath = filePathFromJson.replace(/\\/g, '/').trim();
-
-  let relativePathToPostsDir: string;
-  if (normalizedFilePath.startsWith(postsBaseDirString)) {
-    relativePathToPostsDir = normalizedFilePath.substring(
-      postsBaseDirString.length,
-    );
-  } else {
-    relativePathToPostsDir = normalizedFilePath;
-  }
-
-  const fileExtension = path.posix.extname(relativePathToPostsDir);
-  const baseFilename = path.posix.basename(
-    relativePathToPostsDir,
-    fileExtension,
-  );
-
-  let slugCandidate: string;
-  if (baseFilename.toLowerCase() === 'index') {
-    const parentDirName = path.posix.basename(
-      path.posix.dirname(relativePathToPostsDir),
-    );
-    slugCandidate =
-      parentDirName === '.' || parentDirName === '' ? 'home' : parentDirName;
-  } else {
-    slugCandidate = baseFilename;
-  }
-
-  const slug = slugCandidate
-    .replace(/-+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9-]/g, '');
-
-  if (!slug) {
-    // Fallback for an empty slug, though unlikely with the above logic
-    const pathHash = Buffer.from(filePathFromJson)
-      .toString('hex')
-      .substring(0, 8);
-    return `post-${pathHash}`;
-  }
-  return slug;
-}
-
-/**
- * Formats a name (like a filename or directory name) into a nice title.
- */
-function formatTitle(namePart: string): string {
-  const titleWithoutDate = namePart.replace(/^\d{2}-\d{2}-\d{4}-/, '');
-  return titleWithoutDate
-    .split('-')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-}
-
-// --- Main function to get blog posts ---
-
-async function getBlogPosts(): Promise<BlogPost[]> {
-  try {
-    const jsonFilePath = path.join(
-      process.cwd(),
-      'generated/markdown-paths.json',
-    );
-    if (!fs.existsSync(jsonFilePath)) {
-      console.error(
-        'CRITICAL: markdown-paths.json not found at:',
-        jsonFilePath,
-      );
-      return [];
-    }
-
-    const jsonFileContent = fs.readFileSync(jsonFilePath, 'utf8');
-    const markdownFilePaths: string[] = JSON.parse(jsonFileContent);
-
-    // Step 1: Generate base slugs and gather necessary info for each path
-    const processedPaths = markdownFilePaths.map((filePathFromJson, index) => {
-      const currentFilePath = filePathFromJson.trim();
-
-      const baseSlug = generateBaseSlug(currentFilePath);
-
-      // Determine titleSource from original path structure
-      const postsBaseDirString = 'MoL-blog-content/posts/';
-      let originalNormalizedPath = currentFilePath.replace(/\\/g, '/');
-      let originalRelativePath = originalNormalizedPath.startsWith(
-        postsBaseDirString,
-      )
-        ? originalNormalizedPath.substring(postsBaseDirString.length)
-        : originalNormalizedPath;
-
-      const originalFileExt = path.posix.extname(originalRelativePath);
-      const originalBaseFileNameForTitle = path.posix.basename(
-        originalRelativePath,
-        originalFileExt,
-      );
-      const originalParentDirName = path.posix.basename(
-        path.posix.dirname(originalRelativePath),
-      );
-
-      let titleSourceName: string;
-      if (originalBaseFileNameForTitle.toLowerCase() === 'index') {
-        titleSourceName =
-          originalParentDirName && originalParentDirName !== '.'
-            ? originalParentDirName
-            : originalBaseFileNameForTitle;
-      } else {
-        titleSourceName = originalBaseFileNameForTitle;
-      }
-
-      return {
-        filePath: currentFilePath,
-        baseSlug: baseSlug,
-        titleSourceName: titleSourceName,
-        originalIndex: index, // Keep original index for stable suffixing if needed later, though current logic relies on iteration order
-      };
-    });
-
-    // Step 2: Create unique slugs and process each file
-    const posts: BlogPost[] = [];
-    const slugOccurrences: { [key: string]: number } = {};
-
-    for (const item of processedPaths) {
-      const { filePath, baseSlug, titleSourceName, originalIndex } = item;
-
-      let finalUniqueSlug: string;
-      if (slugOccurrences[baseSlug] === undefined) {
-        slugOccurrences[baseSlug] = 0;
-        finalUniqueSlug = baseSlug;
-      } else {
-        slugOccurrences[baseSlug]++;
-        finalUniqueSlug = `${baseSlug}-${slugOccurrences[baseSlug]}`;
-      }
-
-      const fullMarkdownPath = path.join(process.cwd(), filePath);
-      if (!fs.existsSync(fullMarkdownPath)) {
-        console.error(
-          `[${originalIndex}] ERROR: File not found at full path: "${fullMarkdownPath}" (should have been caught earlier if paths are static). Skipping.`,
-        );
-        continue;
-      }
-
-      let fileContentRead;
-      try {
-        if (fs.statSync(fullMarkdownPath).isDirectory()) {
-          continue;
-        }
-        fileContentRead = fs.readFileSync(fullMarkdownPath, 'utf8');
-      } catch (readError: any) {
-        if (readError.code === 'EISDIR') {
-          continue;
-        }
-        console.error(
-          `[${originalIndex}] ERROR: Could not read file content for "${fullMarkdownPath}":`,
-          readError,
-        );
-        continue;
-      }
-
-      const { data: parsedFrontmatter } = matter(fileContentRead);
-
-      // Normalize categories logic
-      let rawCategories: string[] = [];
-      let categorySlugs: string[] = [];
-
-      // 1. Get Display Names
-      if (
-        parsedFrontmatter['categories'] &&
-        Array.isArray(parsedFrontmatter['categories'])
-      ) {
-        rawCategories = parsedFrontmatter['categories'];
-      } else if (
-        parsedFrontmatter['category'] &&
-        typeof parsedFrontmatter['category'] === 'string'
-      ) {
-        rawCategories = [parsedFrontmatter['category']];
-      }
-
-      // 2. Get Slugs
-      if (
-        parsedFrontmatter['category-slug'] ||
-        parsedFrontmatter['category-slugs']
-      ) {
-        if (Array.isArray(parsedFrontmatter['category-slugs'])) {
-          categorySlugs = parsedFrontmatter['category-slugs'];
-        } else if (typeof parsedFrontmatter['category-slug'] === 'string') {
-          categorySlugs = [parsedFrontmatter['category-slug']];
-        }
-      } else {
-        // Fallback: slugify the display names
-        categorySlugs = rawCategories.map((cat) =>
-          cat
-            .toString()
-            .toLowerCase()
-            .trim()
-            .replace(/\//g, '-') // Replace slashes first
-            .replace(/\s+/g, '-')
-            .replace(/[^\w-]+/g, '')
-            .replace(/-+/g, '-'),
-        );
-      }
-
-      const frontmatter: BlogPost['frontmatter'] = {
-        ...(parsedFrontmatter as object),
-        title: parsedFrontmatter['title'] ?? formatTitle(titleSourceName),
-        status:
-          parsedFrontmatter['status'] === 'private' ? 'private' : 'public',
-        categories: rawCategories,
-        categorySlugs: categorySlugs,
-      };
-
-      posts.push({
-        slug: finalUniqueSlug,
-        frontmatter,
-      });
-    }
-
-    return posts.sort((a, b) => {
-      if (a.frontmatter.date && b.frontmatter.date) {
-        return (
-          new Date(b.frontmatter.date).getTime() -
-          new Date(a.frontmatter.date).getTime()
-        );
-      }
-      if (a.frontmatter.date) return -1;
-      if (b.frontmatter.date) return 1;
-      return 0;
-    });
-  } catch (error) {
-    console.error('CRITICAL ERROR in getBlogPosts:', error);
-    if (process.env.NODE_ENV === 'production') {
-      return [];
-    }
-    throw error;
-  }
-}
+import { BlogPost, getBlogPosts } from '#/lib/github-fetcher';
 
 // Helper function to check if user can view a post based on role and post status
 // (This is the same as in your provided code)
@@ -301,7 +43,7 @@ export default async function BlogPage(props: {
 
   const allPosts = await getBlogPosts();
 
-  let visiblePosts = allPosts.filter((post) =>
+  let visiblePosts = allPosts.filter((post: BlogPost) =>
     canViewPost(userRole, post.frontmatter.status),
   );
 
@@ -323,7 +65,7 @@ export default async function BlogPage(props: {
     typeof searchParams['sort'] === 'string' ? searchParams['sort'] : 'latest';
 
   if (currentTag) {
-    visiblePosts = visiblePosts.filter((post) =>
+    visiblePosts = visiblePosts.filter((post: BlogPost) =>
       post.frontmatter.tags?.includes(currentTag),
     );
   }
@@ -532,7 +274,7 @@ export default async function BlogPage(props: {
                   {post.frontmatter.tags &&
                     post.frontmatter.tags.length > 0 && (
                       <div className="mb-3 flex flex-wrap gap-2">
-                        {post.frontmatter.tags.map((tag) => (
+                        {post.frontmatter.tags.map((tag: string) => (
                           <span key={tag} className="tag-blog">
                             {tag}
                           </span>
