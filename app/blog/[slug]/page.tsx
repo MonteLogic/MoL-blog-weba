@@ -40,10 +40,6 @@ const mdxProcessingOptions = {
   rehypePlugins: [[rehypePrettyCode, { theme: 'github-dark' }]], // Or your preferred theme
 };
 
-export async function generateStaticParams() {
-  const allPosts = await getBlogPosts();
-  return allPosts.map((p) => ({ slug: p.slug }));
-}
 
 // --- Blog Post Page Component ---
 export default async function BlogPostPage({
