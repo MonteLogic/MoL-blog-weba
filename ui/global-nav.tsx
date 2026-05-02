@@ -1,20 +1,28 @@
 'use client';
 
-import React from 'react';
 import { useUser } from '@clerk/nextjs';
-import { getSecondMenu, useResolveSlug, type Item } from '#/lib/second-menu';
-import Link from 'next/link';
-import { useSelectedLayoutSegment } from 'next/navigation';
 import { MenuAlt2Icon, XIcon } from '@heroicons/react/solid';
 import clsx from 'clsx';
+import Link from 'next/link';
+import { useSelectedLayoutSegment } from 'next/navigation';
 import { useState } from 'react';
-import Byline from './byline';
-import { MoLLogo } from './MoL-logo';
-import { DarkModeToggle } from './dark-mode-toggle';
+import { type Item, getSecondMenu, useResolveSlug } from '#/lib/second-menu';
 import packageJson from '#/package.json';
+import { MoLLogo } from './MoL-logo';
+import Byline from './byline';
+import { DarkModeToggle } from './dark-mode-toggle';
 
 // Get project name from package.json config
-const projectName = (packageJson as any).config?.niceNameOfProject || 'Blog';
+type PackageJsonConfig = {
+  config?: {
+    niceNameOfProject?: string;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+};
+
+const projectName =
+  ((packageJson as PackageJsonConfig).config?.niceNameOfProject) || 'Blog';
 
 export function GlobalNav() {
   const { user } = useUser();
@@ -115,7 +123,7 @@ function GlobalNavItem({
   resolveSlug,
 }: {
   item: Item;
-  close: () => false | void;
+  close: () => void;
   resolveSlug: (item: Item) => string;
 }) {
   const segment = useSelectedLayoutSegment();
