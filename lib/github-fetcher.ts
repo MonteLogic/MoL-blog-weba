@@ -296,7 +296,17 @@ export async function getBlogPosts(): Promise<BlogPost[]> {
   if (process.env.NODE_ENV !== 'production') {
     return fetchLocalPosts();
   }
-  return fetchRemotePosts();
+
+  // In production, try GitHub API first, fall back to local files
+  const remotePosts = await fetchRemotePosts();
+  if (remotePosts.length > 0) {
+    return remotePosts;
+  }
+
+  // Fallback: if remote returned nothing (missing token, API error, etc.),
+  // try the local generated files that were included in the build
+  console.warn('Remote fetch returned no posts, falling back to local files.');
+  return fetchLocalPosts();
 }
 
 export async function getPostDataBySlug(slug: string): Promise<BlogPost | null> {
