@@ -7,6 +7,7 @@ import { auth, currentUser } from '@clerk/nextjs/server';
 import packageJson from '#/package.json';
 
 import { BlogPost, getBlogPosts } from '#/lib/github-fetcher';
+import PerPageSelect from './PerPageSelect';
 
 // Helper function to check if user can view a post based on role and post status
 // (This is the same as in your provided code)
@@ -75,15 +76,21 @@ export default async function BlogPage(props: {
   }
 
   // Pagination Logic
+  const VALID_PER_PAGE = [15, 30, 50, 100];
+  const rawPerPage =
+    typeof searchParams['perPage'] === 'string'
+      ? parseInt(searchParams['perPage'], 10)
+      : 15;
+  const perPage = VALID_PER_PAGE.includes(rawPerPage) ? rawPerPage : 15;
+
   const page =
     typeof searchParams['page'] === 'string'
       ? parseInt(searchParams['page'], 10)
       : 1;
-  const POSTS_PER_PAGE = 5; // Adjust as needed
-  const totalPages = Math.ceil(visiblePosts.length / POSTS_PER_PAGE);
+  const totalPages = Math.ceil(visiblePosts.length / perPage);
 
-  const startIndex = (page - 1) * POSTS_PER_PAGE;
-  const endIndex = startIndex + POSTS_PER_PAGE;
+  const startIndex = (page - 1) * perPage;
+  const endIndex = startIndex + perPage;
   const currentPosts = visiblePosts.slice(startIndex, endIndex);
 
   return (
@@ -292,43 +299,42 @@ export default async function BlogPage(props: {
           </div>
 
           {/* Pagination Controls */}
-          {totalPages > 1 && (
-            <div className="mt-10 flex items-center justify-center space-x-4">
-              {page > 1 ? (
-                <Link
-                  href={`/blog?page=${page - 1}&sort=${currentSort}${
-                    currentTag ? `&tag=${currentTag}` : ''
-                  }`}
-                  className="bg-accent-purple rounded-lg px-5 py-2.5 text-white shadow-sm transition-all hover:bg-purple-700 hover:shadow-md"
-                >
-                  Previous
-                </Link>
-              ) : (
-                <span className="bg-cream-300 text-charcoal-muted cursor-not-allowed rounded-lg px-5 py-2.5">
-                  Previous
-                </span>
-              )}
+          <div className="mt-10 flex flex-col items-center gap-4">
+            {totalPages > 1 && (
+              <div className="flex items-center space-x-4">
+                {page > 1 ? (
+                  <Link
+                    href={`/blog?page=${page - 1}&sort=${currentSort}${currentTag ? `&tag=${currentTag}` : ''}${perPage !== 15 ? `&perPage=${perPage}` : ''}`}
+                    className="bg-accent-purple rounded-lg px-5 py-2.5 text-white shadow-sm transition-all hover:bg-purple-700 hover:shadow-md"
+                  >
+                    Previous
+                  </Link>
+                ) : (
+                  <span className="bg-cream-300 text-charcoal-muted cursor-not-allowed rounded-lg px-5 py-2.5">
+                    Previous
+                  </span>
+                )}
 
-              <span className="text-charcoal-muted font-medium">
-                Page {page} of {totalPages}
-              </span>
-
-              {page < totalPages ? (
-                <Link
-                  href={`/blog?page=${page + 1}&sort=${currentSort}${
-                    currentTag ? `&tag=${currentTag}` : ''
-                  }`}
-                  className="bg-accent-purple rounded-lg px-5 py-2.5 text-white shadow-sm transition-all hover:bg-purple-700 hover:shadow-md"
-                >
-                  Next
-                </Link>
-              ) : (
-                <span className="bg-cream-300 text-charcoal-muted cursor-not-allowed rounded-lg px-5 py-2.5">
-                  Next
+                <span className="text-charcoal-muted font-medium">
+                  Page {page} of {totalPages}
                 </span>
-              )}
-            </div>
-          )}
+
+                {page < totalPages ? (
+                  <Link
+                    href={`/blog?page=${page + 1}&sort=${currentSort}${currentTag ? `&tag=${currentTag}` : ''}${perPage !== 15 ? `&perPage=${perPage}` : ''}`}
+                    className="bg-accent-purple rounded-lg px-5 py-2.5 text-white shadow-sm transition-all hover:bg-purple-700 hover:shadow-md"
+                  >
+                    Next
+                  </Link>
+                ) : (
+                  <span className="bg-cream-300 text-charcoal-muted cursor-not-allowed rounded-lg px-5 py-2.5">
+                    Next
+                  </span>
+                )}
+              </div>
+            )}
+            <PerPageSelect current={perPage} />
+          </div>
         </>
       )}
     </div>

@@ -38,7 +38,7 @@ export const getSecondMenu = (
       {
         name: 'Blog',
         slug: 'blog',
-        description: 'CBud Documentation',
+        description: 'Monte Logic blog with insights and updates.',
       },
     ],
   },
