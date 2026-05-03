@@ -123,76 +123,7 @@ function generatePostSlug(relativePath: string): string {
   return slug || 'post';
 }
 
-// Get all posts for a project (for generateStaticParams)
-function getProjectPosts(
-  projectSlug: string,
-): Array<{ slug: string; filePath: string }> {
-  const projectDir = path.join(
-    process.cwd(),
-    'MoL-blog-content/posts/categorized/projects',
-    projectSlug,
-  );
 
-  if (!fs.existsSync(projectDir)) {
-    return [];
-  }
-
-  function findMarkdownFiles(dir: string): string[] {
-    const files: string[] = [];
-    const items = fs.readdirSync(dir, { withFileTypes: true });
-
-    for (const item of items) {
-      const fullPath = path.join(dir, item.name);
-      if (item.isDirectory()) {
-        files.push(...findMarkdownFiles(fullPath));
-      } else if (item.name.endsWith('.md') || item.name.endsWith('.mdx')) {
-        files.push(fullPath);
-      }
-    }
-    return files;
-  }
-
-  const markdownFiles = findMarkdownFiles(projectDir);
-
-  return markdownFiles.map((filePath) => {
-    const relativePath = path.relative(projectDir, filePath);
-    return {
-      slug: generatePostSlug(relativePath),
-      filePath,
-    };
-  });
-}
-
-// Generate static params for all project posts
-export async function generateStaticParams(): Promise<ProjectPostParams[]> {
-  const projectsDir = path.join(
-    process.cwd(),
-    'MoL-blog-content/posts/categorized/projects',
-  );
-
-  if (!fs.existsSync(projectsDir)) {
-    return [];
-  }
-
-  const items = fs.readdirSync(projectsDir, { withFileTypes: true });
-  const params: ProjectPostParams[] = [];
-
-  for (const item of items) {
-    if (!item.isDirectory()) continue;
-
-    const projectSlug = item.name;
-    const posts = getProjectPosts(projectSlug);
-
-    for (const post of posts) {
-      params.push({
-        project: projectSlug,
-        post: post.slug,
-      });
-    }
-  }
-
-  return params;
-}
 
 // Project Post Page Component
 export default async function ProjectPostPage({

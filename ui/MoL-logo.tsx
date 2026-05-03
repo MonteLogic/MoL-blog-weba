@@ -1,0 +1,25 @@
+import React from 'react';
+
+export function MoLLogo() {
+  return (
+    <svg viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <mask
+        id="mask0_mol_logo"
+        style={{ maskType: 'alpha' }}
+        x="0"
+        y="0"
+        width="512"
+        height="512"
+      >
+        <circle cx="256" cy="256" r="256" fill="black" />
+      </mask>
+      <g mask="url(#mask0_mol_logo)">
+        <circle cx="256" cy="256" r="256" fill="black" />
+        <path
+          d="M 160 360 L 160 152 L 200 152 L 256 250 L 312 152 L 352 152 L 352 360 L 312 360 L 312 210 L 256 300 L 200 210 L 200 360 Z"
+          fill="white"
+        />
+      </g>
+    </svg>
+  );
+}

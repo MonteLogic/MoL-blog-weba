@@ -35,7 +35,7 @@ interface CreateSubscriptionRequest {
  */
 function getBaseUrl(): string {
   if (process.env.NODE_ENV === 'production') {
-    return 'https://cbud.app';
+    return 'https://mln.mn';
   }
   // toDo: Change this to the process url being used
   // not just a hard-coded value.
